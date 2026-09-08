@@ -24,6 +24,12 @@ export function PrepView({ session, data, setData }) {
     setData({ ...data, sessions: reorderSessionEntries(data.sessions, session.id, fromIndex, toIndex) })
   }
 
+  function handleMove(index, direction) {
+    const targetIndex = index + direction
+    if (targetIndex < 0 || targetIndex >= session.entries.length) return
+    handleReorder(index, targetIndex)
+  }
+
   function handleRemoveExercise(exerciseId) {
     setData({ ...data, sessions: removeExerciseEntryFromSession(data.sessions, session.id, exerciseId) })
   }
@@ -90,6 +96,12 @@ export function PrepView({ session, data, setData }) {
                 ⠿
               </button>
               <span className="prep-exercise__name">{entry.exerciseName}</span>
+              <button type="button" className="prep-exercise__remove" onClick={() => handleMove(index, -1)} aria-label="Monter">
+                ↑
+              </button>
+              <button type="button" className="prep-exercise__remove" onClick={() => handleMove(index, 1)} aria-label="Descendre">
+                ↓
+              </button>
               <button
                 type="button"
                 className="prep-exercise__remove"

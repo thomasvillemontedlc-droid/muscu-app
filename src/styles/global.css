@@ -321,6 +321,61 @@ input[type='number']:focus {
   color: var(--color-text);
 }
 
+/* Suivi hebdomadaire */
+.week-tracker {
+  display: flex;
+  justify-content: space-between;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 12px 8px;
+  margin-bottom: 20px;
+}
+
+.week-tracker__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.week-tracker__label {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.week-tracker__circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  color: var(--color-primary-text);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.week-tracker__circle--done {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.week-tracker__circle--partial {
+  background: transparent;
+  border-color: #f59e0b;
+}
+
+.week-tracker__today {
+  position: absolute;
+  bottom: -8px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-muted);
+}
+
 /* Historique, groupé par jour */
 .history-day {
   margin-bottom: 20px;
@@ -582,25 +637,37 @@ input[type='number']:focus {
   margin-bottom: 8px;
 }
 
-.session-summary__header {
+.session-summary__name {
+  font-weight: 600;
+}
+
+.session-summary__completion {
+  color: var(--color-primary);
+  font-weight: 600;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin: 0 0 12px;
+}
+
+.session-summary__sets {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.session-summary__sets li {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.session-summary__name {
-  font-weight: 600;
+  padding: 2px 0;
 }
 
 .session-summary__rest {
   color: var(--color-muted);
   font-size: 0.85rem;
-}
-
-.session-summary__sets {
-  color: var(--color-muted);
-  font-size: 0.9rem;
-  margin: 2px 0 0;
 }
 
 .session-summary__progress {
@@ -613,4 +680,18 @@ input[type='number']:focus {
   list-style: none;
   padding: 0;
   margin: 0;
+}
+
+/* Volontairement discret : reste accessible (zone tactile correcte) sans
+   attirer l'œil comme les propositions d'exercices au-dessus. */
+.subtle-button {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 16px;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  text-decoration: underline;
 }

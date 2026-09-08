@@ -1,6 +1,6 @@
 import { getLastPerformance } from '../../domain/history.js'
 import { updateSet } from '../../domain/sessions.js'
-import { validateCurrentSet } from '../../domain/sessionRunner.js'
+import { finishCurrentExerciseEarly, validateCurrentSet } from '../../domain/sessionRunner.js'
 import { unlockAudio } from '../../lib/alarm.js'
 import { NumberField } from '../../components/NumberField.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
@@ -30,6 +30,10 @@ export function ExerciseView({ session, data, setData }) {
     // puisse sonner plus tard sans interaction directe (voir lib/alarm.js).
     unlockAudio()
     setData({ ...data, sessions: validateCurrentSet(data.sessions, session.id) })
+  }
+
+  function handleFinishExercise() {
+    setData({ ...data, sessions: finishCurrentExerciseEarly(data.sessions, session.id) })
   }
 
   return (
@@ -71,6 +75,12 @@ export function ExerciseView({ session, data, setData }) {
       </div>
 
       <BigButton onClick={handleValidate}>Valider la série</BigButton>
+
+      {session.currentSetIndex > 0 && (
+        <BigButton variant="secondary" onClick={handleFinishExercise}>
+          Terminer cet exercice
+        </BigButton>
+      )}
     </div>
   )
 }

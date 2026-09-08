@@ -1,11 +1,17 @@
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
-import { getSessionsGroupedByDate } from '../domain/history.js'
+import { getSessionsGroupedByDate, getWeekActivity } from '../domain/history.js'
 import { getSessionStatus } from '../domain/sessions.js'
 
 const STATUS_LABELS = {
   done: '✓ Faite',
   partial: '◐ Partielle',
   'not-done': 'Non faite',
+}
+
+const WEEKDAY_LETTERS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
+
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 }
 
 // Construit une date locale à partir d'un "YYYY-MM-DD" sans passer par le
@@ -23,10 +29,24 @@ function formatDay(isoDay) {
 export function HistoryPage() {
   const { data } = useAppDataContext()
   const groups = getSessionsGroupedByDate(data.sessions)
+  const week = getWeekActivity(data.sessions)
+  const today = new Date()
 
   return (
     <div className="page">
       <h1>Historique</h1>
+
+      <div className="week-tracker">
+        {week.map((day, index) => (
+          <div key={index} className="week-tracker__day">
+            <span className="week-tracker__label">{WEEKDAY_LETTERS[index]}</span>
+            <span className={`week-tracker__circle week-tracker__circle--${day.status}`}>
+              {day.status === 'done' && '✓'}
+            </span>
+            {isSameDay(day.date, today) && <span className="week-tracker__today" />}
+          </div>
+        ))}
+      </div>
 
       {groups.length === 0 && <p className="empty-state">Aucune séance enregistrée pour l'instant.</p>}
 

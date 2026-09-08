@@ -27,6 +27,7 @@ export function startSessionFromTemplate(sessions, template, exercises) {
     phase: 'prep',
     restSeconds: getDefaultRestSeconds(sessions),
     restUntil: null,
+    restStartedAt: null,
     startingExerciseId: template.exerciseIds[0] ?? null,
     currentExerciseId: null,
     currentSetIndex: 0,
@@ -69,6 +70,30 @@ export function getSessionStatus(session) {
     return session.done ? 'done' : 'not-done'
   }
   return completedCount > 0 ? 'partial' : 'not-done'
+}
+
+// Filtre les séances pour l'export ciblé vers une IA (Réglages). "last" =
+// la plus récente séance (peu importe son statut), pas forcément celle
+// juste terminée si l'utilisateur navigue plus tard.
+export function filterSessionsByScope(sessions, scope, now = new Date()) {
+  if (scope === 'last') {
+    const latest = [...sessions].sort((a, b) => b.date.localeCompare(a.date))[0]
+    return latest ? [latest] : []
+  }
+  if (scope === '7days') {
+    const cutoff = new Date(now)
+    cutoff.setDate(cutoff.getDate() - 7)
+    return sessions.filter((s) => new Date(s.date) >= cutoff)
+  }
+  if (scope === 'month') {
+    const year = now.getFullYear()
+    const month = now.getMonth()
+    return sessions.filter((s) => {
+      const d = new Date(s.date)
+      return d.getFullYear() === year && d.getMonth() === month
+    })
+  }
+  return sessions
 }
 
 export function updateSession(sessions, sessionId, changes) {

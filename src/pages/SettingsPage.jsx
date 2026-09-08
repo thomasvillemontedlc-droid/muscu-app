@@ -1,14 +1,23 @@
-import { useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
+import { filterSessionsByScope } from '../domain/sessions.js'
 import { parseImportedData } from '../storage/storage.js'
 import { BigButton } from '../components/BigButton.jsx'
+
+const SCOPE_LABELS = {
+  last: 'La séance la plus récente',
+  '7days': 'Les 7 derniers jours',
+  month: 'Le mois en cours',
+  all: 'Toutes les séances',
+}
 
 export function SettingsPage() {
   const { data, setData } = useAppDataContext()
   const fileInputRef = useRef(null)
+  const [scope, setScope] = useState('all')
 
-  function downloadExport() {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+  function downloadExport(exportData) {
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -18,7 +27,8 @@ export function SettingsPage() {
   }
 
   function handleSendTo(url) {
-    downloadExport()
+    const scopedData = { ...data, sessions: filterSessionsByScope(data.sessions, scope) }
+    downloadExport(scopedData)
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
@@ -53,7 +63,7 @@ export function SettingsPage() {
           Toutes tes données restent uniquement sur ce téléphone (localStorage). Exporte
           régulièrement pour ne rien perdre, surtout avant de vider le cache du navigateur.
         </p>
-        <BigButton onClick={downloadExport}>Exporter (JSON)</BigButton>
+        <BigButton onClick={() => downloadExport(data)}>Exporter (JSON)</BigButton>
         <BigButton variant="secondary" onClick={handleImportClick}>
           Importer
         </BigButton>
@@ -68,6 +78,18 @@ export function SettingsPage() {
 
       <section className="settings-section">
         <h2>Envoyer à une IA</h2>
+
+        <label className="prep-field">
+          <span>Contenu à envoyer</span>
+          <select className="prep-field__select" value={scope} onChange={(e) => setScope(e.target.value)}>
+            {Object.entries(SCOPE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <BigButton variant="secondary" onClick={() => handleSendTo('https://claude.ai')}>
           Envoyer à Claude
         </BigButton>

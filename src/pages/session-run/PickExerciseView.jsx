@@ -25,9 +25,9 @@ export function PickExerciseView({ session, data, setData }) {
         ))}
       </ul>
 
-      <BigButton variant="secondary" onClick={handleFinish}>
+      <button type="button" className="subtle-button" onClick={handleFinish}>
         Terminer la séance
-      </BigButton>
+      </button>
     </div>
   )
 }

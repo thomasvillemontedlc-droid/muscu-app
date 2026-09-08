@@ -1,3 +1,13 @@
+import { getSessionStatus } from './sessions.js'
+
+// "YYYY-MM-DD" en jour CALENDAIRE LOCAL de l'utilisateur, pas la date UTC
+// que renverrait toISOString()/slice(0,10) sur une date-heure — sinon une
+// séance faite tard le soir peut se retrouver rangée sous le jour suivant
+// (ou précédent, selon le fuseau) au lieu du jour réellement vécu.
+function toLocalDayKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
 // Dernière performance enregistrée sur un exercice donné, tous templates confondus.
 // Sert à pré-remplir les champs quand on relance une séance (fonctionnalité 3).
 export function getLastPerformance(sessions, exerciseId) {
@@ -37,6 +47,35 @@ export function getExercisesUsedInTemplate(sessions, templateName) {
   return ordered
 }
 
+// Les 7 jours de la semaine en cours (lundi -> dimanche) avec le meilleur
+// statut de séance ce jour-là ('done' > 'partial' > 'none'), pour l'encart
+// de suivi hebdomadaire.
+export function getWeekActivity(sessions, referenceDate = new Date()) {
+  const dayOfWeek = referenceDate.getDay() // 0 = dimanche
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+  const monday = new Date(referenceDate)
+  monday.setHours(0, 0, 0, 0)
+  monday.setDate(monday.getDate() + mondayOffset)
+
+  const days = []
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(monday)
+    date.setDate(monday.getDate() + i)
+    const dayKey = toLocalDayKey(date)
+
+    const sessionsThatDay = sessions.filter((s) => toLocalDayKey(new Date(s.date)) === dayKey)
+    const statuses = sessionsThatDay.map(getSessionStatus)
+
+    let status = 'none'
+    if (statuses.includes('done')) status = 'done'
+    else if (statuses.includes('partial')) status = 'partial'
+
+    days.push({ date, status })
+  }
+
+  return days
+}
+
 // Séances passées groupées par jour calendaire, du plus récent au plus
 // ancien, avec pour chaque jour la ou les séances faites ce jour-là
 // (fonctionnalité 5).
@@ -46,7 +85,7 @@ export function getSessionsGroupedByDate(sessions) {
   let currentDay = null
 
   for (const session of sorted) {
-    const day = session.date.slice(0, 10) // YYYY-MM-DD
+    const day = toLocalDayKey(new Date(session.date))
     if (day !== currentDay) {
       currentDay = day
       groups.push({ day, sessions: [] })

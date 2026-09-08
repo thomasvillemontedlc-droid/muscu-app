@@ -1,0 +1,335 @@
+:root {
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-surface-2: #334155;
+  --color-text: #f1f5f9;
+  --color-muted: #94a3b8;
+  --color-border: #334155;
+  --color-primary: #22c55e;
+  --color-primary-text: #052e12;
+  --color-danger: #ef4444;
+
+  --touch-min: 52px;
+  --radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 17px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.app__content {
+  flex: 1;
+  padding: 16px 16px calc(var(--touch-min) + 32px);
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.page h1 {
+  font-size: 1.4rem;
+  margin: 4px 0 16px;
+}
+
+.page h2 {
+  font-size: 1.1rem;
+  margin: 0 0 4px;
+}
+
+/* Boutons et champs volontairement grands : usage une main, mains moites */
+button,
+input {
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+input[type='text'],
+input[type='number'] {
+  min-height: var(--touch-min);
+  width: 100%;
+  padding: 0 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+input[type='text']:focus,
+input[type='number']:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.big-button {
+  min-height: var(--touch-min);
+  width: 100%;
+  padding: 0 16px;
+  margin: 6px 0;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.big-button--primary {
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+}
+
+.big-button--secondary {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+
+.big-button--danger {
+  background: transparent;
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger);
+}
+
+.big-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.back-link {
+  display: inline-block;
+  color: var(--color-muted);
+  text-decoration: none;
+  margin-bottom: 12px;
+  min-height: var(--touch-min);
+  line-height: var(--touch-min);
+}
+
+.empty-state {
+  color: var(--color-muted);
+}
+
+/* Navigation basse, fixée à l'écran pour rester accessible au pouce même sur
+   une page longue (ex: séance avec beaucoup d'exercices) */
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bottom-nav__link {
+  flex: 1;
+  text-align: center;
+  padding: 14px 0;
+  color: var(--color-muted);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.bottom-nav__link.active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* Liste des séances types */
+.template-create {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.template-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.template-list__item {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.template-list__name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: block;
+}
+
+.template-list__count {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.template-list__actions {
+  margin-top: 8px;
+}
+
+/* Édition de séance type */
+.template-edit__name {
+  margin-bottom: 16px;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.exercise-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+}
+
+.exercise-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.exercise-list__actions button {
+  min-width: var(--touch-min);
+  min-height: 44px;
+  margin-left: 4px;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: 1.1rem;
+}
+
+.exercise-picker {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* Séance en cours */
+.session-date {
+  color: var(--color-muted);
+  margin-top: -8px;
+}
+
+.exercise-block {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.last-performance {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  margin: 4px 0 12px;
+}
+
+.last-performance--empty {
+  font-style: italic;
+}
+
+.set-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto 1fr auto auto;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.set-row__label {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.set-row__unit {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.set-row__remove {
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-surface-2);
+  color: var(--color-danger);
+  font-size: 1rem;
+}
+
+.add-set-button {
+  width: 100%;
+  min-height: 48px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-text);
+}
+
+/* Historique */
+.exercise-history-list,
+.history-entries {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.exercise-history-list__link {
+  display: block;
+  min-height: var(--touch-min);
+  line-height: var(--touch-min);
+  color: var(--color-text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.history-entry {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.history-entry__date {
+  display: block;
+  font-weight: 600;
+}
+
+.history-entry__sets {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+/* Réglages */
+.settings-section {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.settings-section p {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}

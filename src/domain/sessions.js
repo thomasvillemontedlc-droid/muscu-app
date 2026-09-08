@@ -23,7 +23,6 @@ export function startSessionFromTemplate(sessions, template, exercises) {
     templateId: template.id,
     templateName: template.name,
     date: new Date().toISOString(),
-    done: false,
     entries,
     phase: 'prep',
     restSeconds: getDefaultRestSeconds(sessions),
@@ -48,6 +47,28 @@ function getDefaultRestSeconds(sessions) {
 
 export function getSessionById(sessions, sessionId) {
   return sessions.find((s) => s.id === sessionId)
+}
+
+// Statut dérivé (jamais stocké) : évite un champ à garder synchronisé et
+// gère pour "gratuit" le cas où l'utilisateur ferme l'app en plein milieu
+// d'une séance sans jamais cliquer un bouton de fin.
+// - 'done'      : phase 'finished' et tous les exercices prévus complétés
+// - 'partial'   : arrêtée via "Terminer la séance", ou abandonnée après au
+//                 moins un exercice entièrement fait
+// - 'not-done'  : jamais démarrée, ou abandonnée avant d'avoir fini le tout
+//                 premier exercice
+export function getSessionStatus(session) {
+  const completedCount = session.completedExerciseIds?.length ?? 0
+  const totalCount = session.entries.length
+
+  if (session.phase === 'finished') {
+    return completedCount >= totalCount ? 'done' : 'partial'
+  }
+  if (!session.phase || session.phase === 'prep') {
+    // Séances créées avant l'introduction des phases (repli sur l'ancien champ)
+    return session.done ? 'done' : 'not-done'
+  }
+  return completedCount > 0 ? 'partial' : 'not-done'
 }
 
 export function updateSession(sessions, sessionId, changes) {

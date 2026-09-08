@@ -13,6 +13,30 @@ export function getLastPerformance(sessions, exerciseId) {
   return null
 }
 
+// Exercices déjà utilisés dans des séances passées portant le même nom de
+// template, du plus récemment utilisé au moins récent. Sert à faire
+// remonter les suggestions les plus pertinentes en premier (fonctionnalité
+// "ajouter un exercice" pendant la préparation d'une séance).
+export function getExercisesUsedInTemplate(sessions, templateName) {
+  const sorted = [...sessions]
+    .filter((s) => s.templateName === templateName)
+    .sort((a, b) => b.date.localeCompare(a.date))
+
+  const seen = new Set()
+  const ordered = []
+
+  for (const session of sorted) {
+    for (const entry of session.entries) {
+      if (!seen.has(entry.exerciseId)) {
+        seen.add(entry.exerciseId)
+        ordered.push(entry.exerciseId)
+      }
+    }
+  }
+
+  return ordered
+}
+
 // Séances passées groupées par jour calendaire, du plus récent au plus
 // ancien, avec pour chaque jour la ou les séances faites ce jour-là
 // (fonctionnalité 5).

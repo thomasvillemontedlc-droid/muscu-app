@@ -34,7 +34,7 @@ export function SessionRunPage() {
     case 'picking':
       return <PickExerciseView session={session} data={data} setData={setData} />
     case 'finished':
-      return <FinishedView session={session} />
+      return <FinishedView session={session} data={data} />
     case 'prep':
     default:
       return <PrepView session={session} data={data} setData={setData} />

@@ -1,5 +1,12 @@
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { getSessionsGroupedByDate } from '../domain/history.js'
+import { getSessionStatus } from '../domain/sessions.js'
+
+const STATUS_LABELS = {
+  done: '✓ Faite',
+  partial: '◐ Partielle',
+  'not-done': 'Non faite',
+}
 
 // Construit une date locale à partir d'un "YYYY-MM-DD" sans passer par le
 // parsing ISO natif de Date(), qui interprète ces chaînes en UTC et peut
@@ -27,33 +34,30 @@ export function HistoryPage() {
         <section key={group.day} className="history-day">
           <h2 className="history-day__date">{formatDay(group.day)}</h2>
 
-          {group.sessions.map((session) => (
-            <div key={session.id} className="history-session">
-              <div className="history-session__header">
-                <span className="history-session__name">{session.templateName}</span>
-                <span
-                  className={
-                    session.done
-                      ? 'history-session__status history-session__status--done'
-                      : 'history-session__status'
-                  }
-                >
-                  {session.done ? '✓ Faite' : 'Non faite'}
-                </span>
-              </div>
+          {group.sessions.map((session) => {
+            const status = getSessionStatus(session)
+            return (
+              <div key={session.id} className="history-session">
+                <div className="history-session__header">
+                  <span className="history-session__name">{session.templateName}</span>
+                  <span className={`history-session__status history-session__status--${status}`}>
+                    {STATUS_LABELS[status]}
+                  </span>
+                </div>
 
-              <ul className="history-session__exercises">
-                {session.entries.map((entry) => (
-                  <li key={entry.exerciseId}>
-                    <span className="history-session__exercise-name">{entry.exerciseName}</span>
-                    <span className="history-session__sets">
-                      {entry.sets.map((s) => `${s.weight}kg×${s.reps}`).join(', ')}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+                <ul className="history-session__exercises">
+                  {session.entries.map((entry) => (
+                    <li key={entry.exerciseId}>
+                      <span className="history-session__exercise-name">{entry.exerciseName}</span>
+                      <span className="history-session__sets">
+                        {entry.sets.map((s) => `${s.weight}kg×${s.reps}`).join(', ')}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          })}
         </section>
       ))}
     </div>

@@ -7,8 +7,6 @@ import { useNow } from '../../hooks/useNow.js'
 import { NumberField } from '../../components/NumberField.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
 
-const OVERSHOOT_MS = 30000
-
 function formatClock(ms) {
   const totalSeconds = Math.ceil(Math.abs(ms) / 1000)
   const minutes = Math.floor(totalSeconds / 60)
@@ -24,9 +22,6 @@ export function RestView({ session, data, setData }) {
   const remainingMs = session.restUntil - now
   const isOvershoot = remainingMs <= 0
   const overshootMs = isOvershoot ? -remainingMs : 0
-  const overshootDone = overshootMs >= OVERSHOOT_MS
-  // Le chrono de dépassement s'arrête à +30s (n'affiche pas au-delà).
-  const displayOvershootMs = Math.min(overshootMs, OVERSHOOT_MS)
 
   useEffect(() => {
     requestWakeLock()
@@ -64,9 +59,8 @@ export function RestView({ session, data, setData }) {
 
       <div className={isOvershoot ? 'rest-timer rest-timer--overshoot' : 'rest-timer'}>
         <span className="rest-timer__clock">
-          {isOvershoot ? `+${formatClock(displayOvershootMs)}` : formatClock(remainingMs)}
+          {isOvershoot ? `+${formatClock(overshootMs)}` : formatClock(remainingMs)}
         </span>
-        {overshootDone && <span className="rest-timer__done">Repos terminé</span>}
       </div>
 
       <section className="exercise-block">

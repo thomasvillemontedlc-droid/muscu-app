@@ -223,9 +223,42 @@ input[type='number']:focus {
 }
 
 .exercise-picker {
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.exercise-picker__form {
   display: flex;
   gap: 8px;
-  margin-bottom: 16px;
+}
+
+/* Limité à ~3 lignes visibles, défilement pour le reste (voir --touch-min) */
+.exercise-picker__suggestions {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  max-height: calc(3 * var(--touch-min));
+  overflow-y: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.exercise-picker__suggestions button {
+  display: block;
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: 0 14px;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  font-size: 1rem;
+}
+
+.exercise-picker__suggestions li:last-child button {
+  border-bottom: none;
 }
 
 /* Séance en cours */
@@ -328,6 +361,10 @@ input[type='number']:focus {
   color: var(--color-primary);
 }
 
+.history-session__status--partial {
+  color: #f59e0b;
+}
+
 .history-session__exercises {
   list-style: none;
   padding: 0;
@@ -368,6 +405,16 @@ input[type='number']:focus {
   font-size: 0.9rem;
 }
 
+.settings-section + .settings-section {
+  margin-top: 12px;
+}
+
+.settings-section__hint {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  margin: 8px 0 0;
+}
+
 /* Lancement guidé d'une séance (préparation, exercice actif, repos, choix) */
 .prep-exercise-list {
   list-style: none;
@@ -385,23 +432,42 @@ input[type='number']:focus {
 .prep-exercise__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
   margin-bottom: 8px;
 }
 
 .prep-exercise__name {
+  flex: 1;
   font-weight: 600;
 }
 
-.prep-exercise__actions button {
+.prep-exercise__handle,
+.prep-exercise__remove {
   min-width: 44px;
   min-height: 44px;
-  margin-left: 4px;
   border: none;
   border-radius: 8px;
   background: var(--color-surface-2);
   color: var(--color-text);
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.prep-exercise__handle {
+  cursor: grab;
+  touch-action: none;
+}
+
+/* Réordonnance en cours : au-dessus des autres lignes, légèrement mise en
+   évidence pour indiquer que l'élément est "soulevé" */
+.draggable-list__item {
+  transition: transform 0.15s ease;
+}
+
+.draggable-list__item--dragging {
+  transition: none;
+  opacity: 0.9;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
 .prep-field {
@@ -426,6 +492,35 @@ input[type='number']:focus {
   background: var(--color-surface);
   color: var(--color-text);
   font-size: 1rem;
+}
+
+.rest-duration-fields {
+  display: flex;
+  gap: 12px;
+}
+
+.rest-duration-fields__field {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rest-duration-fields__field input {
+  flex: 1;
+  min-height: var(--touch-min);
+  padding: 0 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 1rem;
+  text-align: center;
+}
+
+.rest-duration-fields__field span {
+  color: var(--color-muted);
+  font-size: 0.9rem;
 }
 
 /* Champs poids/reps mis en avant pendant l'exercice actif et la révision
@@ -474,10 +569,44 @@ input[type='number']:focus {
   color: var(--color-danger);
 }
 
-.rest-timer__done {
-  display: block;
+.session-summary {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+}
+
+.session-summary__item {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.session-summary__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.session-summary__name {
+  font-weight: 600;
+}
+
+.session-summary__rest {
   color: var(--color-muted);
-  margin-top: 4px;
+  font-size: 0.85rem;
+}
+
+.session-summary__sets {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  margin: 2px 0 0;
+}
+
+.session-summary__progress {
+  color: var(--color-primary);
+  font-weight: 600;
+  margin: 6px 0 0;
 }
 
 .pick-exercise-list {

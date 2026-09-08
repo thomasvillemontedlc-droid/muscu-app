@@ -106,7 +106,6 @@ export function confirmRestReview(sessions, sessionId) {
   if (remaining.length === 0) {
     return updateSession(sessions, sessionId, {
       phase: 'finished',
-      done: true,
       currentExerciseId: null,
       restUntil: null,
       completedExerciseIds,
@@ -127,5 +126,15 @@ export function pickNextExercise(sessions, sessionId, exerciseId) {
     phase: 'exercise',
     currentExerciseId: exerciseId,
     currentSetIndex: 0,
+  })
+}
+
+// Étape 4 -> fin, sans exiger que tout soit complété (getSessionStatus dans
+// domain/sessions.js déduira 'partial' si des exercices restent non faits).
+export function finishSessionEarly(sessions, sessionId) {
+  return updateSession(sessions, sessionId, {
+    phase: 'finished',
+    currentExerciseId: null,
+    restUntil: null,
   })
 }

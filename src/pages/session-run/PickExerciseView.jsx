@@ -1,4 +1,4 @@
-import { pickNextExercise } from '../../domain/sessionRunner.js'
+import { finishSessionEarly, pickNextExercise } from '../../domain/sessionRunner.js'
 import { BigButton } from '../../components/BigButton.jsx'
 
 export function PickExerciseView({ session, data, setData }) {
@@ -6,6 +6,10 @@ export function PickExerciseView({ session, data, setData }) {
 
   function handlePick(exerciseId) {
     setData({ ...data, sessions: pickNextExercise(data.sessions, session.id, exerciseId) })
+  }
+
+  function handleFinish() {
+    setData({ ...data, sessions: finishSessionEarly(data.sessions, session.id) })
   }
 
   return (
@@ -20,6 +24,10 @@ export function PickExerciseView({ session, data, setData }) {
           </li>
         ))}
       </ul>
+
+      <BigButton variant="secondary" onClick={handleFinish}>
+        Terminer la séance
+      </BigButton>
     </div>
   )
 }

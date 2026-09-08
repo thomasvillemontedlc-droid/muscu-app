@@ -21,7 +21,6 @@ function App() {
               <Route path="/templates/:templateId" element={<TemplateEditPage />} />
               <Route path="/sessions/:sessionId" element={<SessionRunPage />} />
               <Route path="/history" element={<HistoryPage />} />
-              <Route path="/history/:exerciseId" element={<HistoryPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Routes>
           </main>

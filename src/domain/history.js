@@ -13,13 +13,22 @@ export function getLastPerformance(sessions, exerciseId) {
   return null
 }
 
-// Historique complet d'un exercice, du plus récent au plus ancien (fonctionnalité 5).
-export function getExerciseHistory(sessions, exerciseId) {
-  return [...sessions]
-    .filter((s) => s.entries.some((e) => e.exerciseId === exerciseId))
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .map((s) => {
-      const entry = s.entries.find((e) => e.exerciseId === exerciseId)
-      return { sessionId: s.id, date: s.date, done: s.done, sets: entry.sets }
-    })
+// Séances passées groupées par jour calendaire, du plus récent au plus
+// ancien, avec pour chaque jour la ou les séances faites ce jour-là
+// (fonctionnalité 5).
+export function getSessionsGroupedByDate(sessions) {
+  const sorted = [...sessions].sort((a, b) => b.date.localeCompare(a.date))
+  const groups = []
+  let currentDay = null
+
+  for (const session of sorted) {
+    const day = session.date.slice(0, 10) // YYYY-MM-DD
+    if (day !== currentDay) {
+      currentDay = day
+      groups.push({ day, sessions: [] })
+    }
+    groups[groups.length - 1].sessions.push(session)
+  }
+
+  return groups
 }

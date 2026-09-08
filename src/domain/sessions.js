@@ -4,6 +4,8 @@ import { getLastPerformance } from './history.js'
 
 // Crée une nouvelle séance à partir d'un template, en pré-remplissant chaque
 // exercice avec les poids/reps de la dernière fois (moins de saisie = mieux).
+// La séance démarre en phase "prep" (écran de préparation), voir
+// domain/sessionRunner.js pour la suite du déroulé guidé.
 export function startSessionFromTemplate(sessions, template, exercises) {
   const entries = template.exerciseIds.map((exerciseId) => {
     const exercise = getExerciseById(exercises, exerciseId)
@@ -23,9 +25,25 @@ export function startSessionFromTemplate(sessions, template, exercises) {
     date: new Date().toISOString(),
     done: false,
     entries,
+    phase: 'prep',
+    restSeconds: getDefaultRestSeconds(sessions),
+    restUntil: null,
+    startingExerciseId: template.exerciseIds[0] ?? null,
+    currentExerciseId: null,
+    currentSetIndex: 0,
+    completedExerciseIds: [],
   }
 
   return { session, sessions: [...sessions, session] }
+}
+
+// Reprend le dernier temps de repos choisi par l'utilisateur, pour éviter de
+// le ressaisir à chaque séance (moins de saisie = mieux).
+function getDefaultRestSeconds(sessions) {
+  for (let i = sessions.length - 1; i >= 0; i--) {
+    if (typeof sessions[i].restSeconds === 'number') return sessions[i].restSeconds
+  }
+  return 90
 }
 
 export function getSessionById(sessions, sessionId) {
@@ -34,10 +52,6 @@ export function getSessionById(sessions, sessionId) {
 
 export function updateSession(sessions, sessionId, changes) {
   return sessions.map((s) => (s.id === sessionId ? { ...s, ...changes } : s))
-}
-
-export function markSessionDone(sessions, sessionId, done) {
-  return updateSession(sessions, sessionId, { done })
 }
 
 export function deleteSession(sessions, sessionId) {

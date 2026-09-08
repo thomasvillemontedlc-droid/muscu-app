@@ -367,3 +367,121 @@ input[type='number']:focus {
   color: var(--color-muted);
   font-size: 0.9rem;
 }
+
+/* Lancement guidé d'une séance (préparation, exercice actif, repos, choix) */
+.prep-exercise-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+}
+
+.prep-exercise {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.prep-exercise__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.prep-exercise__name {
+  font-weight: 600;
+}
+
+.prep-exercise__actions button {
+  min-width: 44px;
+  min-height: 44px;
+  margin-left: 4px;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: 1.1rem;
+}
+
+.prep-field {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.prep-field span {
+  display: block;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.prep-field__select,
+.prep-field__input {
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: 0 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 1rem;
+}
+
+/* Champs poids/reps mis en avant pendant l'exercice actif et la révision
+   post-repos : plus grands que dans les listes de séries classiques. */
+.exercise-active__fields {
+  display: flex;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.exercise-active__field {
+  flex: 1;
+  display: block;
+}
+
+.exercise-active__field span {
+  display: block;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.exercise-active__input {
+  width: 100%;
+  min-height: 64px;
+  font-size: 1.6rem;
+  text-align: center;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.rest-timer {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.rest-timer__clock {
+  font-size: 3.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rest-timer--overshoot .rest-timer__clock {
+  color: var(--color-danger);
+}
+
+.rest-timer__done {
+  display: block;
+  color: var(--color-muted);
+  margin-top: 4px;
+}
+
+.pick-exercise-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}

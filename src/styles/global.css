@@ -488,6 +488,42 @@ input[type='number']:focus {
   margin: 8px 0 0;
 }
 
+.session-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+  max-height: calc(4 * var(--touch-min));
+  overflow-y: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.session-checklist__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--touch-min);
+  padding: 0 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.session-checklist li:last-child .session-checklist__row {
+  border-bottom: none;
+}
+
+.session-checklist__row input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.session-checklist__empty {
+  padding: 14px;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
 /* Lancement guidé d'une séance (préparation, exercice actif, repos, choix) */
 .prep-exercise-list {
   list-style: none;
@@ -767,4 +803,9 @@ input[type='number']:focus {
   color: var(--color-muted);
   font-size: 0.9rem;
   text-decoration: underline;
+}
+
+.subtle-button--danger {
+  color: var(--color-danger);
+  margin-top: 8px;
 }

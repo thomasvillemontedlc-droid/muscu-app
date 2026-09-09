@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
-import { createTemplate, deleteTemplate } from '../domain/templates.js'
+import { createTemplate, deleteTemplate, sortTemplatesForToday } from '../domain/templates.js'
 import { startSessionFromTemplate } from '../domain/sessions.js'
 import { BigButton } from '../components/BigButton.jsx'
 
@@ -48,7 +48,7 @@ export function TemplatesListPage() {
       {data.templates.length === 0 && <p className="empty-state">Aucune séance type pour l'instant.</p>}
 
       <ul className="template-list">
-        {data.templates.map((template) => (
+        {sortTemplatesForToday(data.templates, data.sessions).map((template) => (
           <li key={template.id} className="template-list__item">
             <span className="template-list__name">{template.name}</span>
             <span className="template-list__count">{template.exerciseIds.length} exercice(s)</span>

@@ -9,26 +9,54 @@ const SCOPE_LABELS = {
   '7days': 'Les 7 derniers jours',
   month: 'Le mois en cours',
   all: 'Toutes les séances',
+  custom: 'Sélection précise ci-dessous',
 }
 
 export function SettingsPage() {
   const { data, setData } = useAppDataContext()
   const fileInputRef = useRef(null)
   const [scope, setScope] = useState('all')
+  const [selectedIds, setSelectedIds] = useState(new Set())
 
-  function downloadExport(exportData) {
+  const sortedSessions = [...data.sessions].sort((a, b) => b.date.localeCompare(a.date))
+
+  function getScopedSessions() {
+    if (scope === 'custom') return data.sessions.filter((s) => selectedIds.has(s.id))
+    return filterSessionsByScope(data.sessions, scope)
+  }
+
+  function toggleSession(sessionId) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(sessionId)) next.delete(sessionId)
+      else next.add(sessionId)
+      return next
+    })
+  }
+
+  // Attacher l'élément au DOM avant de cliquer, et ne révoquer l'URL
+  // qu'après un court délai : sur mobile, cliquer un <a> détaché du DOM ou
+  // révoquer l'URL trop tôt peut silencieusement empêcher le téléchargement.
+  function downloadJson(exportData, filename) {
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `muscu-export-${new Date().toISOString().slice(0, 10)}.json`
+    a.download = filename
+    document.body.appendChild(a)
     a.click()
-    URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+
+  function handleExport() {
+    const scopedData = { ...data, sessions: getScopedSessions() }
+    downloadJson(scopedData, `muscu-export-${new Date().toISOString().slice(0, 10)}.json`)
   }
 
   function handleSendTo(url) {
-    const scopedData = { ...data, sessions: filterSessionsByScope(data.sessions, scope) }
-    downloadExport(scopedData)
+    const scopedData = { ...data, sessions: getScopedSessions() }
+    downloadJson(scopedData, `muscu-export-${new Date().toISOString().slice(0, 10)}.json`)
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
@@ -63,7 +91,39 @@ export function SettingsPage() {
           Toutes tes données restent uniquement sur ce téléphone (localStorage). Exporte
           régulièrement pour ne rien perdre, surtout avant de vider le cache du navigateur.
         </p>
-        <BigButton onClick={() => downloadExport(data)}>Exporter (JSON)</BigButton>
+
+        <label className="prep-field">
+          <span>Contenu à exporter / envoyer</span>
+          <select className="prep-field__select" value={scope} onChange={(e) => setScope(e.target.value)}>
+            {Object.entries(SCOPE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {scope === 'custom' && (
+          <ul className="session-checklist">
+            {sortedSessions.length === 0 && <li className="session-checklist__empty">Aucune séance enregistrée.</li>}
+            {sortedSessions.map((session) => (
+              <li key={session.id}>
+                <label className="session-checklist__row">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(session.id)}
+                    onChange={() => toggleSession(session.id)}
+                  />
+                  <span>
+                    {session.templateName} — {new Date(session.date).toLocaleDateString('fr-FR')}
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <BigButton onClick={handleExport}>Exporter (JSON)</BigButton>
         <BigButton variant="secondary" onClick={handleImportClick}>
           Importer
         </BigButton>
@@ -78,17 +138,7 @@ export function SettingsPage() {
 
       <section className="settings-section">
         <h2>Envoyer à une IA</h2>
-
-        <label className="prep-field">
-          <span>Contenu à envoyer</span>
-          <select className="prep-field__select" value={scope} onChange={(e) => setScope(e.target.value)}>
-            {Object.entries(SCOPE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <p>Utilise le même contenu sélectionné ci-dessus.</p>
 
         <BigButton variant="secondary" onClick={() => handleSendTo('https://claude.ai')}>
           Envoyer à Claude

@@ -1,6 +1,6 @@
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { getSessionsGroupedByDate, getWeekActivity } from '../domain/history.js'
-import { getSessionStatus } from '../domain/sessions.js'
+import { deleteSession, getSessionStatus } from '../domain/sessions.js'
 import { getEntryTrends, getTrendFromDiff, getVolumeProgress } from '../domain/sessionSummary.js'
 import { TrendDot } from '../components/TrendDot.jsx'
 
@@ -33,10 +33,15 @@ function formatDay(isoDay) {
 }
 
 export function HistoryPage() {
-  const { data } = useAppDataContext()
+  const { data, setData } = useAppDataContext()
   const groups = getSessionsGroupedByDate(data.sessions)
   const week = getWeekActivity(data.sessions)
   const today = new Date()
+
+  function handleDeleteSession(sessionId) {
+    if (!window.confirm('Supprimer cette séance ? Cette action est définitive.')) return
+    setData({ ...data, sessions: deleteSession(data.sessions, sessionId) })
+  }
 
   return (
     <div className="page">
@@ -102,6 +107,14 @@ export function HistoryPage() {
                     </li>
                   ))}
                 </ul>
+
+                <button
+                  type="button"
+                  className="subtle-button subtle-button--danger"
+                  onClick={() => handleDeleteSession(session.id)}
+                >
+                  Supprimer cette séance
+                </button>
               </div>
             )
           })}

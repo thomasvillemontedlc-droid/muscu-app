@@ -4,10 +4,12 @@ import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { createTemplate, deleteTemplate, sortTemplatesForToday } from '../domain/templates.js'
 import { startSessionFromTemplate } from '../domain/sessions.js'
 import { BigButton } from '../components/BigButton.jsx'
+import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 
 export function TemplatesListPage() {
   const { data, setData } = useAppDataContext()
   const [newName, setNewName] = useState('')
+  const [pendingDeleteId, setPendingDeleteId] = useState(null)
   const navigate = useNavigate()
 
   function handleCreate(e) {
@@ -19,9 +21,9 @@ export function TemplatesListPage() {
     navigate(`/templates/${template.id}`)
   }
 
-  function handleDelete(templateId) {
-    if (!window.confirm('Supprimer cette séance type ?')) return
-    setData({ ...data, templates: deleteTemplate(data.templates, templateId) })
+  function confirmDelete() {
+    setData({ ...data, templates: deleteTemplate(data.templates, pendingDeleteId) })
+    setPendingDeleteId(null)
   }
 
   function handleStart(template) {
@@ -62,13 +64,23 @@ export function TemplatesListPage() {
               <BigButton variant="secondary" onClick={() => navigate(`/templates/${template.id}`)}>
                 Modifier
               </BigButton>
-              <BigButton variant="danger" onClick={() => handleDelete(template.id)}>
+              <BigButton variant="danger" onClick={() => setPendingDeleteId(template.id)}>
                 Supprimer
               </BigButton>
             </div>
           </li>
         ))}
       </ul>
+
+      <ConfirmDialog
+        open={pendingDeleteId != null}
+        title="Supprimer cette séance type ?"
+        message="Cette action est définitive."
+        confirmLabel="Supprimer"
+        danger
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDeleteId(null)}
+      />
     </div>
   )
 }

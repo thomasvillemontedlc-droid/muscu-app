@@ -3,6 +3,8 @@ import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { filterSessionsByScope } from '../domain/sessions.js'
 import { parseImportedData } from '../storage/storage.js'
 import { BigButton } from '../components/BigButton.jsx'
+import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
+import { AlertDialog } from '../components/AlertDialog.jsx'
 
 const SCOPE_LABELS = {
   last: 'La séance la plus récente',
@@ -17,6 +19,8 @@ export function SettingsPage() {
   const fileInputRef = useRef(null)
   const [scope, setScope] = useState('all')
   const [selectedIds, setSelectedIds] = useState(new Set())
+  const [pendingImport, setPendingImport] = useState(null)
+  const [importError, setImportError] = useState(null)
 
   const sortedSessions = [...data.sessions].sort((a, b) => b.date.localeCompare(a.date))
 
@@ -66,19 +70,20 @@ export function SettingsPage() {
 
   async function handleFileChange(e) {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
 
     try {
       const text = await file.text()
-      const imported = parseImportedData(text)
-      if (window.confirm('Importer ce fichier remplacera toutes les données actuelles. Continuer ?')) {
-        setData(imported)
-      }
+      setPendingImport(parseImportedData(text))
     } catch (err) {
-      window.alert(`Import impossible : ${err.message}`)
-    } finally {
-      e.target.value = ''
+      setImportError(err.message)
     }
+  }
+
+  function confirmImport() {
+    setData(pendingImport)
+    setPendingImport(null)
   }
 
   return (
@@ -151,6 +156,17 @@ export function SettingsPage() {
           conversation une fois là-bas, ce n'est pas automatique.
         </p>
       </section>
+
+      <ConfirmDialog
+        open={pendingImport != null}
+        title="Importer ce fichier ?"
+        message="Cela remplacera toutes les données actuelles."
+        confirmLabel="Importer"
+        danger
+        onConfirm={confirmImport}
+        onCancel={() => setPendingImport(null)}
+      />
+      <AlertDialog title="Import impossible" message={importError} open={importError != null} onClose={() => setImportError(null)} />
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { getEntryTrends, getTrendFromDiff, getVolumeProgress } from '../domain/s
 import { getMuscleIntensities, getMuscleVolumes, hasAnyIntensity } from '../domain/muscleHeatmap.js'
 import { TrendDot } from '../components/TrendDot.jsx'
 import { BodyHeatmap, BodyHeatmapLegend } from '../components/BodyHeatmap.jsx'
+import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 
 function formatVolume(kg) {
   return `${kg.toLocaleString('fr-FR')}kg`
@@ -41,10 +42,11 @@ export function HistoryPage() {
   const week = getWeekActivity(data.sessions)
   const today = new Date()
   const [expandedHeatmaps, setExpandedHeatmaps] = useState(new Set())
+  const [pendingDeleteId, setPendingDeleteId] = useState(null)
 
-  function handleDeleteSession(sessionId) {
-    if (!window.confirm('Supprimer cette séance ? Cette action est définitive.')) return
-    setData({ ...data, sessions: deleteSession(data.sessions, sessionId) })
+  function confirmDeleteSession() {
+    setData({ ...data, sessions: deleteSession(data.sessions, pendingDeleteId) })
+    setPendingDeleteId(null)
   }
 
   function toggleHeatmap(sessionId) {
@@ -141,7 +143,7 @@ export function HistoryPage() {
                 <button
                   type="button"
                   className="subtle-button subtle-button--danger"
-                  onClick={() => handleDeleteSession(session.id)}
+                  onClick={() => setPendingDeleteId(session.id)}
                 >
                   Supprimer cette séance
                 </button>
@@ -150,6 +152,16 @@ export function HistoryPage() {
           })}
         </section>
       ))}
+
+      <ConfirmDialog
+        open={pendingDeleteId != null}
+        title="Supprimer cette séance ?"
+        message="Cette action est définitive."
+        confirmLabel="Supprimer"
+        danger
+        onConfirm={confirmDeleteSession}
+        onCancel={() => setPendingDeleteId(null)}
+      />
     </div>
   )
 }

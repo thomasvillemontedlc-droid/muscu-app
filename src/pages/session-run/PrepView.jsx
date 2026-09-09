@@ -55,7 +55,15 @@ export function PrepView({ session, data, setData }) {
   }
 
   function handleStartingExerciseChange(e) {
-    setData({ ...data, sessions: setStartingExercise(data.sessions, session.id, e.target.value) })
+    const exerciseId = e.target.value
+    let sessions = setStartingExercise(data.sessions, session.id, exerciseId)
+
+    const fromIndex = session.entries.findIndex((entry) => entry.exerciseId === exerciseId)
+    if (fromIndex > 0) {
+      sessions = reorderSessionEntries(sessions, session.id, fromIndex, 0)
+    }
+
+    setData({ ...data, sessions })
   }
 
   function handleRestMinutesChange(minutes) {

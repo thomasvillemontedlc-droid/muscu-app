@@ -2,6 +2,8 @@ import { getLastPerformance } from '../../domain/history.js'
 import { updateSet } from '../../domain/sessions.js'
 import { finishCurrentExerciseEarly, validateCurrentSet } from '../../domain/sessionRunner.js'
 import { unlockAudio } from '../../lib/alarm.js'
+import { getExerciseIllustration } from '../../illustrations/registry.js'
+import { GenericIllustration } from '../../illustrations/Generic.jsx'
 import { NumberField } from '../../components/NumberField.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
 
@@ -10,6 +12,7 @@ export function ExerciseView({ session, data, setData }) {
   const set = entry.sets[session.currentSetIndex]
   const otherSessions = data.sessions.filter((s) => s.id !== session.id)
   const last = getLastPerformance(otherSessions, entry.exerciseId)
+  const Illustration = getExerciseIllustration(entry.exerciseName) ?? GenericIllustration
 
   function handleRepsChange(reps) {
     setData({
@@ -51,6 +54,8 @@ export function ExerciseView({ session, data, setData }) {
       ) : (
         <p className="last-performance last-performance--empty">Première fois sur cet exercice</p>
       )}
+
+      <Illustration className="exercise-active__illustration" />
 
       <div className="exercise-active__fields">
         <label className="exercise-active__field">

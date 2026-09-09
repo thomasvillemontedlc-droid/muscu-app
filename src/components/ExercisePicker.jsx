@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { getExerciseIllustration } from '../illustrations/registry.js'
+import { GenericIllustration } from '../illustrations/Generic.jsx'
 import { BigButton } from './BigButton.jsx'
 
 // Champ texte avec suggestions cliquables, triées pour faire remonter les
@@ -50,14 +52,18 @@ export function ExercisePicker({ exercises, suggestedIds = [], onAdd }) {
 
       {open && filtered.length > 0 && (
         <ul className="exercise-picker__suggestions">
-          {filtered.map((exercise) => (
-            <li key={exercise.id}>
-              {/* onMouseDown (pas onClick) pour s'exécuter avant le onBlur du champ */}
-              <button type="button" onMouseDown={() => handleSelect(exercise)}>
-                {exercise.name}
-              </button>
-            </li>
-          ))}
+          {filtered.map((exercise) => {
+            const Illustration = getExerciseIllustration(exercise.name) ?? GenericIllustration
+            return (
+              <li key={exercise.id}>
+                {/* onMouseDown (pas onClick) pour s'exécuter avant le onBlur du champ */}
+                <button type="button" onMouseDown={() => handleSelect(exercise)}>
+                  <Illustration className="exercise-picker__thumb" />
+                  {exercise.name}
+                </button>
+              </li>
+            )
+          })}
         </ul>
       )}
     </div>

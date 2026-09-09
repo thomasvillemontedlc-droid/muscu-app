@@ -245,7 +245,9 @@ input[type='number']:focus {
 }
 
 .exercise-picker__suggestions button {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
   min-height: var(--touch-min);
   padding: 0 14px;
@@ -255,6 +257,13 @@ input[type='number']:focus {
   color: var(--color-text);
   text-align: left;
   font-size: 1rem;
+}
+
+.exercise-picker__thumb {
+  width: 36px;
+  height: 24px;
+  flex-shrink: 0;
+  color: var(--color-muted);
 }
 
 .exercise-picker__suggestions li:last-child button {
@@ -439,7 +448,16 @@ input[type='number']:focus {
 }
 
 .history-session__exercise-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   flex-shrink: 0;
+}
+
+.history-session__volume {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  margin: 4px 0 8px;
 }
 
 .history-session__sets {
@@ -580,6 +598,15 @@ input[type='number']:focus {
 
 /* Champs poids/reps mis en avant pendant l'exercice actif et la révision
    post-repos : plus grands que dans les listes de séries classiques. */
+.exercise-active__illustration {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  margin: 12px auto;
+  color: var(--color-muted);
+}
+
 .exercise-active__fields {
   display: flex;
   gap: 12px;
@@ -637,8 +664,34 @@ input[type='number']:focus {
   margin-bottom: 8px;
 }
 
+.session-summary__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .session-summary__name {
   font-weight: 600;
+}
+
+.session-summary__volume {
+  color: var(--color-text);
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin: 0 0 12px;
+}
+
+.volume-diff--up {
+  color: var(--color-primary);
+}
+
+.volume-diff--neutral {
+  color: var(--color-muted);
+}
+
+.volume-diff--down {
+  color: #f59e0b;
 }
 
 .session-summary__completion {
@@ -648,6 +701,26 @@ input[type='number']:focus {
   border-radius: var(--radius);
   padding: 12px;
   margin: 0 0 12px;
+}
+
+.trend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.trend-dot--up {
+  background: var(--color-primary);
+}
+
+.trend-dot--neutral {
+  background: var(--color-muted);
+}
+
+.trend-dot--down {
+  background: #f59e0b;
 }
 
 .session-summary__sets {

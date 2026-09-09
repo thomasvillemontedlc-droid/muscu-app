@@ -41,11 +41,10 @@ export function getMuscleLabel(muscleId) {
 }
 
 // Association exercice -> muscles sollicités (principal / secondaire), clé =
-// nom d'exercice slugifié. Registre statique dans le code (même principe que
-// illustrations/registry.js) : les exercices sont du texte libre saisi par
-// l'utilisateur, il n'y a pas de catalogue fermé en base. Un exercice non
-// reconnu ici ne fait s'allumer aucun muscle sur la carte de chaleur - c'est
-// la même dégradation gracieuse que le schéma générique des illustrations.
+// nom d'exercice slugifié. Registre statique dans le code : les exercices
+// sont du texte libre saisi par l'utilisateur, il n'y a pas de catalogue
+// fermé en base. Un exercice non reconnu ici ne fait s'allumer aucun muscle
+// sur la carte de chaleur.
 const EXERCISE_MUSCLES = {
   'developpe-couche': { primary: ['pectoraux'], secondary: ['triceps', 'deltoides'] },
   'developpe-incline': { primary: ['pectoraux'], secondary: ['deltoides', 'triceps'] },

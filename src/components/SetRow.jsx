@@ -1,6 +1,17 @@
 import { NumberField } from './NumberField.jsx'
+import { WeightField } from './WeightField.jsx'
 
-export function SetRow({ index, weight, reps, onChangeWeight, onChangeReps, onRemove }) {
+export function SetRow({
+  index,
+  weight,
+  reps,
+  exercise,
+  onChangeWeight,
+  onChangeReps,
+  onChangeWeightMode,
+  onChangeBarWeight,
+  onRemove,
+}) {
   return (
     <div className="set-row">
       <span className="set-row__label">#{index + 1}</span>
@@ -13,14 +24,14 @@ export function SetRow({ index, weight, reps, onChangeWeight, onChangeReps, onRe
       />
       <span className="set-row__unit">reps</span>
 
-      <NumberField
-        className="set-row__input"
-        decimal
+      <WeightField
+        exercise={exercise}
         value={weight}
         onChange={onChangeWeight}
+        onModeChange={onChangeWeightMode}
+        onBarWeightChange={onChangeBarWeight}
         aria-label={`Poids série ${index + 1} (kg)`}
       />
-      <span className="set-row__unit">kg</span>
 
       <button
         type="button"

@@ -1,6 +1,8 @@
 import { finishSessionEarly, pickExercise } from '../../domain/sessionRunner.js'
+import { setEntryFeeling } from '../../domain/sessions.js'
 import { useRestTimer } from '../../hooks/useRestTimer.js'
 import { RestBanner } from '../../components/RestBanner.jsx'
+import { FeelingPicker } from '../../components/FeelingPicker.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
 
 export function PickExerciseView({ session, data, setData }) {
@@ -12,6 +14,10 @@ export function PickExerciseView({ session, data, setData }) {
 
   function handleFinish() {
     setData({ ...data, sessions: finishSessionEarly(data.sessions, session.id) })
+  }
+
+  function handleFeelingChange(exerciseId, feeling) {
+    setData({ ...data, sessions: setEntryFeeling(data.sessions, session.id, exerciseId, feeling) })
   }
 
   return (
@@ -30,6 +36,9 @@ export function PickExerciseView({ session, data, setData }) {
                 {done ? '✓ ' : ''}
                 {entry.exerciseName}
               </BigButton>
+              {done && (
+                <FeelingPicker feeling={entry.feeling} onChange={(feeling) => handleFeelingChange(entry.exerciseId, feeling)} />
+              )}
             </li>
           )
         })}

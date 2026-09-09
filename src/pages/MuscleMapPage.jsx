@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
-import { getCumulativeMuscleVolumes, getMuscleIntensities, hasAnyIntensity } from '../domain/muscleHeatmap.js'
-import { getMostNeglectedMuscles, getMuscleRecovery } from '../domain/recovery.js'
+import { getCumulativeMuscleVolumes, getMuscleIntensities } from '../domain/muscleHeatmap.js'
+import { getMostNeglectedMuscles } from '../domain/recovery.js'
 import { BodyHeatmap, BodyHeatmapLegend } from '../components/BodyHeatmap.jsx'
 import { MuscleRecoveryRow } from '../components/MuscleRecoveryRow.jsx'
 
@@ -21,7 +21,6 @@ export function MuscleMapPage() {
   const volumes = getCumulativeMuscleVolumes(sessionsInPeriod)
   const intensities = getMuscleIntensities(volumes)
   const neglected = getMostNeglectedMuscles(data.sessions)
-  const recovery = getMuscleRecovery(data.sessions)
 
   return (
     <div className="page">
@@ -35,30 +34,17 @@ export function MuscleMapPage() {
         </select>
       </label>
 
-      {hasAnyIntensity(intensities) ? (
-        <>
-          <BodyHeatmap intensities={intensities} />
-          <BodyHeatmapLegend intensities={intensities} />
-        </>
-      ) : (
-        <p className="empty-state">Aucun muscle identifié sur cette période.</p>
-      )}
-
-      <section className="muscle-map-section">
-        <h2>Muscles négligés</h2>
-        <p className="muscle-map-section__hint">Du plus longtemps délaissé au plus récemment travaillé.</p>
-        <ul className="muscle-recovery-list">
-          {neglected.map((item) => (
-            <MuscleRecoveryRow key={item.muscleId} item={item} />
-          ))}
-        </ul>
-      </section>
+      <BodyHeatmap intensities={intensities} />
+      <BodyHeatmapLegend intensities={intensities} />
 
       <section className="muscle-map-section">
         <h2>Récupération</h2>
-        <p className="muscle-map-section__hint">Récupéré : ≥ 48h. Négligé : plus de 10 jours sans sollicitation.</p>
+        <p className="muscle-map-section__hint">
+          Jours écoulés depuis la dernière sollicitation. Récupéré : ≥ 48h. Négligé : plus de 10 jours sans
+          sollicitation. Du plus négligé au plus récent.
+        </p>
         <ul className="muscle-recovery-list">
-          {recovery.map((item) => (
+          {neglected.map((item) => (
             <MuscleRecoveryRow key={item.muscleId} item={item} />
           ))}
         </ul>

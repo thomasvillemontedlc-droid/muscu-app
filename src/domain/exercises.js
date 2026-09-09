@@ -24,3 +24,16 @@ export function getOrCreateExercise(exercises, name) {
 export function getExerciseById(exercises, id) {
   return exercises.find((e) => e.id === id)
 }
+
+// Mode de saisie du poids, mémorisé par exercice : 'total' (par défaut) ou
+// 'perSide' (barre + poids par côté, pour charges symétriques). Le poids
+// total reste ce qui est stocké et comparé dans l'historique (voir
+// components/WeightField.jsx) ; ces deux champs ne sont qu'une préférence de
+// saisie.
+export function setExerciseWeightMode(exercises, exerciseId, weightInputMode) {
+  return exercises.map((e) => (e.id === exerciseId ? { ...e, weightInputMode } : e))
+}
+
+export function setExerciseBarWeight(exercises, exerciseId, barWeight) {
+  return exercises.map((e) => (e.id === exerciseId ? { ...e, barWeight } : e))
+}

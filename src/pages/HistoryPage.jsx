@@ -7,6 +7,7 @@ import { getMuscleIntensities, getMuscleVolumes, hasAnyIntensity } from '../doma
 import { TrendDot } from '../components/TrendDot.jsx'
 import { BodyHeatmap, BodyHeatmapLegend } from '../components/BodyHeatmap.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
+import { getFeelingLabel } from '../components/FeelingPicker.jsx'
 
 function formatVolume(kg) {
   return `${kg.toLocaleString('fr-FR')}kg`
@@ -122,6 +123,12 @@ export function HistoryPage() {
                       <span className="history-session__sets">
                         {entry.sets.map((s) => `${s.weight}kg×${s.reps}`).join(', ')}
                       </span>
+                      {entry.feeling && (entry.feeling.value || entry.feeling.note) && (
+                        <span className="history-session__feeling">
+                          {getFeelingLabel(entry.feeling.value)}
+                          {entry.feeling.note ? ` — ${entry.feeling.note}` : ''}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>

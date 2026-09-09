@@ -6,8 +6,9 @@ import {
   getTrendFromDiff,
   getVolumeProgress,
 } from '../../domain/sessionSummary.js'
-import { getMuscleIntensities, getMuscleVolumes, hasAnyIntensity } from '../../domain/muscleHeatmap.js'
+import { getMuscleIntensities, getMuscleVolumes } from '../../domain/muscleHeatmap.js'
 import { getPrimaryMusclesWorked, getStretchSuggestions } from '../../domain/stretches.js'
+import { getFeelingLabel } from '../../components/FeelingPicker.jsx'
 import { TrendDot } from '../../components/TrendDot.jsx'
 import { BodyHeatmap, BodyHeatmapLegend } from '../../components/BodyHeatmap.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
@@ -48,12 +49,8 @@ export function FinishedView({ session, data }) {
       <h1>Séance terminée 🎉</h1>
       <p className="last-performance">{session.templateName}</p>
 
-      {hasAnyIntensity(intensities) && (
-        <>
-          <BodyHeatmap intensities={intensities} />
-          <BodyHeatmapLegend intensities={intensities} />
-        </>
-      )}
+      <BodyHeatmap intensities={intensities} />
+      <BodyHeatmapLegend intensities={intensities} />
 
       <ul className="session-stats">
         {duration && <li>Durée : {duration}</li>}
@@ -81,10 +78,14 @@ export function FinishedView({ session, data }) {
       ) : (
         <ul className="session-summary">
           {summary.map((item) => (
-            <li key={item.exerciseId} className="session-summary__item">
+            <li
+              key={item.exerciseId}
+              className={`session-summary__item${item.bestProgress ? ' session-summary__item--best' : ''}`}
+            >
               <div className="session-summary__header">
                 <TrendDot trend={item.trend} />
                 <span className="session-summary__name">{item.exerciseName}</span>
+                {item.bestProgress && <span className="session-summary__best-badge">🏆 Meilleure progression</span>}
               </div>
 
               <ul className="session-summary__sets">
@@ -100,10 +101,25 @@ export function FinishedView({ session, data }) {
                 ))}
               </ul>
 
-              {item.progressKg != null && (
-                <p className="session-summary__progress">
-                  Bravo, tu as augmenté ta charge de {item.progressKg}kg
-                  {item.progressPercent != null ? ` (+${item.progressPercent}%)` : ''} sur {item.exerciseName}
+              {item.progressKg != null ? (
+                <p className={`session-summary__progress volume-diff--${getTrendFromDiff(item.progressKg)}`}>
+                  {item.progressKg > 0 ? '+' : ''}
+                  {item.progressKg}kg
+                  {item.progressPercent != null
+                    ? ` (${item.progressKg > 0 ? '+' : ''}${item.progressPercent}%)`
+                    : ''}{' '}
+                  vs dernière fois
+                </p>
+              ) : (
+                <p className="session-summary__progress session-summary__progress--muted">
+                  Première fois sur cet exercice
+                </p>
+              )}
+
+              {item.feeling && (item.feeling.value || item.feeling.note) && (
+                <p className="session-summary__feeling">
+                  {getFeelingLabel(item.feeling.value)}
+                  {item.feeling.note ? ` — ${item.feeling.note}` : ''}
                 </p>
               )}
             </li>

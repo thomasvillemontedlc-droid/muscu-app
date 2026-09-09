@@ -41,32 +41,25 @@ export function removeExerciseEntryFromSession(sessions, sessionId, exerciseId) 
   if (!session) return sessions
 
   const entries = session.entries.filter((e) => e.exerciseId !== exerciseId)
-  const changes = { entries }
-  if (session.startingExerciseId === exerciseId) {
-    changes.startingExerciseId = entries[0]?.exerciseId ?? null
-  }
-
-  return updateSession(sessions, sessionId, changes)
+  return updateSession(sessions, sessionId, { entries })
 }
 
 export function setRestSeconds(sessions, sessionId, restSeconds) {
   return updateSession(sessions, sessionId, { restSeconds })
 }
 
-export function setStartingExercise(sessions, sessionId, exerciseId) {
-  return updateSession(sessions, sessionId, { startingExerciseId: exerciseId })
-}
-
-// Étape 1 -> étape 2 : démarre sur l'exercice choisi.
+// Étape 1 -> étape 2 : démarre sur le premier exercice de la liste.
+// "Commencer par" n'est pas un champ séparé (source de désync avec l'ordre
+// réel après un glisser-déposer) : c'est toujours entries[0]. Choisir un
+// autre exercice de départ (PrepView) revient simplement à le réordonner en
+// première position via reorderSessionEntries.
 export function startSession(sessions, sessionId) {
   const session = getSessionById(sessions, sessionId)
   if (!session) return sessions
 
-  const startingExerciseId = session.startingExerciseId ?? session.entries[0]?.exerciseId ?? null
-
   return updateSession(sessions, sessionId, {
     phase: 'exercise',
-    currentExerciseId: startingExerciseId,
+    currentExerciseId: session.entries[0]?.exerciseId ?? null,
     currentSetIndex: 0,
     startedAt: session.startedAt ?? Date.now(),
   })

@@ -32,7 +32,6 @@ export function startSessionFromTemplate(sessions, template, exercises) {
     restStartedAt: null,
     pendingRestExerciseId: null,
     pendingRestSetIndex: null,
-    startingExerciseId: template.exerciseIds[0] ?? null,
     currentExerciseId: null,
     currentSetIndex: 0,
     completedExerciseIds: [],
@@ -132,6 +131,12 @@ export function updateSet(sessions, sessionId, exerciseId, setIndex, changes) {
     ...entry,
     sets: entry.sets.map((set, i) => (i >= setIndex ? { ...set, ...changes } : set)),
   }))
+}
+
+// Ressenti optionnel sur un exercice complété : { value: 'difficile' | 'ok'
+// | 'facile' | null, note: string }. feeling peut être null pour l'effacer.
+export function setEntryFeeling(sessions, sessionId, exerciseId, feeling) {
+  return mapEntry(sessions, sessionId, exerciseId, (entry) => ({ ...entry, feeling }))
 }
 
 function mapEntry(sessions, sessionId, exerciseId, transform) {

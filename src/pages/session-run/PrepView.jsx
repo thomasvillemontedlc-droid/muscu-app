@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { getOrCreateExercise } from '../../domain/exercises.js'
+import { getOrCreateExercise, setExerciseBarWeight, setExerciseWeightMode } from '../../domain/exercises.js'
 import { getExercisesUsedInTemplate } from '../../domain/history.js'
 import { addSet, removeSet, updateSet } from '../../domain/sessions.js'
 import {
@@ -7,7 +7,6 @@ import {
   removeExerciseEntryFromSession,
   reorderSessionEntries,
   setRestSeconds,
-  setStartingExercise,
   startSession,
 } from '../../domain/sessionRunner.js'
 import { DraggableList } from '../../components/DraggableList.jsx'
@@ -54,16 +53,20 @@ export function PrepView({ session, data, setData }) {
     setData({ ...data, sessions: updateSet(data.sessions, session.id, exerciseId, setIndex, changes) })
   }
 
+  function handleWeightModeChange(exerciseId, weightInputMode) {
+    setData({ ...data, exercises: setExerciseWeightMode(data.exercises, exerciseId, weightInputMode) })
+  }
+
+  function handleBarWeightChange(exerciseId, barWeight) {
+    setData({ ...data, exercises: setExerciseBarWeight(data.exercises, exerciseId, barWeight) })
+  }
+
   function handleStartingExerciseChange(e) {
     const exerciseId = e.target.value
-    let sessions = setStartingExercise(data.sessions, session.id, exerciseId)
-
     const fromIndex = session.entries.findIndex((entry) => entry.exerciseId === exerciseId)
-    if (fromIndex > 0) {
-      sessions = reorderSessionEntries(sessions, session.id, fromIndex, 0)
-    }
+    if (fromIndex <= 0) return
 
-    setData({ ...data, sessions })
+    setData({ ...data, sessions: reorderSessionEntries(data.sessions, session.id, fromIndex, 0) })
   }
 
   function handleRestMinutesChange(minutes) {
@@ -126,8 +129,11 @@ export function PrepView({ session, data, setData }) {
                 index={setIndex}
                 weight={set.weight}
                 reps={set.reps}
+                exercise={data.exercises.find((e) => e.id === entry.exerciseId)}
                 onChangeWeight={(weight) => handleUpdateSet(entry.exerciseId, setIndex, { weight })}
                 onChangeReps={(reps) => handleUpdateSet(entry.exerciseId, setIndex, { reps })}
+                onChangeWeightMode={(mode) => handleWeightModeChange(entry.exerciseId, mode)}
+                onChangeBarWeight={(barWeight) => handleBarWeightChange(entry.exerciseId, barWeight)}
                 onRemove={() => handleRemoveSet(entry.exerciseId, setIndex)}
               />
             ))}
@@ -149,7 +155,7 @@ export function PrepView({ session, data, setData }) {
             <span>Commencer par</span>
             <select
               className="prep-field__select"
-              value={session.startingExerciseId ?? session.entries[0].exerciseId}
+              value={session.entries[0].exerciseId}
               onChange={handleStartingExerciseChange}
             >
               {session.entries.map((entry) => (

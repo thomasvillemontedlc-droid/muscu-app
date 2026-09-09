@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { filterSessionsByScope } from '../domain/sessions.js'
 import { parseImportedData } from '../storage/storage.js'
@@ -16,6 +17,7 @@ const SCOPE_LABELS = {
 
 export function SettingsPage() {
   const { data, setData } = useAppDataContext()
+  const navigate = useNavigate()
   const fileInputRef = useRef(null)
   const [scope, setScope] = useState('all')
   const [selectedIds, setSelectedIds] = useState(new Set())
@@ -66,6 +68,10 @@ export function SettingsPage() {
 
   function handleImportClick() {
     fileInputRef.current?.click()
+  }
+
+  function handlePrint() {
+    navigate('/print', { state: { sessionIds: getScopedSessions().map((s) => s.id) } })
   }
 
   async function handleFileChange(e) {
@@ -131,6 +137,9 @@ export function SettingsPage() {
         <BigButton onClick={handleExport}>Exporter (JSON)</BigButton>
         <BigButton variant="secondary" onClick={handleImportClick}>
           Importer
+        </BigButton>
+        <BigButton variant="secondary" onClick={handlePrint}>
+          Imprimer / Exporter en PDF
         </BigButton>
         <input
           type="file"

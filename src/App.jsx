@@ -8,6 +8,7 @@ import { SessionRunPage } from './pages/SessionRunPage.jsx'
 import { HistoryPage } from './pages/HistoryPage.jsx'
 import { MuscleMapPage } from './pages/MuscleMapPage.jsx'
 import { SettingsPage } from './pages/SettingsPage.jsx'
+import { PrintPage } from './pages/PrintPage.jsx'
 
 function App() {
   const [data, setData] = useAppData()
@@ -24,6 +25,7 @@ function App() {
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/muscles" element={<MuscleMapPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/print" element={<PrintPage />} />
             </Routes>
           </main>
           <BottomNav />

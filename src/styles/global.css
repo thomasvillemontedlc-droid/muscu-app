@@ -309,11 +309,20 @@ input[type='number']:focus {
 }
 
 .set-row {
-  display: grid;
-  grid-template-columns: 28px 1fr auto 1fr auto auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 6px 8px;
   margin-bottom: 8px;
+}
+
+input.set-row__input {
+  width: 64px;
+  flex: 0 0 auto;
+}
+
+.set-row .weight-field {
+  flex: 1 1 140px;
 }
 
 .set-row__label {
@@ -452,10 +461,19 @@ input[type='number']:focus {
 
 .history-session__exercises li {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 8px;
   padding: 4px 0;
   border-top: 1px solid var(--color-border);
+}
+
+.history-session__feeling {
+  flex-basis: 100%;
+  text-align: right;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-style: italic;
 }
 
 .history-session__exercises li:first-child {
@@ -649,19 +667,78 @@ input[type='number']:focus {
 
 /* Champs poids/reps mis en avant pendant l'exercice actif et la révision
    post-repos : plus grands que dans les listes de séries classiques. */
-.exercise-active__illustration {
-  display: block;
-  width: 100%;
-  max-width: 280px;
-  height: auto;
-  margin: 12px auto;
-  color: var(--color-muted);
-}
-
 .exercise-active__fields {
+  position: relative;
   display: flex;
   gap: 12px;
   margin: 16px 0;
+  padding: 8px;
+  border-radius: var(--radius);
+  transition: background-color 0.2s ease;
+}
+
+.exercise-active__fields--validated {
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.exercise-active__check {
+  position: absolute;
+  top: -14px;
+  right: -6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  animation: check-pop 0.25s ease;
+  z-index: 2;
+}
+
+@keyframes check-pop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.confetti {
+  position: absolute;
+  inset: -20px -20px auto -20px;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.confetti__piece {
+  position: absolute;
+  top: 0;
+  width: 7px;
+  height: 10px;
+  opacity: 0.9;
+  animation-name: confetti-fall;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+
+@keyframes confetti-fall {
+  from {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.9;
+  }
+  to {
+    transform: translateY(70px) rotate(200deg);
+    opacity: 0;
+  }
 }
 
 .exercise-active__field {
@@ -674,6 +751,48 @@ input[type='number']:focus {
   color: var(--color-muted);
   font-size: 0.9rem;
   margin-bottom: 4px;
+}
+
+.weight-field__mode-toggle {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  text-decoration: underline;
+  padding: 4px 0;
+}
+
+.weight-field--per-side {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 8px;
+}
+
+.weight-field__row {
+  display: flex;
+  gap: 8px;
+}
+
+.weight-field__row label {
+  flex: 1;
+  display: block;
+}
+
+.weight-field__row span {
+  display: block;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  margin-bottom: 2px;
+}
+
+.weight-field__total {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
 }
 
 .exercise-active__input {
@@ -795,9 +914,61 @@ input[type='number']:focus {
 }
 
 .session-summary__progress {
-  color: var(--color-primary);
   font-weight: 600;
   margin: 6px 0 0;
+}
+
+.session-summary__progress--muted {
+  color: var(--color-muted);
+  font-weight: 400;
+}
+
+.session-summary__item--best {
+  border: 2px solid var(--color-primary);
+}
+
+.session-summary__feeling {
+  margin: 6px 0 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.feeling-picker {
+  margin-top: 8px;
+}
+
+.feeling-picker__options {
+  display: flex;
+  gap: 6px;
+}
+
+.feeling-picker__option {
+  flex: 1;
+  min-height: 44px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.85rem;
+}
+
+.feeling-picker__option--selected {
+  border-color: var(--color-primary);
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.feeling-picker__note {
+  margin-top: 6px;
+  font-size: 0.9rem;
+}
+
+.session-summary__best-badge {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  white-space: nowrap;
 }
 
 .pick-exercise-list {
@@ -1003,6 +1174,81 @@ input[type='number']:focus {
 .muscle-recovery-row__status--never {
   background: rgba(245, 158, 11, 0.15);
   color: #f59e0b;
+}
+
+.print-page {
+  background: #fff;
+  color: #111;
+  min-height: 100vh;
+  padding: 16px 16px calc(var(--touch-min) + 32px);
+}
+
+.print-page__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.print-page__toolbar .big-button {
+  width: auto;
+  margin: 0;
+}
+
+.print-session {
+  border: 1px solid #ddd;
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 16px;
+  break-inside: avoid;
+}
+
+.print-session h2 {
+  margin: 0 0 4px;
+}
+
+.print-session__meta {
+  color: #555;
+  font-size: 0.9rem;
+  margin: 0 0 10px;
+}
+
+.print-session__exercises {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.print-session__exercises li {
+  padding: 6px 0;
+  border-top: 1px solid #eee;
+}
+
+.print-session__exercises li:first-child {
+  border-top: none;
+}
+
+.print-session__exercises strong {
+  display: block;
+}
+
+.print-session__exercises em {
+  display: block;
+  color: #555;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+@media print {
+  .bottom-nav,
+  .print-page__toolbar {
+    display: none !important;
+  }
+
+  .print-page {
+    padding: 0;
+  }
 }
 
 .modal-overlay {

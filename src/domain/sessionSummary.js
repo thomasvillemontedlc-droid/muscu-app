@@ -1,3 +1,5 @@
+import { getLastPerformance } from './history.js'
+
 // Séance précédente avec le même nom de template, pour comparer la
 // progression (fonctionnalité "récap de fin de séance").
 export function getPreviousSessionByTemplate(sessions, currentSession) {
@@ -132,22 +134,25 @@ export function getSessionStats(session) {
   }
 }
 
-// Un item par exercice effectivement complété dans la séance, avec un
-// message de progression (poids max de la série) uniquement si la charge a
-// augmenté par rapport à la dernière fois où ce template a été fait, et une
-// tendance (vert/neutre/orange) basée sur charge OU volume.
+// Un item par exercice effectivement complété dans la séance, avec la
+// progression en kg et % de charge max par rapport à la DERNIÈRE FOIS que CET
+// EXERCICE a été fait (tous templates confondus, via getLastPerformance) —
+// pas seulement la dernière fois avec ce même template : un exercice partagé
+// entre plusieurs séances types doit se comparer à sa propre dernière
+// occurrence. Le ou les exercices à la plus forte progression (%) sont
+// marqués bestProgress pour être mis en avant à l'affichage.
 export function buildSessionSummary(sessions, session) {
-  const previous = getPreviousSessionByTemplate(sessions, session)
+  const otherSessions = sessions.filter((s) => s.id !== session.id)
   const completedIds = session.completedExerciseIds ?? []
 
-  return session.entries
+  const items = session.entries
     .filter((entry) => completedIds.includes(entry.exerciseId))
     .map((entry) => {
-      const previousEntry = previous?.entries.find((e) => e.exerciseId === entry.exerciseId)
+      const last = getLastPerformance(otherSessions, entry.exerciseId)
       const currentMax = getMaxWeight(entry.sets)
-      const previousMax = previousEntry ? getMaxWeight(previousEntry.sets) : null
+      const previousMax = last ? getMaxWeight(last.sets) : null
 
-      const progressKg = previousMax !== null && currentMax > previousMax ? currentMax - previousMax : null
+      const progressKg = previousMax !== null ? currentMax - previousMax : null
       const progressPercent =
         progressKg !== null && previousMax > 0 ? Math.round((progressKg / previousMax) * 100) : null
 
@@ -155,9 +160,13 @@ export function buildSessionSummary(sessions, session) {
         exerciseId: entry.exerciseId,
         exerciseName: entry.exerciseName,
         sets: entry.sets,
+        feeling: entry.feeling ?? null,
         progressKg,
         progressPercent,
-        trend: getExerciseTrend(previousEntry, entry),
+        trend: getExerciseTrend(last ? { sets: last.sets } : null, entry),
       }
     })
+
+  const bestPercent = Math.max(0, ...items.map((item) => item.progressPercent ?? -Infinity))
+  return items.map((item) => ({ ...item, bestProgress: bestPercent > 0 && item.progressPercent === bestPercent }))
 }

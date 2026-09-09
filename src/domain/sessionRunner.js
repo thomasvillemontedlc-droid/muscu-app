@@ -68,6 +68,7 @@ export function startSession(sessions, sessionId) {
     phase: 'exercise',
     currentExerciseId: startingExerciseId,
     currentSetIndex: 0,
+    startedAt: session.startedAt ?? Date.now(),
   })
 }
 
@@ -130,6 +131,7 @@ export function validateCurrentSet(sessions, sessionId) {
       entries,
       phase: 'finished',
       currentExerciseId: null,
+      finishedAt: Date.now(),
       restUntil: null,
       restStartedAt: null,
       pendingRestExerciseId: null,
@@ -186,6 +188,7 @@ export function finishCurrentExerciseEarly(sessions, sessionId) {
     phase: remaining.length === 0 ? 'finished' : 'picking',
     currentExerciseId: null,
     currentSetIndex: 0,
+    finishedAt: remaining.length === 0 ? Date.now() : null,
     restUntil: null,
     restStartedAt: null,
     pendingRestExerciseId: null,
@@ -225,6 +228,7 @@ export function finishSessionEarly(sessions, sessionId) {
     entries,
     phase: 'finished',
     currentExerciseId: null,
+    finishedAt: Date.now(),
     restUntil: null,
     restStartedAt: null,
     pendingRestExerciseId: null,

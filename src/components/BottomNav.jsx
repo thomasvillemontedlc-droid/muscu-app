@@ -9,6 +9,9 @@ export function BottomNav() {
       <NavLink to="/history" className="bottom-nav__link">
         Historique
       </NavLink>
+      <NavLink to="/muscles" className="bottom-nav__link">
+        Muscles
+      </NavLink>
       <NavLink to="/settings" className="bottom-nav__link">
         Réglages
       </NavLink>

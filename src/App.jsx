@@ -6,6 +6,7 @@ import { TemplatesListPage } from './pages/TemplatesListPage.jsx'
 import { TemplateEditPage } from './pages/TemplateEditPage.jsx'
 import { SessionRunPage } from './pages/SessionRunPage.jsx'
 import { HistoryPage } from './pages/HistoryPage.jsx'
+import { MuscleMapPage } from './pages/MuscleMapPage.jsx'
 import { SettingsPage } from './pages/SettingsPage.jsx'
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
               <Route path="/templates/:templateId" element={<TemplateEditPage />} />
               <Route path="/sessions/:sessionId" element={<SessionRunPage />} />
               <Route path="/history" element={<HistoryPage />} />
+              <Route path="/muscles" element={<MuscleMapPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Routes>
           </main>

@@ -824,3 +824,183 @@ input[type='number']:focus {
   color: var(--color-danger);
   margin-top: 8px;
 }
+
+.body-heatmap {
+  display: flex;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.body-heatmap__view {
+  flex: 1;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 8px;
+  text-align: center;
+}
+
+.body-heatmap__view svg {
+  width: 100%;
+  height: auto;
+  color: var(--color-muted);
+}
+
+.body-heatmap__label {
+  display: block;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+.body-heatmap__legend {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.body-heatmap__legend li {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+}
+
+.session-stats {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.session-stats li {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.stretch-suggestions {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin: 0 0 16px;
+}
+
+.stretch-suggestions h2 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.stretch-suggestions__hint {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  margin: 0 0 10px;
+}
+
+.stretch-suggestions ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.stretch-suggestions li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.stretch-suggestions li:first-child {
+  border-top: none;
+}
+
+.stretch-suggestions__muscle {
+  font-weight: 600;
+  flex-basis: 100%;
+}
+
+.stretch-suggestions__hold {
+  color: var(--color-muted);
+  margin-left: auto;
+}
+
+.muscle-map-section {
+  margin: 20px 0;
+}
+
+.muscle-map-section h2 {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+}
+
+.muscle-map-section__hint {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  margin: 0 0 10px;
+}
+
+.muscle-recovery-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.muscle-recovery-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.muscle-recovery-row:first-child {
+  border-top: none;
+}
+
+.muscle-recovery-row__label {
+  font-weight: 600;
+  flex-basis: 40%;
+}
+
+.muscle-recovery-row__days {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.muscle-recovery-row__status {
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.muscle-recovery-row__status--recovering {
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--color-muted);
+}
+
+.muscle-recovery-row__status--recovered {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--color-primary);
+}
+
+.muscle-recovery-row__status--neglected {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--color-danger);
+}
+
+.muscle-recovery-row__status--never {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}

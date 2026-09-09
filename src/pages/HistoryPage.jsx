@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { getSessionsGroupedByDate, getWeekActivity } from '../domain/history.js'
 import { deleteSession, getSessionStatus } from '../domain/sessions.js'
 import { getEntryTrends, getTrendFromDiff, getVolumeProgress } from '../domain/sessionSummary.js'
+import { getMuscleIntensities, getMuscleVolumes, hasAnyIntensity } from '../domain/muscleHeatmap.js'
 import { TrendDot } from '../components/TrendDot.jsx'
+import { BodyHeatmap, BodyHeatmapLegend } from '../components/BodyHeatmap.jsx'
 
 function formatVolume(kg) {
   return `${kg.toLocaleString('fr-FR')}kg`
@@ -37,10 +40,20 @@ export function HistoryPage() {
   const groups = getSessionsGroupedByDate(data.sessions)
   const week = getWeekActivity(data.sessions)
   const today = new Date()
+  const [expandedHeatmaps, setExpandedHeatmaps] = useState(new Set())
 
   function handleDeleteSession(sessionId) {
     if (!window.confirm('Supprimer cette séance ? Cette action est définitive.')) return
     setData({ ...data, sessions: deleteSession(data.sessions, sessionId) })
+  }
+
+  function toggleHeatmap(sessionId) {
+    setExpandedHeatmaps((prev) => {
+      const next = new Set(prev)
+      if (next.has(sessionId)) next.delete(sessionId)
+      else next.add(sessionId)
+      return next
+    })
   }
 
   return (
@@ -69,6 +82,9 @@ export function HistoryPage() {
             const status = getSessionStatus(session)
             const trends = getEntryTrends(data.sessions, session)
             const volumeProgress = getVolumeProgress(data.sessions, session)
+            const isHeatmapExpanded = expandedHeatmaps.has(session.id)
+            const intensities = getMuscleIntensities(getMuscleVolumes(session))
+            const hasHeatmap = hasAnyIntensity(intensities)
 
             return (
               <div key={session.id} className="history-session">
@@ -107,6 +123,20 @@ export function HistoryPage() {
                     </li>
                   ))}
                 </ul>
+
+                {hasHeatmap && (
+                  <>
+                    <button type="button" className="subtle-button" onClick={() => toggleHeatmap(session.id)}>
+                      {isHeatmapExpanded ? 'Masquer la carte de chaleur' : 'Voir la carte de chaleur'}
+                    </button>
+                    {isHeatmapExpanded && (
+                      <>
+                        <BodyHeatmap intensities={intensities} />
+                        <BodyHeatmapLegend intensities={intensities} />
+                      </>
+                    )}
+                  </>
+                )}
 
                 <button
                   type="button"

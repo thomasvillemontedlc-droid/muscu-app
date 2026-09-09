@@ -115,6 +115,23 @@ export function getCompletionProgress(sessions, session) {
   return null
 }
 
+// Durée, nombre de séries et de répétitions totales des exercices complétés
+// d'une séance, en plus du volume déjà calculé par getSessionVolume.
+// Séances créées avant l'ajout de startedAt/finishedAt : durée non
+// disponible (null) plutôt qu'une estimation fausse.
+export function getSessionStats(session) {
+  const completedIds = session.completedExerciseIds ?? session.entries.map((e) => e.exerciseId)
+  const completedEntries = session.entries.filter((e) => completedIds.includes(e.exerciseId))
+  const allSets = completedEntries.flatMap((e) => e.sets)
+
+  return {
+    durationMs: session.startedAt && session.finishedAt ? session.finishedAt - session.startedAt : null,
+    totalSets: allSets.length,
+    totalReps: allSets.reduce((total, set) => total + set.reps, 0),
+    totalVolume: getSessionVolume(session),
+  }
+}
+
 // Un item par exercice effectivement complété dans la séance, avec un
 // message de progression (poids max de la série) uniquement si la charge a
 // augmenté par rapport à la dernière fois où ce template a été fait, et une

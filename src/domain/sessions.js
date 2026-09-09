@@ -25,6 +25,8 @@ export function startSessionFromTemplate(sessions, template, exercises) {
     date: new Date().toISOString(),
     entries,
     phase: 'prep',
+    startedAt: null,
+    finishedAt: null,
     restSeconds: getDefaultRestSeconds(sessions),
     restUntil: null,
     restStartedAt: null,

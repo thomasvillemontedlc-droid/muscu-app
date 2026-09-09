@@ -1,13 +1,21 @@
 import { getLastPerformance } from '../../domain/history.js'
 import { updateSet } from '../../domain/sessions.js'
-import { finishCurrentExerciseEarly, validateCurrentSet } from '../../domain/sessionRunner.js'
+import {
+  finishCurrentExerciseEarly,
+  goToExerciseList,
+  goToPreviousSet,
+  validateCurrentSet,
+} from '../../domain/sessionRunner.js'
 import { unlockAudio } from '../../lib/alarm.js'
+import { useRestTimer } from '../../hooks/useRestTimer.js'
 import { getExerciseIllustration } from '../../illustrations/registry.js'
 import { GenericIllustration } from '../../illustrations/Generic.jsx'
+import { RestBanner } from '../../components/RestBanner.jsx'
 import { NumberField } from '../../components/NumberField.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
 
 export function ExerciseView({ session, data, setData }) {
+  const timer = useRestTimer(session)
   const entry = session.entries.find((e) => e.exerciseId === session.currentExerciseId)
   const set = entry.sets[session.currentSetIndex]
   const otherSessions = data.sessions.filter((s) => s.id !== session.id)
@@ -39,8 +47,29 @@ export function ExerciseView({ session, data, setData }) {
     setData({ ...data, sessions: finishCurrentExerciseEarly(data.sessions, session.id) })
   }
 
+  function handlePreviousSet() {
+    setData({ ...data, sessions: goToPreviousSet(data.sessions, session.id) })
+  }
+
+  function handleGoToList() {
+    setData({ ...data, sessions: goToExerciseList(data.sessions, session.id) })
+  }
+
   return (
     <div className="page">
+      <div className="exercise-active__nav">
+        {session.currentSetIndex > 0 && (
+          <button type="button" className="back-link" onClick={handlePreviousSet}>
+            ← Série précédente
+          </button>
+        )}
+        <button type="button" className="back-link" onClick={handleGoToList}>
+          ← Tous les exercices
+        </button>
+      </div>
+
+      <RestBanner timer={timer} />
+
       <h1>{entry.exerciseName}</h1>
       <p className="session-date">
         Série {session.currentSetIndex + 1} / {entry.sets.length}

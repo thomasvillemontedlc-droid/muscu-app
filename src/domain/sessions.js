@@ -28,6 +28,8 @@ export function startSessionFromTemplate(sessions, template, exercises) {
     restSeconds: getDefaultRestSeconds(sessions),
     restUntil: null,
     restStartedAt: null,
+    pendingRestExerciseId: null,
+    pendingRestSetIndex: null,
     startingExerciseId: template.exerciseIds[0] ?? null,
     currentExerciseId: null,
     currentSetIndex: 0,
@@ -118,10 +120,15 @@ export function removeSet(sessions, sessionId, exerciseId, setIndex) {
   }))
 }
 
+// Modifie une série ET toutes celles qui suivent dans le même exercice, qui
+// n'ont pas encore été faites (les séries validées avant setIndex ne sont
+// jamais touchées, puisqu'on ne modifie que la série en cours et le futur).
+// Ça évite de garder le pré-remplissage de la séance précédente sur les
+// séries suivantes une fois qu'on a corrigé la charge en cours de séance.
 export function updateSet(sessions, sessionId, exerciseId, setIndex, changes) {
   return mapEntry(sessions, sessionId, exerciseId, (entry) => ({
     ...entry,
-    sets: entry.sets.map((set, i) => (i === setIndex ? { ...set, ...changes } : set)),
+    sets: entry.sets.map((set, i) => (i >= setIndex ? { ...set, ...changes } : set)),
   }))
 }
 

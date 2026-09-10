@@ -3,14 +3,17 @@ import { seedDefaultExercises } from '../domain/exercises.js'
 
 const STORAGE_KEY = 'muscu-app-data'
 
+// Un nouvel utilisateur (pas de données du tout) part directement avec le
+// catalogue complet plutôt que de passer par migrate() : ce n'est pas une
+// migration de données existantes, juste l'état de départ normal.
 export function loadData() {
   const raw = localStorage.getItem(STORAGE_KEY)
-  if (!raw) return createEmptyData()
+  if (!raw) return { ...createEmptyData(), exercises: seedDefaultExercises([]) }
 
   try {
     return migrate(JSON.parse(raw))
   } catch {
-    return createEmptyData()
+    return { ...createEmptyData(), exercises: seedDefaultExercises([]) }
   }
 }
 
@@ -27,12 +30,19 @@ export function parseImportedData(jsonText) {
 }
 
 function migrate(data) {
-  // rien à migrer pour l'instant côté schéma : la v1 est le premier format
-  const versioned = data.version === SCHEMA_VERSION ? data : { ...createEmptyData(), ...data, version: SCHEMA_VERSION }
+  const previousVersion = data.version ?? 0
+  let migrated = previousVersion === SCHEMA_VERSION ? data : { ...createEmptyData(), ...data, version: SCHEMA_VERSION }
 
-  // Complète le catalogue d'exercices à chaque chargement (idempotent, voir
-  // domain/exercises.js#seedDefaultExercises) plutôt que de dépendre d'une
-  // migration ponctuelle : une mise à jour future de la base d'exercices se
-  // propage automatiquement sans bump de version.
-  return { ...versioned, exercises: seedDefaultExercises(versioned.exercises) }
+  // v1 -> v2 : complète le catalogue avec les exercices de la base fournie
+  // (exercices-musculation.md, voir domain/muscleGroups.js) qui n'y sont pas
+  // déjà, sans toucher aux exercices existants ni à l'historique. Gardé
+  // derrière le numéro de version pour ne le faire qu'une fois par
+  // utilisateur plutôt qu'à chaque chargement une fois le catalogue complet
+  // (voir aussi le bouton "Réinitialiser le catalogue d'exercices" dans
+  // Réglages, pour forcer un nouveau passage à la demande).
+  if (previousVersion < 2) {
+    migrated = { ...migrated, exercises: seedDefaultExercises(migrated.exercises) }
+  }
+
+  return migrated
 }

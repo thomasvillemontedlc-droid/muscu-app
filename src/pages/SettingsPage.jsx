@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { filterSessionsByScope } from '../domain/sessions.js'
+import { seedDefaultExercises } from '../domain/exercises.js'
 import { parseImportedData } from '../storage/storage.js'
 import { BigButton } from '../components/BigButton.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
@@ -23,6 +24,7 @@ export function SettingsPage() {
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [pendingImport, setPendingImport] = useState(null)
   const [importError, setImportError] = useState(null)
+  const [catalogResetMessage, setCatalogResetMessage] = useState(null)
 
   const sortedSessions = [...data.sessions].sort((a, b) => b.date.localeCompare(a.date))
 
@@ -92,6 +94,22 @@ export function SettingsPage() {
     setPendingImport(null)
   }
 
+  // Recomplète le catalogue depuis la base fournie (exercices-musculation.md,
+  // voir domain/muscleGroups.js) à la demande : utile si le semis automatique
+  // n'a pas encore tourné sur cet appareil (ex. ancien bundle en cache).
+  // Purement additif comme seedDefaultExercises : aucun exercice existant ni
+  // aucune séance n'est touché.
+  function handleResetCatalog() {
+    const exercises = seedDefaultExercises(data.exercises)
+    const added = exercises.length - data.exercises.length
+    setData({ ...data, exercises })
+    setCatalogResetMessage(
+      added > 0
+        ? `${added} exercice${added > 1 ? 's' : ''} ajouté${added > 1 ? 's' : ''} au catalogue.`
+        : 'Le catalogue était déjà complet, rien à ajouter.',
+    )
+  }
+
   return (
     <div className="page">
       <h1>Réglages</h1>
@@ -151,6 +169,18 @@ export function SettingsPage() {
       </section>
 
       <section className="settings-section">
+        <h2>Catalogue d'exercices</h2>
+        <p>
+          Complète le catalogue avec tous les exercices de la base intégrée à l'app, sans toucher à tes
+          exercices personnels ni à ton historique de séances. À utiliser si des exercices semblent manquants
+          (filtre par muscle incomplet, par exemple) après une mise à jour de l'app.
+        </p>
+        <BigButton variant="secondary" onClick={handleResetCatalog}>
+          Réinitialiser le catalogue d'exercices
+        </BigButton>
+      </section>
+
+      <section className="settings-section">
         <h2>Envoyer à une IA</h2>
         <p>Utilise le même contenu sélectionné ci-dessus.</p>
 
@@ -176,6 +206,12 @@ export function SettingsPage() {
         onCancel={() => setPendingImport(null)}
       />
       <AlertDialog title="Import impossible" message={importError} open={importError != null} onClose={() => setImportError(null)} />
+      <AlertDialog
+        title="Catalogue d'exercices"
+        message={catalogResetMessage}
+        open={catalogResetMessage != null}
+        onClose={() => setCatalogResetMessage(null)}
+      />
     </div>
   )
 }

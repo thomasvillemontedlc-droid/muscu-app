@@ -1,11 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import {
-  buildSessionSummary,
-  getCompletionProgress,
-  getSessionStats,
-  getTrendFromDiff,
-  getVolumeProgress,
-} from '../../domain/sessionSummary.js'
+import { buildSessionSummary, getCompletionProgress, getSessionStats, getTrendFromDiff } from '../../domain/sessionSummary.js'
 import { getMuscleIntensities, getMuscleVolumes } from '../../domain/muscleHeatmap.js'
 import { getPrimaryMusclesWorked, getStretchSuggestions } from '../../domain/stretches.js'
 import { getFeelingLabel } from '../../components/FeelingPicker.jsx'
@@ -21,10 +15,6 @@ function formatRest(totalSeconds) {
   return `${minutes}min${String(seconds).padStart(2, '0')}`
 }
 
-function formatVolume(kg) {
-  return `${kg.toLocaleString('fr-FR')}kg`
-}
-
 function formatDuration(durationMs) {
   if (durationMs == null) return null
   const totalMinutes = Math.round(durationMs / 60000)
@@ -38,7 +28,6 @@ export function FinishedView({ session, data }) {
   const navigate = useNavigate()
   const summary = buildSessionSummary(data.sessions, session)
   const completionProgress = getCompletionProgress(data.sessions, session)
-  const volumeProgress = getVolumeProgress(data.sessions, session)
   const stats = getSessionStats(session)
   const intensities = getMuscleIntensities(getMuscleVolumes(session))
   const duration = formatDuration(stats.durationMs)
@@ -57,19 +46,6 @@ export function FinishedView({ session, data }) {
         <li>{stats.totalSets} séries</li>
         <li>{stats.totalReps} répétitions</li>
       </ul>
-
-      <p className="session-summary__volume">
-        Volume total : {formatVolume(volumeProgress.volume)}
-        {volumeProgress.diff != null && (
-          <span className={`volume-diff volume-diff--${getTrendFromDiff(volumeProgress.diff)}`}>
-            {' '}
-            ({volumeProgress.diff >= 0 ? '+' : ''}
-            {formatVolume(volumeProgress.diff)}
-            {volumeProgress.percent != null ? `, ${volumeProgress.diff >= 0 ? '+' : ''}${volumeProgress.percent}%` : ''} vs
-            dernière fois)
-          </span>
-        )}
-      </p>
 
       {completionProgress && <p className="session-summary__completion">{completionProgress.message}</p>}
 

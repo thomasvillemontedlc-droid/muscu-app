@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <title>Tirage horizontal serré</title>
+  <desc>Illustration vectorielle en deux étapes du tirage horizontal serré, avec repères techniques simples.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+      <path d="M0 0 L12 6 L0 12 Z" fill="#1E78C8"/>
+    </marker>
+    <style>
+      .o{stroke:#172231;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+      .a{stroke:#1E78C8;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;fill:none}
+      .g{stroke:#1E78C8;stroke-width:4;stroke-linecap:round;stroke-dasharray:9 9;fill:none}
+      .skin{fill:#F2B28C}
+      .shirt{fill:#1E3A5F}
+      .shorts{fill:#252C35}
+      .shoe{fill:#26313D}
+      .machine{fill:#303B48}
+      .metal{fill:#737D89}
+      .dark{fill:#202832}
+      .t{font-family:Arial,Helvetica,sans-serif;fill:#172231}
+    </style>
+  </defs>
+
+  <!-- ================= LEFT : POSITION DE DÉPART ================= -->
+  <path d="M70 585 H500" stroke="#D5DBE2" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- seat -->
+  <path d="M250 470 H385 Q398 470 398 482 V500 H250 Z" class="machine o"/>
+  <path d="M285 500 L285 575 M370 500 L370 575" class="machine o"/>
+  <path d="M270 575 H300 M355 575 H385" class="o" fill="none"/>
+
+  <!-- foot support -->
+  <path d="M225 515 L205 555 H235 L255 515" class="machine o"/>
+
+  <!-- cable + pulley -->
+  <circle cx="205" cy="390" r="18" fill="#F8FAFC" class="o"/>
+  <path d="M205 408 V470 H315" class="metal o" fill="none"/>
+  <path d="M205 390 H165" class="metal o" fill="none"/>
+
+  <!-- triangle handle, arms extended -->
+  <path d="M315 468 L330 493 L345 468 Z" fill="#737D89" class="o"/>
+  <path d="M315 480 H270" class="skin o" fill="none"/>
+  <path d="M345 480 H390" class="skin o" fill="none"/>
+
+  <!-- head -->
+  <circle cx="350" cy="330" r="33" class="skin o"/>
+  <path d="M318 320 Q325 280 361 289 Q382 295 383 317 Q365 300 342 307 Q330 311 318 320Z" fill="#202832"/>
+
+  <!-- torso upright, slight forward lean -->
+  <path d="M329 365 Q365 348 402 365 L438 455 Q390 480 342 458 L315 410Z" class="shirt o"/>
+  <path d="M323 374 L426 462" class="g"/>
+
+  <!-- hips / shorts -->
+  <path d="M342 452 Q390 468 438 450 L463 495 Q412 520 355 500Z" class="shorts o"/>
+
+  <!-- thighs -->
+  <path d="M360 494 Q322 520 302 555" class="skin o" fill="none"/>
+  <path d="M438 490 Q475 520 492 555" class="skin o" fill="none"/>
+
+  <!-- shins -->
+  <path d="M302 555 L295 577 M492 555 L500 577" class="skin o" fill="none"/>
+
+  <!-- shoes -->
+  <path d="M285 570 Q305 562 322 574 L335 590 Q303 603 270 591 Q268 579 285 570Z" class="shoe o"/>
+  <path d="M487 570 Q507 562 524 574 L538 590 Q506 603 473 591 Q470 579 487 570Z" class="shoe o"/>
+
+  <!-- ================= MOVEMENT ================= -->
+  <path d="M540 480 H625" class="a" marker-end="url(#arrow)"/>
+  <text x="582" y="455" text-anchor="middle" class="t" font-size="20" font-weight="700">Tirer</text>
+
+  <!-- ================= RIGHT : POSITION TIRÉE ================= -->
+  <path d="M680 585 H1110" stroke="#D5DBE2" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- seat -->
+  <path d="M860 470 H995 Q1008 470 1008 482 V500 H860 Z" class="machine o"/>
+  <path d="M895 500 L895 575 M980 500 L980 575" class="machine o"/>
+  <path d="M880 575 H910 M965 575 H995" class="o" fill="none"/>
+
+  <!-- pulley + cable -->
+  <circle cx="815" cy="390" r="18" fill="#F8FAFC" class="o"/>
+  <path d="M815 408 V470 H925" class="metal o" fill="none"/>
+  <path d="M815 390 H775" class="metal o" fill="none"/>
+
+  <!-- handle close to torso -->
+  <path d="M925 468 L940 493 L955 468 Z" fill="#737D89" class="o"/>
+  <path d="M925 480 H890" class="skin o" fill="none"/>
+  <path d="M955 480 H920" class="skin o" fill="none"/>
+
+  <!-- head -->
+  <circle cx="960" cy="330" r="33" class="skin o"/>
+  <path d="M928 320 Q935 280 971 289 Q992 295 993 317 Q975 300 952 307 Q940 311 928 320Z" fill="#202832"/>
+
+  <!-- torso -->
+  <path d="M939 365 Q975 348 1012 365 L1048 455 Q1000 480 952 458 L925 410Z" class="shirt o"/>
+  <path d="M933 374 L1036 462" class="g"/>
+
+  <!-- hips / shorts -->
+  <path d="M952 452 Q1000 468 1048 450 L1073 495 Q1022 520 965 500Z" class="shorts o"/>
+
+  <!-- thighs -->
+  <path d="M970 494 Q932 520 912 555" class="skin o" fill="none"/>
+  <path d="M1048 490 Q1085 520 1102 555" class="skin o" fill="none"/>
+
+  <!-- shins -->
+  <path d="M912 555 L905 577 M1102 555 L1110 577" class="skin o" fill="none"/>
+
+  <!-- shoes -->
+  <path d="M895 570 Q915 562 932 574 L945 590 Q913 603 880 591 Q878 579 895 570Z" class="shoe o"/>
+  <path d="M1097 570 Q1117 562 1134 574 L1148 590 Q1116 603 1083 591 Q1080 579 1097 570Z" class="shoe o"/>
+
+  <!-- elbows travel back -->
+  <path d="M890 480 L835 420" class="a" marker-end="url(#arrow)"/>
+  <path d="M955 480 L900 420" class="a" marker-end="url(#arrow)"/>
+
+  <!-- ================= TECHNICAL BUBBLES ================= -->
+  <g fill="#F8FAFC" stroke="#1E78C8" stroke-width="4">
+    <circle cx="155" cy="700" r="70"/>
+    <circle cx="415" cy="700" r="70"/>
+    <circle cx="675" cy="700" r="70"/>
+    <circle cx="935" cy="700" r="70"/>
+  </g>
+
+  <!-- Bubble 1: back -->
+  <path d="M115 720 Q155 670 195 720" class="g"/>
+  <path d="M108 737 H202" stroke="#303B48" stroke-width="8" stroke-linecap="round"/>
+  <text x="155" y="785" text-anchor="middle" class="t" font-size="21" font-weight="700">Dos droit</text>
+
+  <!-- Bubble 2: elbows -->
+  <path d="M380 725 L410 680 L448 705" class="skin o" fill="none"/>
+  <path d="M389 720 A45 45 0 0 1 430 700" class="a"/>
+  <text x="415" y="785" text-anchor="middle" class="t" font-size="20" font-weight="700">Coudes vers l'arrière</text>
+
+  <!-- Bubble 3: torso -->
+  <path d="M645 720 Q675 680 710 720" class="shirt o" fill="none"/>
+  <path d="M642 724 L712 724" class="g"/>
+  <text x="675" y="785" text-anchor="middle" class="t" font-size="21" font-weight="700">Torse stable</text>
+
+  <!-- Bubble 4: handle -->
+  <path d="M902 684 L935 715 L968 684" class="metal o" fill="none"/>
+  <path d="M935 680 V735" class="g"/>
+  <text x="935" y="785" text-anchor="middle" class="t" font-size="20" font-weight="700">Poignée près du corps</text>
+</svg>

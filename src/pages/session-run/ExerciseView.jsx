@@ -12,6 +12,7 @@ import { unlockAudio } from '../../lib/alarm.js'
 import { vibrateSuccess } from '../../lib/haptics.js'
 import { useRestTimer } from '../../hooks/useRestTimer.js'
 import { RestBanner } from '../../components/RestBanner.jsx'
+import { ExerciseImage } from '../../components/ExerciseImage.jsx'
 import { NumberField } from '../../components/NumberField.jsx'
 import { WeightField } from '../../components/WeightField.jsx'
 import { Confetti } from '../../components/Confetti.jsx'
@@ -106,6 +107,8 @@ export function ExerciseView({ session, data, setData }) {
       ) : (
         <p className="last-performance last-performance--empty">Première fois sur cet exercice</p>
       )}
+
+      <ExerciseImage key={entry.exerciseName} name={entry.exerciseName} className="exercise-active__image" />
 
       <div className={`exercise-active__fields${validating ? ' exercise-active__fields--validated' : ''}`}>
         {validating && <span className="exercise-active__check">✓</span>}

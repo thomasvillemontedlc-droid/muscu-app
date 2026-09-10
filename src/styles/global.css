@@ -278,6 +278,15 @@ input[type='number']:focus {
   border-bottom: none;
 }
 
+.exercise-picker__thumb {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  object-fit: cover;
+  background: var(--color-surface-2);
+}
+
 .exercise-picker__muscle-filter {
   display: block;
   margin-bottom: 8px;
@@ -707,6 +716,14 @@ input.set-row__input {
 
 /* Champs poids/reps mis en avant pendant l'exercice actif et la révision
    post-repos : plus grands que dans les listes de séries classiques. */
+.exercise-active__image {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  margin: 12px auto;
+}
+
 .exercise-active__fields {
   position: relative;
   display: flex;

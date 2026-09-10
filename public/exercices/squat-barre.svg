@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <title>Squat barre</title>
+  <desc>Illustration vectorielle en deux étapes du squat avec barre, avec repères techniques simples.</desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+      <path d="M0 0 L12 6 L0 12 Z" fill="#1E78C8"/>
+    </marker>
+    <style>
+      .o{stroke:#172231;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+      .a{stroke:#1E78C8;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;fill:none}
+      .g{stroke:#1E78C8;stroke-width:4;stroke-linecap:round;stroke-dasharray:9 9;fill:none}
+      .skin{fill:#F2B28C}
+      .shirt{fill:#1E3A5F}
+      .shorts{fill:#252C35}
+      .shoe{fill:#26313D}
+      .bar{fill:#737D89}
+      .plate{fill:#202832}
+      .rack{fill:#303B48}
+      .t{font-family:Arial,Helvetica,sans-serif;fill:#172231}
+    </style>
+  </defs>
+
+  <!-- ===================== LEFT: POSITION HAUTE ===================== -->
+  <!-- Ground -->
+  <path d="M75 585 H505" stroke="#D5DBE2" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- Barbell -->
+  <g class="o">
+    <rect x="105" y="190" width="370" height="13" rx="6" class="bar"/>
+    <rect x="125" y="155" width="35" height="83" rx="8" class="plate"/>
+    <rect x="165" y="165" width="25" height="63" rx="7" class="bar"/>
+    <rect x="415" y="155" width="35" height="83" rx="8" class="plate"/>
+    <rect x="390" y="165" width="25" height="63" rx="7" class="bar"/>
+  </g>
+
+  <!-- Head -->
+  <circle cx="285" cy="260" r="34" class="skin o"/>
+  <path d="M252 250 Q258 210 295 218 Q316 224 317 247 Q299 229 275 237 Q264 241 252 250Z" fill="#202832"/>
+
+  <!-- Torso -->
+  <path d="M267 292 Q300 276 337 293 L365 390 Q323 415 278 390 L246 350Z" class="shirt o"/>
+
+  <!-- Arms holding bar -->
+  <path d="M264 302 L237 258 L223 206" class="skin o" fill="none"/>
+  <path d="M345 300 L372 258 L385 206" class="skin o" fill="none"/>
+
+  <!-- Hands -->
+  <circle cx="222" cy="202" r="9" class="skin o"/>
+  <circle cx="386" cy="202" r="9" class="skin o"/>
+
+  <!-- Shorts / hips -->
+  <path d="M278 382 Q322 395 365 380 L390 430 Q340 455 286 428Z" class="shorts o"/>
+
+  <!-- Legs standing -->
+  <path d="M296 423 L286 520 Q284 555 270 575" class="skin o" fill="none"/>
+  <path d="M355 424 L365 520 Q368 555 383 575" class="skin o" fill="none"/>
+
+  <!-- Shoes -->
+  <path d="M265 567 Q286 560 305 573 L317 590 Q283 604 250 590 Q247 578 265 567Z" class="shoe o"/>
+  <path d="M376 567 Q397 560 416 573 L430 590 Q397 604 364 590 Q360 578 376 567Z" class="shoe o"/>
+
+  <!-- Knee alignment guide -->
+  <path d="M285 520 H270 M365 520 H383" class="g"/>
+
+  <!-- ===================== MOVEMENT ===================== -->
+  <path d="M540 405 V520" class="a" marker-end="url(#arrow)"/>
+  <text x="540" y="385" text-anchor="middle" class="t" font-size="20" font-weight="700">Descendre</text>
+
+  <!-- ===================== RIGHT: POSITION BASSE ===================== -->
+  <path d="M675 585 H1105" stroke="#D5DBE2" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- Barbell -->
+  <g class="o">
+    <rect x="705" y="245" width="370" height="13" rx="6" class="bar"/>
+    <rect x="725" y="210" width="35" height="83" rx="8" class="plate"/>
+    <rect x="765" y="220" width="25" height="63" rx="7" class="bar"/>
+    <rect x="1015" y="210" width="35" height="83" rx="8" class="plate"/>
+    <rect x="990" y="220" width="25" height="63" rx="7" class="bar"/>
+  </g>
+
+  <!-- Head -->
+  <circle cx="890" cy="330" r="34" class="skin o"/>
+  <path d="M857 320 Q863 280 900 288 Q921 294 922 317 Q904 299 880 307 Q869 311 857 320Z" fill="#202832"/>
+
+  <!-- Torso leaning forward, straight -->
+  <path d="M872 362 Q902 346 938 360 L970 445 Q922 470 874 445 L846 410Z" class="shirt o"/>
+  <path d="M855 355 L958 455" class="g"/>
+
+  <!-- Arms -->
+  <path d="M874 367 L842 320 L824 258" class="skin o" fill="none"/>
+  <path d="M944 365 L978 320 L994 258" class="skin o" fill="none"/>
+  <circle cx="823" cy="253" r="9" class="skin o"/>
+  <circle cx="995" cy="253" r="9" class="skin o"/>
+
+  <!-- Shorts / hips -->
+  <path d="M875 440 Q922 454 969 436 L995 480 Q946 505 889 487Z" class="shorts o"/>
+
+  <!-- Thighs angled -->
+  <path d="M892 477 Q820 485 775 505 L748 526" class="skin o" fill="none"/>
+  <path d="M970 474 Q1038 486 1080 509 L1102 529" class="skin o" fill="none"/>
+
+  <!-- Shins -->
+  <path d="M748 526 L760 568" class="skin o" fill="none"/>
+  <path d="M1102 529 L1092 568" class="skin o" fill="none"/>
+
+  <!-- Shoes flat -->
+  <path d="M744 561 Q765 552 784 565 L798 585 Q765 600 730 587 Q727 574 744 561Z" class="shoe o"/>
+  <path d="M1080 562 Q1101 552 1120 565 L1135 585 Q1102 600 1067 587 Q1064 574 1080 562Z" class="shoe o"/>
+
+  <!-- Knee angle guides -->
+  <path d="M780 503 A65 65 0 0 1 760 568" class="a"/>
+  <path d="M1038 503 A65 65 0 0 0 1092 568" class="a"/>
+  <text x="775" y="555" class="t" font-size="22" font-weight="700">≈90°</text>
+  <text x="1030" y="555" class="t" font-size="22" font-weight="700">≈90°</text>
+
+  <!-- ===================== TECHNICAL BUBBLES ===================== -->
+  <g fill="#F8FAFC" stroke="#1E78C8" stroke-width="4">
+    <circle cx="155" cy="700" r="70"/>
+    <circle cx="415" cy="700" r="70"/>
+    <circle cx="675" cy="700" r="70"/>
+    <circle cx="935" cy="700" r="70"/>
+  </g>
+
+  <!-- Bubble 1: dos droit -->
+  <path d="M112 724 Q155 680 198 724" class="g"/>
+  <path d="M105 742 H205" stroke="#303B48" stroke-width="8" stroke-linecap="round"/>
+  <text x="155" y="785" text-anchor="middle" class="t" font-size="20" font-weight="700">Dos droit</text>
+
+  <!-- Bubble 2: genoux -->
+  <path d="M385 730 L415 680 L447 708" class="skin o" fill="none"/>
+  <path d="M390 730 A42 42 0 0 1 430 699" class="a"/>
+  <text x="415" y="785" text-anchor="middle" class="t" font-size="20" font-weight="700">Genoux ≈ 90°</text>
+
+  <!-- Bubble 3: pieds -->
+  <path d="M635 731 Q675 711 715 731" class="shoe o" fill="none"/>
+  <path d="M630 738 H720" class="g"/>
+  <text x="675" y="785" text-anchor="middle" class="t" font-size="20" font-weight="700">Pieds bien ancrés</text>
+
+  <!-- Bubble 4: genoux dans l'axe -->
+  <path d="M900 730 L935 685 L970 730" class="skin o" fill="none"/>
+  <path d="M915 682 V742 M955 682 V742" class="g"/>
+  <text x="935" y="785" text-anchor="middle" class="t" font-size="19" font-weight="700">Genoux dans l'axe</text>
+</svg>

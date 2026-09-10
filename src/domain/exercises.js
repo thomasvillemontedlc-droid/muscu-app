@@ -1,4 +1,5 @@
 import { createId } from '../storage/ids.js'
+import { getSeedExercises, resolveExerciseCanonicalKey } from './muscleGroups.js'
 
 function normalize(name) {
   return name.trim().toLowerCase()
@@ -23,6 +24,34 @@ export function getOrCreateExercise(exercises, name) {
 
 export function getExerciseById(exercises, id) {
   return exercises.find((e) => e.id === id)
+}
+
+// Ajoute au catalogue les exercices de la base fournie
+// (exercices-musculation.md, voir domain/muscleGroups.js) qui n'y sont pas
+// déjà couverts, sans toucher aux exercices existants ni en créer de
+// doublon — "couvert" veut dire même nom normalisé OU même exercice
+// résolu via un alias (ex. le "Gainage" de l'utilisateur couvre déjà notre
+// "Gainage planche", pas besoin de semer les deux). Idempotent : peut être
+// rappelée à chaque chargement sans effet une fois le catalogue complet.
+// Les muscles ne sont jamais stockés sur l'exercice lui-même : ils restent
+// dérivés à la volée par getExerciseMuscles() à partir du nom, ce qui fait
+// qu'une correction future de la base profite aussi aux exercices déjà
+// semés ou saisis à la main.
+export function seedDefaultExercises(exercises) {
+  const existingNames = new Set()
+  const coveredKeys = new Set()
+
+  for (const e of exercises) {
+    existingNames.add(normalize(e.name))
+    const key = resolveExerciseCanonicalKey(e.name)
+    if (key) coveredKeys.add(key)
+  }
+
+  const toAdd = getSeedExercises()
+    .filter(({ key, name }) => !coveredKeys.has(key) && !existingNames.has(normalize(name)))
+    .map(({ name }) => ({ id: createId(), name }))
+
+  return toAdd.length > 0 ? [...exercises, ...toAdd] : exercises
 }
 
 // Mode de saisie du poids, mémorisé par exercice : 'total' (par défaut) ou

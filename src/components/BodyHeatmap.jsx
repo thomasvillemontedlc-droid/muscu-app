@@ -5,6 +5,8 @@ import { getMuscleLabel, MUSCLE_GROUPS } from '../domain/muscleGroups.js'
 // n'existe pas comme muscle unique côté librairie (front-deltoids et
 // back-deltoids séparés) : on vise les deux pour qu'il s'allume sur les deux
 // vues avec la même intensité.
+// "brachial" n'a pas d'équivalent dans la librairie : rattaché visuellement
+// aux biceps (le brachial est juste dessous).
 const MUSCLE_TO_LIBRARY = {
   pectoraux: ['chest'],
   dorsaux: ['upper-back'],
@@ -12,7 +14,10 @@ const MUSCLE_TO_LIBRARY = {
   deltoides: ['front-deltoids', 'back-deltoids'],
   biceps: ['biceps'],
   triceps: ['triceps'],
+  'avant-bras': ['forearm'],
+  brachial: ['biceps'],
   abdominaux: ['abs'],
+  obliques: ['obliques'],
   lombaires: ['lower-back'],
   quadriceps: ['quadriceps'],
   'ischio-jambiers': ['hamstring'],

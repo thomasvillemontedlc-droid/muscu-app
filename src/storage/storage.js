@@ -1,4 +1,5 @@
 import { createEmptyData, SCHEMA_VERSION } from './schema.js'
+import { seedDefaultExercises } from '../domain/exercises.js'
 
 const STORAGE_KEY = 'muscu-app-data'
 
@@ -26,7 +27,12 @@ export function parseImportedData(jsonText) {
 }
 
 function migrate(data) {
-  // rien à migrer pour l'instant : la v1 est le premier format
-  if (data.version === SCHEMA_VERSION) return data
-  return { ...createEmptyData(), ...data, version: SCHEMA_VERSION }
+  // rien à migrer pour l'instant côté schéma : la v1 est le premier format
+  const versioned = data.version === SCHEMA_VERSION ? data : { ...createEmptyData(), ...data, version: SCHEMA_VERSION }
+
+  // Complète le catalogue d'exercices à chaque chargement (idempotent, voir
+  // domain/exercises.js#seedDefaultExercises) plutôt que de dépendre d'une
+  // migration ponctuelle : une mise à jour future de la base d'exercices se
+  // propage automatiquement sans bump de version.
+  return { ...versioned, exercises: seedDefaultExercises(versioned.exercises) }
 }

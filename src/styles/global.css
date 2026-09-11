@@ -625,6 +625,11 @@ input.set-row__input {
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
+  /* Évite que l'appui long sur la ligne d'exercice (poignée comprise)
+     déclenche la sélection de texte / le menu contextuel natif iOS. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .prep-exercise__name {
@@ -647,6 +652,9 @@ input.set-row__input {
 .prep-exercise__handle {
   cursor: grab;
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 /* Réordonnance en cours : au-dessus des autres lignes, légèrement mise en

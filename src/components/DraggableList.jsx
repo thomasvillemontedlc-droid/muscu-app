@@ -3,6 +3,26 @@ import { useRef, useState } from 'react'
 const LONG_PRESS_MS = 300
 const MOVE_CANCEL_THRESHOLD = 10
 
+// Sur iOS Safari, les Pointer Events seuls ne suffisent pas à empêcher la
+// sélection de texte / le menu contextuel natif ("Copier / Rechercher") que
+// déclenche un appui long : touch-action + user-select + touch-callout en
+// CSS (voir dragHandleProps.style ci-dessous) réduisent le risque, mais
+// seul un preventDefault() explicite sur les événements tactiles natifs
+// (touchstart/touchmove), attachés en non-passif, l'empêche de façon fiable
+// - un handler React onTouchMove ne peut pas preventDefault (passif par
+// défaut). Ref-callback avec nettoyage (React 19) plutôt qu'un useEffect
+// séparé : la poignée change d'élément DOM à chaque item de la liste.
+function suppressNativeTouchGestures(el) {
+  if (!el) return
+  const prevent = (e) => e.preventDefault()
+  el.addEventListener('touchstart', prevent, { passive: false })
+  el.addEventListener('touchmove', prevent, { passive: false })
+  return () => {
+    el.removeEventListener('touchstart', prevent)
+    el.removeEventListener('touchmove', prevent)
+  }
+}
+
 // Liste réordonnable par appui long + glisser (tactile et souris, via les
 // Pointer Events). `renderItem` reçoit les props à poser sur la "poignée"
 // (l'élément qui déclenche le drag au toucher).
@@ -92,10 +112,16 @@ export function DraggableList({ items, getKey, onReorder, renderItem, className 
           : undefined
 
         const dragHandleProps = {
+          ref: suppressNativeTouchGestures,
           onPointerDown: (e) => handleHandlePointerDown(index, e),
           onPointerMove: handleHandlePointerMove,
           onPointerUp: clearPressTimer,
-          style: { touchAction: 'none' },
+          style: {
+            touchAction: 'none',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            WebkitTouchCallout: 'none',
+          },
         }
 
         return (

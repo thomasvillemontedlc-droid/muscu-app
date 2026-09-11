@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/compress-exercise-images.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/compress-exercise-images.mjs",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"
@@ -20,6 +22,7 @@
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
     "oxlint": "^1.79.0",
+    "sharp": "^0.35.4",
     "vite": "^8.2.2",
     "vite-plugin-pwa": "^1.3.0"
   }

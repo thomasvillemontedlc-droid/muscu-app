@@ -31,7 +31,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+        globPatterns: ['**/*.{js,css,html,png,svg,ico,webp}'],
       },
       // permet de tester le service worker / mode hors-ligne avec `npm run dev`
       devOptions: {

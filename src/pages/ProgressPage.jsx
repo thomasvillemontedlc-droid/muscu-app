@@ -1,17 +1,11 @@
 import { useState } from 'react'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
-import {
-  getBestSetHistory,
-  getCompletedExercisesInPeriod,
-  getPeriodStats,
-  getSessionsInPeriod,
-  getSessionsPerWeek,
-  getWeeklyBestLoad,
-} from '../domain/progress.js'
+import { getPeriodStats, getSessionsInPeriod, getSessionsPerWeek } from '../domain/progress.js'
 import { getCumulativeMuscleVolumes, getMuscleIntensities } from '../domain/muscleHeatmap.js'
+import { getMuscleCoverage, suggestSessionsForMissingMuscles } from '../domain/muscleCoverage.js'
+import { getMuscleLabel } from '../domain/muscleGroups.js'
 import { getMostNeglectedMuscles } from '../domain/recovery.js'
 import { BodyHeatmap, BodyHeatmapLegend } from '../components/BodyHeatmap.jsx'
-import { LoadTrendChart } from '../components/LoadTrendChart.jsx'
 import { MuscleRecoveryRow } from '../components/MuscleRecoveryRow.jsx'
 import { WeeklyBarChart } from '../components/WeeklyBarChart.jsx'
 
@@ -33,15 +27,13 @@ function formatTotalDuration(ms) {
 export function ProgressPage() {
   const { data } = useAppDataContext()
   const [period, setPeriod] = useState('week')
-  const [exerciseId, setExerciseId] = useState('')
 
   const sessionsInPeriod = getSessionsInPeriod(data.sessions, period)
   const stats = getPeriodStats(sessionsInPeriod)
   const weeks = getSessionsPerWeek(data.sessions, period)
-  const exercises = getCompletedExercisesInPeriod(data.sessions, period)
-  const selectedExerciseId = exercises.some((e) => e.id === exerciseId) ? exerciseId : (exercises[0]?.id ?? '')
-  const bestSets = selectedExerciseId ? getBestSetHistory(data.sessions, selectedExerciseId, period) : []
-  const loadTrend = selectedExerciseId ? getWeeklyBestLoad(data.sessions, selectedExerciseId, period) : null
+
+  const coverage = getMuscleCoverage(sessionsInPeriod)
+  const { suggestions, uncovered } = suggestSessionsForMissingMuscles(data.templates, data.exercises, coverage.missing)
 
   const intensities = getMuscleIntensities(getCumulativeMuscleVolumes(sessionsInPeriod))
   const neglected = getMostNeglectedMuscles(data.sessions)
@@ -74,48 +66,51 @@ export function ProgressPage() {
       </section>
 
       <section className="progress-section">
-        <h2>Par exercice</h2>
-        {exercises.length === 0 ? (
-          <p className="empty-state">Aucun exercice complété sur cette période.</p>
+        <h2>Groupes musculaires travaillés</h2>
+        {coverage.worked.length === 0 ? (
+          <p className="empty-state">Aucun muscle travaillé sur cette période.</p>
+        ) : (
+          <ul className="muscle-coverage-list">
+            {coverage.worked.map((id) => (
+              <li key={id}>{getMuscleLabel(id)}</li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="progress-section">
+        <h2>Muscles non sollicités</h2>
+        {coverage.missing.length === 0 ? (
+          <p className="empty-state">Tous les groupes musculaires ont été travaillés sur cette période.</p>
         ) : (
           <>
-            <label className="prep-field">
-              <span>Exercice</span>
-              <select
-                className="prep-field__select"
-                value={selectedExerciseId}
-                onChange={(e) => setExerciseId(e.target.value)}
-              >
-                {exercises.map((exercise) => (
-                  <option key={exercise.id} value={exercise.id}>
-                    {exercise.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <ul className="muscle-coverage-list muscle-coverage-list--missing">
+              {coverage.missing.map((id) => (
+                <li key={id}>{getMuscleLabel(id)}</li>
+              ))}
+            </ul>
 
-            {loadTrend && <LoadTrendChart weeks={loadTrend.weeks} unit={loadTrend.unit} />}
-
-            <div className="progress-table-wrap">
-              <table className="progress-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Charge</th>
-                    <th>Répétitions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bestSets.map((row, i) => (
-                    <tr key={i}>
-                      <td>{new Date(row.date).toLocaleDateString('fr-FR')}</td>
-                      <td>{row.unit === 'time' ? '—' : `${row.weight}kg`}</td>
-                      <td>{row.unit === 'time' ? `${row.reps}s` : row.reps}</td>
-                    </tr>
+            {suggestions.length > 0 && (
+              <div className="muscle-coverage-suggestions">
+                <p className="progress-section__hint">Séances existantes qui couvrent le mieux ces manques :</p>
+                <ul>
+                  {suggestions.map(({ template, covers }) => (
+                    <li key={template.id}>
+                      <span className="muscle-coverage-suggestions__name">{template.name}</span>
+                      <span className="muscle-coverage-suggestions__covers">
+                        {covers.map((c) => c.label).join(', ')}
+                      </span>
+                    </li>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </ul>
+              </div>
+            )}
+
+            {uncovered.length > 0 && (
+              <p className="progress-section__hint">
+                Aucune séance existante ne couvre : {uncovered.map((c) => c.label).join(', ')}.
+              </p>
+            )}
           </>
         )}
       </section>

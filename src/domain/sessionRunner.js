@@ -142,6 +142,25 @@ export function validateCurrentSet(sessions, sessionId) {
   })
 }
 
+// Coupe court au repos en cours, pour ceux qui veulent enchaîner plus tôt.
+// Enregistre quand même le temps de repos réellement pris sur la série qui
+// l'a déclenché (via closeOutPendingRest), comme une fin de repos normale —
+// seulement plus courte que la durée programmée.
+export function skipRest(sessions, sessionId) {
+  const session = getSessionById(sessions, sessionId)
+  if (!session || session.restStartedAt == null) return sessions
+
+  const entries = closeOutPendingRest(session, session.entries)
+
+  return updateSession(sessions, sessionId, {
+    entries,
+    restStartedAt: null,
+    restUntil: null,
+    pendingRestExerciseId: null,
+    pendingRestSetIndex: null,
+  })
+}
+
 // Revient à la série précédente du même exercice pour corriger une valeur
 // mal saisie — ne touche à aucune donnée, déplace juste le curseur.
 export function goToPreviousSet(sessions, sessionId) {

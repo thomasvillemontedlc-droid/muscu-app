@@ -1020,9 +1020,10 @@ input.set-row__input {
   color: var(--color-danger);
 }
 
-/* Écran de repos "dominant" (voir ExerciseView.jsx) : le chrono doit être
-   le seul élément fort de l'écran, rien d'autre ne doit lui faire
-   concurrence. */
+/* Écran de repos "dominant" (voir ExerciseView.jsx) : le chrono garde sa
+   taille et son espace dédié (flex:1, seul élément qui grandit), rien
+   d'autre ne l'affaiblit — mais le prochain exercice reste visible en
+   grand au-dessus, pour ne pas avoir à deviner sur quoi enchaîner. */
 .rest-page {
   display: flex;
   flex-direction: column;
@@ -1041,10 +1042,37 @@ input.set-row__input {
   font-size: 5.5rem;
 }
 
-.rest-page__next {
+.rest-page__next-label {
   text-align: center;
   color: var(--color-muted);
-  margin: 0 0 8px;
+  font-size: 0.85rem;
+  margin: 8px 0 0;
+}
+
+.rest-page__next-name {
+  text-align: center;
+  font-size: 1.6rem;
+  margin: 2px 0 0;
+}
+
+.rest-page__set-detail {
+  text-align: center;
+  color: var(--color-muted);
+  margin: 0 0 4px;
+}
+
+/* Volontairement discret : passer le repos est un raccourci pour qui est
+   pressé, pas une action mise en avant à côté de "Passer le repos" nulle
+   part ailleurs dans l'app (le repos s'arrête normalement tout seul). */
+.rest-page__skip {
+  display: block;
+  margin: 0 auto 8px;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  text-decoration: underline;
 }
 
 .exercise-progress {
@@ -1627,68 +1655,59 @@ input.routine-runner__item-duration {
   white-space: nowrap;
 }
 
-.load-trend-chart {
+
+.muscle-coverage-list {
   display: flex;
-  align-items: flex-end;
-  gap: 4px;
-  height: 140px;
-  padding-top: 20px;
-  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 8px;
 }
 
-.load-trend-chart__col {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
-  height: 100%;
+.muscle-coverage-list li {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  background: var(--color-surface);
 }
 
-.load-trend-chart__value {
-  font-size: 0.7rem;
-  color: var(--color-muted);
-  margin-bottom: 2px;
+/* Mis en évidence séparément du reste (voir la demande) : bordure et texte
+   dans la couleur "danger" existante, pas pour signaler une erreur mais
+   pour attirer l'œil sur ce qui manque. */
+.muscle-coverage-list--missing li {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
 }
 
-.load-trend-chart__bar {
-  width: 100%;
-  background: var(--color-primary);
-  border-radius: 4px 4px 0 0;
-}
-
-.load-trend-chart__label {
-  font-size: 0.6rem;
-  color: var(--color-muted);
+.muscle-coverage-suggestions {
   margin-top: 4px;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  white-space: nowrap;
 }
 
-.progress-table-wrap {
-  overflow-x: auto;
+.muscle-coverage-suggestions ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
 }
 
-.progress-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
+.muscle-coverage-suggestions li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-border);
 }
 
-.progress-table th,
-.progress-table td {
-  padding: 8px 6px;
-  text-align: center;
-  border-bottom: 1px solid var(--color-border);
-  white-space: nowrap;
-}
-
-.progress-table th {
-  color: var(--color-muted);
+.muscle-coverage-suggestions__name {
   font-weight: 600;
-  font-size: 0.8rem;
+}
+
+.muscle-coverage-suggestions__covers {
+  color: var(--color-muted);
+  font-size: 0.85rem;
 }
 
 .muscle-recovery-list {

@@ -1,4 +1,3 @@
-import { getExerciseUnit } from './muscleGroups.js'
 import { getSessionStatus } from './sessions.js'
 
 // Jours en arrière pour chaque option de période "glissante" de l'onglet
@@ -48,8 +47,7 @@ function getWeekStart(date) {
 
 // Semaines (lundi à lundi) de la plus ancienne concernée par la période à la
 // semaine en cours, une entrée même pour les semaines sans donnée (`value`
-// vaut alors undefined) : partagé par getSessionsPerWeek et
-// getWeeklyBestLoad pour que leurs graphiques s'alignent sur le même axe.
+// vaut alors undefined), pour le graphique de getSessionsPerWeek.
 function buildWeeklySeries(periodKey, valuesByWeekKey) {
   const currentWeekStart = getWeekStart(new Date())
   const cutoff = getPeriodCutoff(periodKey)
@@ -82,72 +80,3 @@ export function getSessionsPerWeek(sessions, periodKey) {
   return buildWeeklySeries(periodKey, counts).map(({ weekStart, value }) => ({ weekStart, count: value ?? 0 }))
 }
 
-// {id, name} de chaque exercice effectivement complété au moins une fois
-// sur la période, triés par nom.
-export function getCompletedExercisesInPeriod(sessions, periodKey) {
-  const scoped = getSessionsInPeriod(sessions, periodKey)
-  const names = new Map()
-
-  for (const session of scoped) {
-    const completedIds = session.completedExerciseIds ?? []
-    for (const entry of session.entries) {
-      if (completedIds.includes(entry.exerciseId) && !names.has(entry.exerciseId)) {
-        names.set(entry.exerciseId, entry.exerciseName)
-      }
-    }
-  }
-
-  return [...names.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name))
-}
-
-function getSetMetric(set, unit) {
-  return unit === 'time' ? set.reps : set.weight
-}
-
-function getBestSet(sets, unit) {
-  return sets.reduce((best, set) => (!best || getSetMetric(set, unit) > getSetMetric(best, unit) ? set : best), null)
-}
-
-// La meilleure série de chaque séance où cet exercice a été complété sur la
-// période (charge max, ou durée max pour un exercice "au temps"), du plus
-// récent au plus ancien.
-export function getBestSetHistory(sessions, exerciseId, periodKey) {
-  const scoped = getSessionsInPeriod(sessions, periodKey)
-  const rows = []
-
-  for (const session of scoped) {
-    const completedIds = session.completedExerciseIds ?? []
-    if (!completedIds.includes(exerciseId)) continue
-
-    const entry = session.entries.find((e) => e.exerciseId === exerciseId)
-    if (!entry) continue
-
-    const unit = getExerciseUnit(entry.exerciseName)
-    const best = getBestSet(entry.sets, unit)
-    if (!best) continue
-
-    rows.push({ date: session.date, weight: best.weight, reps: best.reps, unit })
-  }
-
-  return rows.sort((a, b) => b.date.localeCompare(a.date))
-}
-
-// Meilleure charge (ou durée, pour un exercice "au temps") par semaine sur
-// la période, pour le graphique d'évolution sous le sélecteur d'exercice de
-// l'onglet Progression : une entrée par semaine, `value` à undefined si
-// aucune séance cette semaine-là (trou dans le graphique plutôt qu'une
-// chute trompeuse à zéro).
-export function getWeeklyBestLoad(sessions, exerciseId, periodKey) {
-  const rows = getBestSetHistory(sessions, exerciseId, periodKey)
-  const unit = rows[0]?.unit ?? 'weight'
-  const bestByWeek = new Map()
-
-  for (const row of rows) {
-    const key = getWeekStart(row.date).getTime()
-    const value = row.unit === 'time' ? row.reps : row.weight
-    const current = bestByWeek.get(key)
-    if (current == null || value > current) bestByWeek.set(key, value)
-  }
-
-  return { unit, weeks: buildWeeklySeries(periodKey, bestByWeek) }
-}

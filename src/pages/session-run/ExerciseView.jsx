@@ -7,6 +7,7 @@ import {
   finishCurrentExerciseEarly,
   goToExerciseList,
   goToPreviousSet,
+  skipRest,
   validateCurrentSet,
 } from '../../domain/sessionRunner.js'
 import { unlockAudio } from '../../lib/alarm.js'
@@ -103,6 +104,10 @@ export function ExerciseView({ session, data, setData }) {
     setData({ ...data, sessions: goToExerciseList(data.sessions, session.id) })
   }
 
+  function handleSkipRest() {
+    setData({ ...data, sessions: skipRest(data.sessions, session.id) })
+  }
+
   const navButtons = (
     <div className="exercise-active__nav">
       {session.currentSetIndex > 0 && (
@@ -119,17 +124,25 @@ export function ExerciseView({ session, data, setData }) {
   // Pendant le repos (décompte encore en cours, pas le dépassement une fois
   // à zéro), le chrono doit rester l'élément dominant de l'écran : on
   // masque le reste (image, tableau, saisie) plutôt que de le faire
-  // cohabiter avec un chrono réduit. Dès le dépassement, l'écran normal
-  // revient pour permettre d'enchaîner sur la série suivante.
+  // cohabiter avec un chrono réduit. Le nom du prochain exercice est
+  // également mis en avant (gros, au-dessus du chrono, voir CSS) sans lui
+  // faire concurrence : le chrono garde sa taille et son espace dédié
+  // (flex:1). Dès le dépassement, l'écran normal revient pour permettre
+  // d'enchaîner sur la série suivante.
   if (timer && !timer.isOvershoot) {
     return (
       <div className="page rest-page">
         {navButtons}
         <ExerciseProgressBar session={session} />
+        <p className="rest-page__next-label">Prochain exercice</p>
+        <h2 className="rest-page__next-name">{entry.exerciseName}</h2>
         <RestBanner timer={timer} />
-        <p className="rest-page__next">
-          Prochain : {entry.exerciseName} — série {session.currentSetIndex + 1} / {entry.sets.length}
+        <p className="rest-page__set-detail">
+          Série {session.currentSetIndex + 1} / {entry.sets.length}
         </p>
+        <button type="button" className="rest-page__skip" onClick={handleSkipRest}>
+          Passer le repos
+        </button>
       </div>
     )
   }

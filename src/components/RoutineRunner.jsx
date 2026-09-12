@@ -6,7 +6,10 @@ import { NumberField } from './NumberField.jsx'
 // Déroulé générique d'une petite liste de mouvements chronométrés, un par
 // un (échauffement avant séance, étirements en fin de séance) : liste
 // modifiable avant de lancer (durée, ajout, retrait), puis défilement
-// automatique d'un mouvement à l'autre une fois le temps écoulé.
+// automatique d'un mouvement à l'autre une fois le temps écoulé — ou
+// manuel via "Passer ce mouvement" (goToNext), sans attendre le décompte
+// ni annuler le reste de la routine (skipLabel/onDone abandonnent
+// TOUTE la routine, c'est différent).
 export function RoutineRunner({ title, hint, initialItems, suggestions = [], onDone, skipLabel = 'Passer' }) {
   const [items, setItems] = useState(initialItems)
   const [running, setRunning] = useState(false)
@@ -85,7 +88,7 @@ export function RoutineRunner({ title, hint, initialItems, suggestions = [], onD
         {current.muscleLabel && <p className="routine-runner__muscle">{current.muscleLabel}</p>}
         <p className="routine-runner__name">{current.name}</p>
         <p className="routine-runner__timer">{current.durationSeconds > 0 ? `${remaining}s` : '—'}</p>
-        <BigButton onClick={goToNext}>Suivant</BigButton>
+        <BigButton onClick={goToNext}>Passer ce mouvement</BigButton>
         <button
           type="button"
           className="subtle-button"

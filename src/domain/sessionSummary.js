@@ -1,4 +1,5 @@
 import { getLastPerformance } from './history.js'
+import { getExerciseUnit } from './muscleGroups.js'
 
 // Séance précédente avec le même nom de template, pour comparer la
 // progression (fonctionnalité "récap de fin de séance").
@@ -12,12 +13,16 @@ export function getPreviousSessionByTemplate(sessions, currentSession) {
   )
 }
 
-function getMaxWeight(sets) {
-  return sets.reduce((max, set) => Math.max(max, set.weight), 0)
+// Charge max pour un exercice classique, durée max tenue (secondes, stockées
+// dans "reps") pour un exercice "au temps" — voir domain/muscleGroups.js#getExerciseUnit.
+function getMaxMetric(sets, unit) {
+  return sets.reduce((max, set) => Math.max(max, unit === 'time' ? set.reps : set.weight), 0)
 }
 
-function getVolume(sets) {
-  return sets.reduce((total, set) => total + set.weight * set.reps, 0)
+// Équivalent du "volume" (poids × reps) pour un exercice au temps : la durée
+// totale tenue sur la série, plutôt qu'une charge qui n'a pas de sens ici.
+function getMetricVolume(sets, unit) {
+  return sets.reduce((total, set) => total + (unit === 'time' ? set.reps : set.weight * set.reps), 0)
 }
 
 // Séances créées avant le suivi de complétion (completedExerciseIds absent)
@@ -32,63 +37,28 @@ function getCompletedCounts(session) {
   }
 }
 
-// Volume total (poids × reps, toutes séries) des exercices complétés d'une
-// séance. Ignore les exercices jamais commencés : leurs séries ne sont que
-// le pré-remplissage de la dernière fois, pas du travail réellement fait.
-export function getSessionVolume(session) {
-  const completedIds = session.completedExerciseIds ?? session.entries.map((e) => e.exerciseId)
-  return session.entries
-    .filter((e) => completedIds.includes(e.exerciseId))
-    .reduce((total, e) => total + getVolume(e.sets), 0)
-}
-
 // Même code couleur up/neutral/down que getExerciseTrend, appliqué à un
-// écart numérique (volume total de séance) plutôt qu'à un exercice.
+// écart numérique plutôt qu'à un exercice.
 export function getTrendFromDiff(diff) {
   if (diff == null || diff === 0) return 'neutral'
   return diff > 0 ? 'up' : 'down'
 }
 
-// Comparaison du volume total avec la séance précédente du même template.
-export function getVolumeProgress(sessions, session) {
-  const volume = getSessionVolume(session)
-  const previous = getPreviousSessionByTemplate(sessions, session)
-  if (!previous) return { volume, previousVolume: null, diff: null, percent: null }
-
-  const previousVolume = getSessionVolume(previous)
-  const diff = volume - previousVolume
-  const percent = previousVolume > 0 ? Math.round((diff / previousVolume) * 100) : null
-
-  return { volume, previousVolume, diff, percent }
-}
-
-// 'up' si la charge max OU le volume de CET exercice a progressé par
-// rapport à la fois précédente, 'down' si l'un des deux a reculé (et
-// aucun n'a progressé), 'neutral' sinon (identique ou pas de comparaison).
-export function getExerciseTrend(previousEntry, currentEntry) {
+// 'up' si la charge (ou la durée, pour un exercice au temps) max OU le
+// volume de CET exercice a progressé par rapport à la fois précédente,
+// 'down' si l'un des deux a reculé (et aucun n'a progressé), 'neutral'
+// sinon (identique ou pas de comparaison).
+export function getExerciseTrend(previousEntry, currentEntry, unit = 'reps') {
   if (!previousEntry) return 'neutral'
 
-  const currentMax = getMaxWeight(currentEntry.sets)
-  const previousMax = getMaxWeight(previousEntry.sets)
-  const currentVolume = getVolume(currentEntry.sets)
-  const previousVolume = getVolume(previousEntry.sets)
+  const currentMax = getMaxMetric(currentEntry.sets, unit)
+  const previousMax = getMaxMetric(previousEntry.sets, unit)
+  const currentVolume = getMetricVolume(currentEntry.sets, unit)
+  const previousVolume = getMetricVolume(previousEntry.sets, unit)
 
   if (currentMax > previousMax || currentVolume > previousVolume) return 'up'
   if (currentMax < previousMax || currentVolume < previousVolume) return 'down'
   return 'neutral'
-}
-
-// Tendance par exercice pour une séance entière (tous les exercices de
-// session.entries, pas seulement ceux complétés) — sert à l'Historique, où
-// chaque séance passée affiche tous ses exercices tels quels.
-export function getEntryTrends(sessions, session) {
-  const previous = getPreviousSessionByTemplate(sessions, session)
-  const trends = {}
-  for (const entry of session.entries) {
-    const previousEntry = previous?.entries.find((e) => e.exerciseId === entry.exerciseId)
-    trends[entry.exerciseId] = getExerciseTrend(previousEntry, entry)
-  }
-  return trends
 }
 
 // Progression au niveau de la séance entière (pas un exercice précis) :
@@ -118,9 +88,8 @@ export function getCompletionProgress(sessions, session) {
 }
 
 // Durée, nombre de séries et de répétitions totales des exercices complétés
-// d'une séance, en plus du volume déjà calculé par getSessionVolume.
-// Séances créées avant l'ajout de startedAt/finishedAt : durée non
-// disponible (null) plutôt qu'une estimation fausse.
+// d'une séance. Séances créées avant l'ajout de startedAt/finishedAt : durée
+// non disponible (null) plutôt qu'une estimation fausse.
 export function getSessionStats(session) {
   const completedIds = session.completedExerciseIds ?? session.entries.map((e) => e.exerciseId)
   const completedEntries = session.entries.filter((e) => completedIds.includes(e.exerciseId))
@@ -130,17 +99,17 @@ export function getSessionStats(session) {
     durationMs: session.startedAt && session.finishedAt ? session.finishedAt - session.startedAt : null,
     totalSets: allSets.length,
     totalReps: allSets.reduce((total, set) => total + set.reps, 0),
-    totalVolume: getSessionVolume(session),
   }
 }
 
 // Un item par exercice effectivement complété dans la séance, avec la
-// progression en kg et % de charge max par rapport à la DERNIÈRE FOIS que CET
-// EXERCICE a été fait (tous templates confondus, via getLastPerformance) —
-// pas seulement la dernière fois avec ce même template : un exercice partagé
-// entre plusieurs séances types doit se comparer à sa propre dernière
-// occurrence. Le ou les exercices à la plus forte progression (%) sont
-// marqués bestProgress pour être mis en avant à l'affichage.
+// progression par rapport à la DERNIÈRE FOIS que CET EXERCICE a été fait
+// (tous templates confondus, via getLastPerformance) — pas seulement la
+// dernière fois avec ce même template : un exercice partagé entre plusieurs
+// séances types doit se comparer à sa propre dernière occurrence. Le ou les
+// exercices à la plus forte progression (%) sont marqués bestProgress pour
+// être mis en avant à l'affichage. progressKg est en kg pour un exercice
+// classique, en secondes pour un exercice "au temps" (voir progressUnit).
 export function buildSessionSummary(sessions, session) {
   const otherSessions = sessions.filter((s) => s.id !== session.id)
   const completedIds = session.completedExerciseIds ?? []
@@ -148,9 +117,10 @@ export function buildSessionSummary(sessions, session) {
   const items = session.entries
     .filter((entry) => completedIds.includes(entry.exerciseId))
     .map((entry) => {
+      const unit = getExerciseUnit(entry.exerciseName)
       const last = getLastPerformance(otherSessions, entry.exerciseId)
-      const currentMax = getMaxWeight(entry.sets)
-      const previousMax = last ? getMaxWeight(last.sets) : null
+      const currentMax = getMaxMetric(entry.sets, unit)
+      const previousMax = last ? getMaxMetric(last.sets, unit) : null
 
       const progressKg = previousMax !== null ? currentMax - previousMax : null
       const progressPercent =
@@ -162,8 +132,9 @@ export function buildSessionSummary(sessions, session) {
         sets: entry.sets,
         feeling: entry.feeling ?? null,
         progressKg,
+        progressUnit: unit === 'time' ? 's' : 'kg',
         progressPercent,
-        trend: getExerciseTrend(last ? { sets: last.sets } : null, entry),
+        trend: getExerciseTrend(last ? { sets: last.sets } : null, entry, unit),
       }
     })
 

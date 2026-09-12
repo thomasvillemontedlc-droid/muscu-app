@@ -2,16 +2,13 @@ import { useState } from 'react'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { getSessionsGroupedByDate, getWeekActivity } from '../domain/history.js'
 import { deleteSession, getSessionStatus } from '../domain/sessions.js'
-import { getEntryTrends, getTrendFromDiff, getVolumeProgress } from '../domain/sessionSummary.js'
+import { buildSessionSummary, getTrendFromDiff } from '../domain/sessionSummary.js'
 import { getMuscleIntensities, getMuscleVolumes, hasAnyIntensity } from '../domain/muscleHeatmap.js'
+import { formatSet } from '../lib/formatSet.js'
 import { TrendDot } from '../components/TrendDot.jsx'
 import { BodyHeatmap, BodyHeatmapLegend } from '../components/BodyHeatmap.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { getFeelingLabel } from '../components/FeelingPicker.jsx'
-
-function formatVolume(kg) {
-  return `${kg.toLocaleString('fr-FR')}kg`
-}
 
 const STATUS_LABELS = {
   done: '✓ Faite',
@@ -83,8 +80,9 @@ export function HistoryPage() {
 
           {group.sessions.map((session) => {
             const status = getSessionStatus(session)
-            const trends = getEntryTrends(data.sessions, session)
-            const volumeProgress = getVolumeProgress(data.sessions, session)
+            const summaryByExerciseId = new Map(
+              buildSessionSummary(data.sessions, session).map((item) => [item.exerciseId, item]),
+            )
             const isHeatmapExpanded = expandedHeatmaps.has(session.id)
             const intensities = getMuscleIntensities(getMuscleVolumes(session))
             const hasHeatmap = hasAnyIntensity(intensities)
@@ -98,39 +96,38 @@ export function HistoryPage() {
                   </span>
                 </div>
 
-                <p className="history-session__volume">
-                  Volume : {formatVolume(volumeProgress.volume)}
-                  {volumeProgress.diff != null && (
-                    <span className={`volume-diff volume-diff--${getTrendFromDiff(volumeProgress.diff)}`}>
-                      {' '}
-                      ({volumeProgress.diff >= 0 ? '+' : ''}
-                      {formatVolume(volumeProgress.diff)}
-                      {volumeProgress.percent != null
-                        ? `, ${volumeProgress.diff >= 0 ? '+' : ''}${volumeProgress.percent}%`
-                        : ''}
-                      )
-                    </span>
-                  )}
-                </p>
-
                 <ul className="history-session__exercises">
-                  {session.entries.map((entry) => (
-                    <li key={entry.exerciseId}>
-                      <span className="history-session__exercise-name">
-                        <TrendDot trend={trends[entry.exerciseId]} />
-                        {entry.exerciseName}
-                      </span>
-                      <span className="history-session__sets">
-                        {entry.sets.map((s) => `${s.weight}kg×${s.reps}`).join(', ')}
-                      </span>
-                      {entry.feeling && (entry.feeling.value || entry.feeling.note) && (
-                        <span className="history-session__feeling">
-                          {getFeelingLabel(entry.feeling.value)}
-                          {entry.feeling.note ? ` — ${entry.feeling.note}` : ''}
+                  {session.entries.map((entry) => {
+                    const progress = summaryByExerciseId.get(entry.exerciseId)
+                    return (
+                      <li key={entry.exerciseId}>
+                        <span className="history-session__exercise-name">
+                          <TrendDot trend={progress?.trend ?? 'neutral'} />
+                          {entry.exerciseName}
                         </span>
-                      )}
-                    </li>
-                  ))}
+                        <span className="history-session__sets">
+                          {entry.sets.map((s) => formatSet(s, entry.exerciseName)).join(', ')}
+                        </span>
+                        {progress && progress.progressKg != null && (
+                          <span className={`history-session__progress volume-diff--${getTrendFromDiff(progress.progressKg)}`}>
+                            {progress.progressKg > 0 ? '+' : ''}
+                            {progress.progressKg}
+                            {progress.progressUnit}
+                            {progress.progressPercent != null
+                              ? ` (${progress.progressKg > 0 ? '+' : ''}${progress.progressPercent}%)`
+                              : ''}{' '}
+                            vs dernière fois
+                          </span>
+                        )}
+                        {entry.feeling && (entry.feeling.value || entry.feeling.note) && (
+                          <span className="history-session__feeling">
+                            {getFeelingLabel(entry.feeling.value)}
+                            {entry.feeling.note ? ` — ${entry.feeling.note}` : ''}
+                          </span>
+                        )}
+                      </li>
+                    )
+                  })}
                 </ul>
 
                 {hasHeatmap && (

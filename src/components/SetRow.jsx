@@ -1,3 +1,5 @@
+import { getExerciseUnit } from '../domain/muscleGroups.js'
+import { DurationField } from './DurationField.jsx'
 import { NumberField } from './NumberField.jsx'
 import { WeightField } from './WeightField.jsx'
 
@@ -16,6 +18,8 @@ export function SetRow({
   onChangeBarWeight,
   onRemove,
 }) {
+  const isTimeBased = getExerciseUnit(exercise?.name) === 'time'
+
   return (
     <div className="set-row">
       <div className="set-row__header">
@@ -32,16 +36,29 @@ export function SetRow({
 
       <div className="set-row__fields">
         <label className="set-row__field">
-          <span>Répétitions</span>
-          <NumberField
-            className="set-row__input"
-            value={reps}
-            onChange={onChangeReps}
-            aria-label={`Répétitions série ${index + 1}`}
-          />
+          <span>{isTimeBased ? 'Durée' : 'Répétitions'}</span>
+          {isTimeBased ? (
+            <DurationField
+              className="set-row__input"
+              value={reps}
+              onChange={onChangeReps}
+              aria-label={`Durée série ${index + 1} en secondes`}
+            />
+          ) : (
+            <NumberField
+              className="set-row__input"
+              value={reps}
+              onChange={onChangeReps}
+              aria-label={`Répétitions série ${index + 1}`}
+            />
+          )}
         </label>
         <label className="set-row__field">
-          <span>Poids (kg)</span>
+          {/* Voir ExerciseView.jsx : en mode "par côté", WeightField affiche
+              déjà ses propres libellés (Barre / Par côté), donc ce
+              "Poids (kg)" en plus décalerait le champ vers le bas par
+              rapport à Répétitions. */}
+          {(exercise?.weightInputMode ?? 'total') !== 'perSide' && <span>Poids (kg)</span>}
           <WeightField
             className="set-row__input"
             exercise={exercise}

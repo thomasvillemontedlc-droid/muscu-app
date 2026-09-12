@@ -536,10 +536,11 @@ input.set-row__input {
   flex-shrink: 0;
 }
 
-.history-session__volume {
-  color: var(--color-muted);
-  font-size: 0.9rem;
-  margin: 4px 0 8px;
+.history-session__progress {
+  flex-basis: 100%;
+  text-align: right;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .history-session__sets {
@@ -834,7 +835,10 @@ input.set-row__input {
 .weight-field--per-side {
   background: var(--color-surface);
   border-radius: var(--radius);
-  padding: 8px;
+  /* Pas de padding en haut : le premier champ (Barre/Par côté ou Poids par
+     haltère) doit démarrer au même niveau que le champ Répétitions à côté,
+     que ce dernier n'a pas de conteneur avec padding. */
+  padding: 0 8px 8px;
 }
 
 .weight-field__row {
@@ -852,7 +856,7 @@ input.set-row__input {
   display: block;
   color: var(--color-muted);
   font-size: 0.8rem;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .weight-field__total {
@@ -860,6 +864,37 @@ input.set-row__input {
   font-size: 0.9rem;
   font-weight: 600;
   text-align: center;
+}
+
+.duration-field__input-row {
+  position: relative;
+}
+
+.duration-field__unit {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-muted);
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+.duration-field__toggle {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  text-decoration: underline;
+  padding: 4px 0;
+}
+
+.duration-field__toggle--active {
+  color: var(--color-primary);
+  font-weight: 600;
 }
 
 .exercise-active__input {
@@ -1169,6 +1204,113 @@ input.set-row__input {
 .stretch-suggestions__hold {
   color: var(--color-muted);
   margin-left: auto;
+}
+
+.routine-runner {
+  padding: 16px;
+}
+
+.routine-runner__hint {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  margin: 0 0 12px;
+}
+
+.routine-runner__list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+}
+
+.routine-runner__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.routine-runner__item:first-child {
+  border-top: none;
+}
+
+.routine-runner__item-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.routine-runner__item-muscle {
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.routine-runner__item-name {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.routine-runner__item-duration {
+  width: 56px;
+  text-align: center;
+}
+
+.routine-runner__item-remove {
+  border: none;
+  background: transparent;
+  color: var(--color-danger);
+  font-size: 1rem;
+  padding: 4px 8px;
+}
+
+.routine-runner__add {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.routine-runner__add-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0 12px;
+  min-height: var(--touch-min);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.routine-runner__add-button {
+  min-height: var(--touch-min);
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.routine-runner__progress {
+  color: var(--color-muted);
+  margin: 0 0 8px;
+}
+
+.routine-runner__muscle {
+  font-weight: 600;
+  margin: 0;
+}
+
+.routine-runner__name {
+  font-size: 1.2rem;
+  margin: 4px 0 16px;
+}
+
+.routine-runner__timer {
+  font-size: 3rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 16px 0;
 }
 
 .muscle-map-section {

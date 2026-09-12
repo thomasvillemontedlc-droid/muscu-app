@@ -19,9 +19,9 @@ function addEntryVolume(volumes, entry) {
   return volumes
 }
 
-// Entrées effectivement complétées d'une séance (mêmes règles que
-// getSessionVolume dans sessionSummary.js : les exercices jamais commencés
-// ne comptent pas, ce ne sont que des séries pré-remplies non faites).
+// Entrées effectivement complétées d'une séance (même règle qu'ailleurs
+// dans l'app : les exercices jamais commencés ne comptent pas, ce ne sont
+// que des séries pré-remplies non faites).
 function getCompletedEntries(session) {
   const completedIds = session.completedExerciseIds ?? session.entries.map((e) => e.exerciseId)
   return session.entries.filter((e) => completedIds.includes(e.exerciseId))

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getOrCreateExercise, setExerciseBarWeight, setExerciseWeightMode } from '../../domain/exercises.js'
 import { getExercisesUsedInTemplate } from '../../domain/history.js'
@@ -9,13 +10,16 @@ import {
   setRestSeconds,
   startSession,
 } from '../../domain/sessionRunner.js'
+import { getPlannedMusclesWorked, getWarmupSuggestions } from '../../domain/warmup.js'
 import { DraggableList } from '../../components/DraggableList.jsx'
 import { ExercisePicker } from '../../components/ExercisePicker.jsx'
 import { NumberField } from '../../components/NumberField.jsx'
+import { RoutineRunner } from '../../components/RoutineRunner.jsx'
 import { SetRow } from '../../components/SetRow.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
 
 export function PrepView({ session, data, setData }) {
+  const [showWarmup, setShowWarmup] = useState(false)
   const otherSessions = data.sessions.filter((s) => s.id !== session.id)
   const suggestedIds = getExercisesUsedInTemplate(otherSessions, session.templateName)
 
@@ -49,16 +53,22 @@ export function PrepView({ session, data, setData }) {
     setData({ ...data, sessions: removeSet(data.sessions, session.id, exerciseId, setIndex) })
   }
 
+  // Forme fonctionnelle : WeightField peut appeler onBarWeightChange puis
+  // onChange dans le même geste (mode "par côté"), donc deux setData
+  // synchrones coup sur coup. Avec un objet littéral, le second écraserait
+  // le premier (les deux partent du même `data` figé) ; la forme
+  // fonctionnelle applique chaque mise à jour sur le résultat de la
+  // précédente.
   function handleUpdateSet(exerciseId, setIndex, changes) {
-    setData({ ...data, sessions: updateSet(data.sessions, session.id, exerciseId, setIndex, changes) })
+    setData((current) => ({ ...current, sessions: updateSet(current.sessions, session.id, exerciseId, setIndex, changes) }))
   }
 
   function handleWeightModeChange(exerciseId, weightInputMode) {
-    setData({ ...data, exercises: setExerciseWeightMode(data.exercises, exerciseId, weightInputMode) })
+    setData((current) => ({ ...current, exercises: setExerciseWeightMode(current.exercises, exerciseId, weightInputMode) }))
   }
 
   function handleBarWeightChange(exerciseId, barWeight) {
-    setData({ ...data, exercises: setExerciseBarWeight(data.exercises, exerciseId, barWeight) })
+    setData((current) => ({ ...current, exercises: setExerciseBarWeight(current.exercises, exerciseId, barWeight) }))
   }
 
   function handleStartingExerciseChange(e) {
@@ -85,6 +95,21 @@ export function PrepView({ session, data, setData }) {
 
   function handleStart() {
     setData({ ...data, sessions: startSession(data.sessions, session.id) })
+  }
+
+  // L'échauffement est un aller simple avant la séance : ni lancé ni passé
+  // ne modifient la phase de la séance elle-même (toujours 'prep' jusqu'à
+  // handleStart), c'est un simple écran intercalaire côté état local.
+  if (showWarmup) {
+    return (
+      <RoutineRunner
+        title="Échauffement"
+        hint="Suggestions générales, pas un échauffement personnalisé."
+        initialItems={getWarmupSuggestions(getPlannedMusclesWorked(session))}
+        skipLabel="Passer l'échauffement"
+        onDone={handleStart}
+      />
+    )
   }
 
   return (
@@ -188,7 +213,7 @@ export function PrepView({ session, data, setData }) {
             </div>
           </div>
 
-          <BigButton onClick={handleStart}>Commencer la séance</BigButton>
+          <BigButton onClick={() => setShowWarmup(true)}>Commencer la séance</BigButton>
         </>
       )}
     </div>

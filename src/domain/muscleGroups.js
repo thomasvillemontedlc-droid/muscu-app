@@ -289,6 +289,24 @@ export function getExerciseMuscles(exerciseName) {
   return { primary, secondary }
 }
 
+// Exercices mesurés en durée (secondes tenues) plutôt qu'en nombre de
+// répétitions : gainage, suspension, marches... Résolu par clé canonique
+// (comme les alias ci-dessus) pour couvrir aussi les noms équivalents
+// saisis par l'utilisateur (ex. "Gainage" -> gainage-planche).
+const TIME_BASED_EXERCISE_KEYS = new Set([
+  'gainage-planche',
+  'gainage-lateral',
+  'suspension-a-la-barre-dead-hang',
+  'marche-sur-la-pointe-des-pieds',
+  'marche-sur-les-talons',
+  'marche-laterale-avec-elastique',
+])
+
+export function getExerciseUnit(exerciseName) {
+  const key = resolveExerciseKey(exerciseName)
+  return key != null && TIME_BASED_EXERCISE_KEYS.has(key) ? 'time' : 'reps'
+}
+
 // {key, name} de toutes les entrées "canoniques" (hors alias) : sert à
 // peupler le catalogue d'exercices, voir
 // domain/exercises.js#seedDefaultExercises.

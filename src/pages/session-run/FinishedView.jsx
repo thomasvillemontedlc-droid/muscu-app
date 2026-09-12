@@ -1,11 +1,14 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { buildSessionSummary, getCompletionProgress, getSessionStats, getTrendFromDiff } from '../../domain/sessionSummary.js'
 import { getMuscleIntensities, getMuscleVolumes } from '../../domain/muscleHeatmap.js'
 import { getPrimaryMusclesWorked, getStretchSuggestions } from '../../domain/stretches.js'
+import { formatSet } from '../../lib/formatSet.js'
 import { getFeelingLabel } from '../../components/FeelingPicker.jsx'
 import { TrendDot } from '../../components/TrendDot.jsx'
 import { BodyHeatmap, BodyHeatmapLegend } from '../../components/BodyHeatmap.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
+import { RoutineRunner } from '../../components/RoutineRunner.jsx'
 
 function formatRest(totalSeconds) {
   const minutes = Math.floor(totalSeconds / 60)
@@ -26,12 +29,30 @@ function formatDuration(durationMs) {
 
 export function FinishedView({ session, data }) {
   const navigate = useNavigate()
+  const [runningStretches, setRunningStretches] = useState(false)
   const summary = buildSessionSummary(data.sessions, session)
   const completionProgress = getCompletionProgress(data.sessions, session)
   const stats = getSessionStats(session)
   const intensities = getMuscleIntensities(getMuscleVolumes(session))
   const duration = formatDuration(stats.durationMs)
   const stretches = getStretchSuggestions(getPrimaryMusclesWorked(session))
+
+  if (runningStretches) {
+    return (
+      <RoutineRunner
+        title="Étirements"
+        hint="Suggestions générales, pas un programme de récupération personnalisé."
+        initialItems={stretches.map((s) => ({
+          id: s.muscleId,
+          muscleLabel: s.muscleLabel,
+          name: s.name,
+          durationSeconds: s.holdSeconds,
+        }))}
+        skipLabel="Passer les étirements"
+        onDone={() => setRunningStretches(false)}
+      />
+    )
+  }
 
   return (
     <div className="page">
@@ -67,9 +88,7 @@ export function FinishedView({ session, data }) {
               <ul className="session-summary__sets">
                 {item.sets.map((s, i) => (
                   <li key={i}>
-                    <span>
-                      {s.weight}kg×{s.reps}
-                    </span>
+                    <span>{formatSet(s, item.exerciseName)}</span>
                     {s.restTakenSeconds != null && (
                       <span className="session-summary__rest">Repos {formatRest(s.restTakenSeconds)}</span>
                     )}
@@ -80,7 +99,8 @@ export function FinishedView({ session, data }) {
               {item.progressKg != null ? (
                 <p className={`session-summary__progress volume-diff--${getTrendFromDiff(item.progressKg)}`}>
                   {item.progressKg > 0 ? '+' : ''}
-                  {item.progressKg}kg
+                  {item.progressKg}
+                  {item.progressUnit}
                   {item.progressPercent != null
                     ? ` (${item.progressKg > 0 ? '+' : ''}${item.progressPercent}%)`
                     : ''}{' '}
@@ -118,6 +138,9 @@ export function FinishedView({ session, data }) {
               </li>
             ))}
           </ul>
+          <BigButton variant="secondary" onClick={() => setRunningStretches(true)}>
+            Lancer les étirements
+          </BigButton>
         </section>
       )}
 

@@ -16,6 +16,7 @@ import { MuscleRecoveryRow } from '../components/MuscleRecoveryRow.jsx'
 import { WeeklyBarChart } from '../components/WeeklyBarChart.jsx'
 
 const PERIOD_OPTIONS = [
+  { value: 'week', label: 'Cette semaine' },
   { value: '4w', label: '4 dernières semaines' },
   { value: '3m', label: '3 mois' },
   { value: 'all', label: 'Tout' },
@@ -31,7 +32,7 @@ function formatTotalDuration(ms) {
 
 export function ProgressPage() {
   const { data } = useAppDataContext()
-  const [period, setPeriod] = useState('4w')
+  const [period, setPeriod] = useState('week')
   const [exerciseId, setExerciseId] = useState('')
 
   const sessionsInPeriod = getSessionsInPeriod(data.sessions, period)

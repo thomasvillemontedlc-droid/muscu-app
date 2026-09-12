@@ -1,19 +1,27 @@
 import { getExerciseUnit } from './muscleGroups.js'
 import { getSessionStatus } from './sessions.js'
 
-// Nombre de jours en arrière pour chaque option de période de l'onglet
-// Progression, ou null pour "tout" (aucune limite).
-export const PROGRESS_PERIOD_DAYS = {
+// Jours en arrière pour chaque option de période "glissante" de l'onglet
+// Progression. "week" (lundi en cours) et "all" (aucune limite) sont gérés
+// à part dans getPeriodCutoff, ce ne sont pas des fenêtres glissantes.
+const ROLLING_PERIOD_DAYS = {
   '4w': 28,
   '3m': 90,
-  all: null,
+}
+
+// Date de début (incluse) de la période, ou null pour "tout".
+function getPeriodCutoff(periodKey) {
+  if (periodKey === 'week') return getWeekStart(new Date())
+  const days = ROLLING_PERIOD_DAYS[periodKey]
+  if (days == null) return null
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - days)
+  return cutoff
 }
 
 export function getSessionsInPeriod(sessions, periodKey) {
-  const days = PROGRESS_PERIOD_DAYS[periodKey]
-  if (days == null) return sessions
-  const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - days)
+  const cutoff = getPeriodCutoff(periodKey)
+  if (cutoff == null) return sessions
   return sessions.filter((s) => new Date(s.date) >= cutoff)
 }
 
@@ -44,10 +52,10 @@ function getWeekStart(date) {
 // getWeeklyBestLoad pour que leurs graphiques s'alignent sur le même axe.
 function buildWeeklySeries(periodKey, valuesByWeekKey) {
   const currentWeekStart = getWeekStart(new Date())
-  const days = PROGRESS_PERIOD_DAYS[periodKey]
+  const cutoff = getPeriodCutoff(periodKey)
   const firstWeekStart =
-    days != null
-      ? getWeekStart(new Date(Date.now() - days * 24 * 3600 * 1000))
+    cutoff != null
+      ? getWeekStart(cutoff)
       : valuesByWeekKey.size > 0
         ? new Date(Math.min(...valuesByWeekKey.keys()))
         : currentWeekStart

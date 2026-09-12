@@ -15,12 +15,12 @@
 
 /* Thème clair explicite (Réglages > Apparence). */
 :root[data-theme='light'] {
-  --color-bg: #eef1f5;
+  --color-bg: #dcdde1;
   --color-surface: #f7f8fa;
-  --color-surface-2: #e3e6ea;
+  --color-surface-2: #e8e9ec;
   --color-text: #0f172a;
-  --color-muted: #64748b;
-  --color-border: #cdd3db;
+  --color-muted: #5a6270;
+  --color-border: #c5c7cc;
   --color-primary: #16a34a;
   --color-primary-text: #ffffff;
   --color-danger: #dc2626;
@@ -31,12 +31,12 @@
    que si l'OS préfère un thème clair. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
-    --color-bg: #eef1f5;
+    --color-bg: #dcdde1;
     --color-surface: #f7f8fa;
-    --color-surface-2: #e3e6ea;
+    --color-surface-2: #e8e9ec;
     --color-text: #0f172a;
-    --color-muted: #64748b;
-    --color-border: #cdd3db;
+    --color-muted: #5a6270;
+    --color-border: #c5c7cc;
     --color-primary: #16a34a;
     --color-primary-text: #ffffff;
     --color-danger: #dc2626;

@@ -34,11 +34,11 @@ function getDefaultWeightStep(name) {
 
 function computePerSide(total, barWeight) {
   const perSide = (total - barWeight) / 2
-  return perSide > 0 ? Math.round(perSide * 10) / 10 : 0
+  return perSide > 0 ? Math.round(perSide * 100) / 100 : 0
 }
 
 function computeTotal(barWeight, perSide) {
-  return Math.round((barWeight + perSide * 2) * 10) / 10
+  return Math.round((barWeight + perSide * 2) * 100) / 100
 }
 
 // Poids total (mode par défaut) ou décomposé (mode symétrique : barre,

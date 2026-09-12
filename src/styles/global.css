@@ -70,7 +70,9 @@ body {
 
 .app__content {
   flex: 1;
-  padding: 16px 16px calc(var(--touch-min) + 32px);
+  /* padding-top réserve la place de l'icône de thème fixe (voir
+     .theme-toggle-button) pour qu'aucun titre de page ne passe dessous. */
+  padding: calc(env(safe-area-inset-top) + 56px) 16px calc(var(--touch-min) + 32px);
   max-width: 480px;
   width: 100%;
   margin: 0 auto;
@@ -198,10 +200,23 @@ input[type='number']:focus {
   font-weight: 600;
 }
 
-.bottom-nav__theme-toggle {
-  border: none;
-  background: transparent;
-  font-family: inherit;
+/* Icône soleil/lune fixe en haut à droite, visible sur tout écran (voir
+   App.jsx : rendue hors des <Routes>, comme .bottom-nav). safe-area-inset
+   pour ne pas passer sous une encoche/île dynamique. */
+.theme-toggle-button {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 12px);
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 /* Liste des séances types */
@@ -1795,6 +1810,7 @@ input.routine-runner__item-duration {
 
 @media print {
   .bottom-nav,
+  .theme-toggle-button,
   .print-page__toolbar {
     display: none !important;
   }

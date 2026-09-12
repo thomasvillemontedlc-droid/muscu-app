@@ -4,6 +4,7 @@ import { AppDataContext } from './hooks/AppDataContext.jsx'
 import { useTheme } from './hooks/useTheme.js'
 import { ThemeContext } from './hooks/ThemeContext.jsx'
 import { BottomNav } from './components/BottomNav.jsx'
+import { ThemeToggleButton } from './components/ThemeToggleButton.jsx'
 import { TemplatesListPage } from './pages/TemplatesListPage.jsx'
 import { TemplateEditPage } from './pages/TemplateEditPage.jsx'
 import { SessionRunPage } from './pages/SessionRunPage.jsx'
@@ -21,6 +22,7 @@ function App() {
       <ThemeContext.Provider value={{ theme, setTheme }}>
         <HashRouter>
           <div className="app">
+            <ThemeToggleButton />
             <main className="app__content">
               <Routes>
                 <Route path="/" element={<TemplatesListPage />} />

@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
+import { useThemeContext } from '../hooks/ThemeContext.jsx'
 import { filterSessionsByScope } from '../domain/sessions.js'
 import { seedDefaultExercises } from '../domain/exercises.js'
 import { parseImportedData } from '../storage/storage.js'
@@ -16,8 +17,15 @@ const SCOPE_LABELS = {
   custom: 'Sélection précise ci-dessous',
 }
 
+const THEME_LABELS = {
+  system: 'Suivre le système',
+  dark: 'Sombre',
+  light: 'Clair',
+}
+
 export function SettingsPage() {
   const { data, setData } = useAppDataContext()
+  const { theme, setTheme } = useThemeContext()
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
   const [scope, setScope] = useState('all')
@@ -113,6 +121,20 @@ export function SettingsPage() {
   return (
     <div className="page">
       <h1>Réglages</h1>
+
+      <section className="settings-section">
+        <h2>Apparence</h2>
+        <label className="prep-field">
+          <span>Thème</span>
+          <select className="prep-field__select" value={theme} onChange={(e) => setTheme(e.target.value)}>
+            {Object.entries(THEME_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </section>
 
       <section className="settings-section">
         <h2>Sauvegarde</h2>

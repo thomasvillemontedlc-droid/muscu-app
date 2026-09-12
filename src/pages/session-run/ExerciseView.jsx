@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { getLastPerformance } from '../../domain/history.js'
 import { getExerciseUnit } from '../../domain/muscleGroups.js'
 import { updateSet } from '../../domain/sessions.js'
-import { setExerciseBarWeight, setExerciseWeightMode } from '../../domain/exercises.js'
+import { setExerciseBarWeight, setExerciseWeightMode, setExerciseWeightStep } from '../../domain/exercises.js'
 import {
   finishCurrentExerciseEarly,
   goToExerciseList,
@@ -10,13 +10,14 @@ import {
   validateCurrentSet,
 } from '../../domain/sessionRunner.js'
 import { unlockAudio } from '../../lib/alarm.js'
-import { formatSet } from '../../lib/formatSet.js'
 import { vibrateSuccess } from '../../lib/haptics.js'
 import { useRestTimer } from '../../hooks/useRestTimer.js'
 import { RestBanner } from '../../components/RestBanner.jsx'
 import { DurationField } from '../../components/DurationField.jsx'
 import { ExerciseImage } from '../../components/ExerciseImage.jsx'
-import { NumberField } from '../../components/NumberField.jsx'
+import { ExerciseProgressBar } from '../../components/ExerciseProgressBar.jsx'
+import { SetComparisonTable } from '../../components/SetComparisonTable.jsx'
+import { StepperField } from '../../components/StepperField.jsx'
 import { WeightField } from '../../components/WeightField.jsx'
 import { Confetti } from '../../components/Confetti.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
@@ -70,6 +71,13 @@ export function ExerciseView({ session, data, setData }) {
     }))
   }
 
+  function handleStepChange(weightStep) {
+    setData((current) => ({
+      ...current,
+      exercises: setExerciseWeightStep(current.exercises, entry.exerciseId, weightStep),
+    }))
+  }
+
   function handleValidate() {
     if (validating) return
     // Débloque l'audio pendant ce geste utilisateur, pour que l'alarme
@@ -95,18 +103,42 @@ export function ExerciseView({ session, data, setData }) {
     setData({ ...data, sessions: goToExerciseList(data.sessions, session.id) })
   }
 
+  const navButtons = (
+    <div className="exercise-active__nav">
+      {session.currentSetIndex > 0 && (
+        <button type="button" className="back-link" onClick={handlePreviousSet}>
+          ← Série précédente
+        </button>
+      )}
+      <button type="button" className="back-link" onClick={handleGoToList}>
+        ← Tous les exercices
+      </button>
+    </div>
+  )
+
+  // Pendant le repos (décompte encore en cours, pas le dépassement une fois
+  // à zéro), le chrono doit rester l'élément dominant de l'écran : on
+  // masque le reste (image, tableau, saisie) plutôt que de le faire
+  // cohabiter avec un chrono réduit. Dès le dépassement, l'écran normal
+  // revient pour permettre d'enchaîner sur la série suivante.
+  if (timer && !timer.isOvershoot) {
+    return (
+      <div className="page rest-page">
+        {navButtons}
+        <ExerciseProgressBar session={session} />
+        <RestBanner timer={timer} />
+        <p className="rest-page__next">
+          Prochain : {entry.exerciseName} — série {session.currentSetIndex + 1} / {entry.sets.length}
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="page">
-      <div className="exercise-active__nav">
-        {session.currentSetIndex > 0 && (
-          <button type="button" className="back-link" onClick={handlePreviousSet}>
-            ← Série précédente
-          </button>
-        )}
-        <button type="button" className="back-link" onClick={handleGoToList}>
-          ← Tous les exercices
-        </button>
-      </div>
+      {navButtons}
+
+      <ExerciseProgressBar session={session} />
 
       <RestBanner timer={timer} />
 
@@ -115,14 +147,9 @@ export function ExerciseView({ session, data, setData }) {
         Série {session.currentSetIndex + 1} / {entry.sets.length}
       </p>
 
-      {last ? (
-        <p className="last-performance">
-          Dernière fois ({new Date(last.date).toLocaleDateString('fr-FR')}) :{' '}
-          {last.sets.map((s) => formatSet(s, entry.exerciseName)).join(', ')}
-        </p>
-      ) : (
-        <p className="last-performance last-performance--empty">Première fois sur cet exercice</p>
-      )}
+      {!last && <p className="last-performance last-performance--empty">Première fois sur cet exercice</p>}
+
+      <SetComparisonTable entry={entry} last={last} currentSetIndex={session.currentSetIndex} />
 
       <ExerciseImage key={entry.exerciseName} name={entry.exerciseName} className="exercise-active__image" />
 
@@ -141,10 +168,11 @@ export function ExerciseView({ session, data, setData }) {
               aria-label="Durée en secondes"
             />
           ) : (
-            <NumberField
+            <StepperField
               className="exercise-active__input"
               value={set.reps}
               onChange={handleRepsChange}
+              step={1}
               disabled={validating}
               aria-label="Répétitions"
             />
@@ -164,6 +192,8 @@ export function ExerciseView({ session, data, setData }) {
             onChange={handleWeightChange}
             onModeChange={handleWeightModeChange}
             onBarWeightChange={handleBarWeightChange}
+            onStepChange={handleStepChange}
+            stepper
             aria-label="Poids en kg"
           />
         </label>

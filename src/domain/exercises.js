@@ -66,3 +66,10 @@ export function setExerciseWeightMode(exercises, exerciseId, weightInputMode) {
 export function setExerciseBarWeight(exercises, exerciseId, barWeight) {
   return exercises.map((e) => (e.id === exerciseId ? { ...e, barWeight } : e))
 }
+
+// Pas d'incrément des boutons +/- de charge, mémorisé par exercice (voir
+// components/WeightField.jsx#getDefaultWeightStep pour la valeur par défaut
+// tant que rien n'est mémorisé ici).
+export function setExerciseWeightStep(exercises, exerciseId, weightStep) {
+  return exercises.map((e) => (e.id === exerciseId ? { ...e, weightStep } : e))
+}

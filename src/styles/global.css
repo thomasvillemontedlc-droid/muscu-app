@@ -13,6 +13,36 @@
   --radius: 12px;
 }
 
+/* Thème clair explicite (Réglages > Apparence). */
+:root[data-theme='light'] {
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-2: #e2e8f0;
+  --color-text: #0f172a;
+  --color-muted: #64748b;
+  --color-border: #cbd5e1;
+  --color-primary: #16a34a;
+  --color-primary-text: #ffffff;
+  --color-danger: #dc2626;
+}
+
+/* Thème "suivre le système" (aucun data-theme posé, voir hooks/useTheme.js)
+   : le sombre ci-dessus reste la valeur par défaut, celle-ci ne s'applique
+   que si l'OS préfère un thème clair. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --color-bg: #f8fafc;
+    --color-surface: #ffffff;
+    --color-surface-2: #e2e8f0;
+    --color-text: #0f172a;
+    --color-muted: #64748b;
+    --color-border: #cbd5e1;
+    --color-primary: #16a34a;
+    --color-primary-text: #ffffff;
+    --color-danger: #dc2626;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -923,6 +953,151 @@ input.set-row__input {
   color: var(--color-danger);
 }
 
+/* Écran de repos "dominant" (voir ExerciseView.jsx) : le chrono doit être
+   le seul élément fort de l'écran, rien d'autre ne doit lui faire
+   concurrence. */
+.rest-page {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - var(--touch-min) - 32px);
+}
+
+.rest-page .rest-timer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.rest-page .rest-timer__clock {
+  font-size: 5.5rem;
+}
+
+.rest-page__next {
+  text-align: center;
+  color: var(--color-muted);
+  margin: 0 0 8px;
+}
+
+.exercise-progress {
+  margin: 0 0 12px;
+}
+
+.exercise-progress__label {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  margin: 0 0 6px;
+}
+
+.exercise-progress__bar {
+  display: flex;
+  gap: 4px;
+}
+
+.exercise-progress__segment {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-surface-2);
+}
+
+.exercise-progress__segment--done {
+  background: var(--color-primary);
+}
+
+.exercise-progress__segment--current {
+  background: var(--color-primary);
+  opacity: 0.5;
+}
+
+.set-comparison {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 16px;
+  font-size: 0.9rem;
+}
+
+.set-comparison th,
+.set-comparison td {
+  padding: 8px 6px;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.set-comparison th {
+  color: var(--color-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.set-comparison__row--current td {
+  background: var(--color-surface);
+  font-weight: 700;
+}
+
+.stepper-field {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.stepper-field__button {
+  min-width: 56px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.stepper-field__button:disabled {
+  opacity: 0.5;
+}
+
+.stepper-field__value {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--touch-min);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.stepper-field--editing {
+  width: 100%;
+}
+
+.weight-field__step {
+  margin-top: 4px;
+}
+
+.weight-field__step-toggle {
+  display: block;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  text-decoration: underline;
+  padding: 4px 0;
+}
+
+.weight-field__step-edit {
+  display: block;
+}
+
+.weight-field__step-edit span {
+  display: block;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  margin-bottom: 2px;
+}
+
 .session-summary {
   list-style: none;
   padding: 0;
@@ -1313,19 +1488,82 @@ input.set-row__input {
   margin: 16px 0;
 }
 
-.muscle-map-section {
+.progress-section {
   margin: 20px 0;
 }
 
-.muscle-map-section h2 {
+.progress-section h2 {
   margin: 0 0 4px;
   font-size: 1.1rem;
 }
 
-.muscle-map-section__hint {
+.progress-section__hint {
   color: var(--color-muted);
   font-size: 0.85rem;
   margin: 0 0 10px;
+}
+
+.weekly-bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 140px;
+  padding-top: 20px;
+}
+
+.weekly-bar-chart__col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+}
+
+.weekly-bar-chart__count {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+  margin-bottom: 2px;
+}
+
+.weekly-bar-chart__bar {
+  width: 100%;
+  background: var(--color-primary);
+  border-radius: 4px 4px 0 0;
+}
+
+.weekly-bar-chart__label {
+  font-size: 0.6rem;
+  color: var(--color-muted);
+  margin-top: 4px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+}
+
+.progress-table-wrap {
+  overflow-x: auto;
+}
+
+.progress-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.progress-table th,
+.progress-table td {
+  padding: 8px 6px;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.progress-table th {
+  color: var(--color-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
 }
 
 .muscle-recovery-list {

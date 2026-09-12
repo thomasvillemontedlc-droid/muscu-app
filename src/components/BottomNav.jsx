@@ -4,13 +4,13 @@ export function BottomNav() {
   return (
     <nav className="bottom-nav">
       <NavLink to="/" end className="bottom-nav__link">
-        Séances
+        Séance
       </NavLink>
       <NavLink to="/history" className="bottom-nav__link">
         Historique
       </NavLink>
-      <NavLink to="/muscles" className="bottom-nav__link">
-        Muscles
+      <NavLink to="/progress" className="bottom-nav__link">
+        Progression
       </NavLink>
       <NavLink to="/settings" className="bottom-nav__link">
         Réglages

@@ -144,7 +144,7 @@ export function FinishedView({ session, data }) {
         </section>
       )}
 
-      <BigButton onClick={() => navigate('/history')}>Voir ma progression</BigButton>
+      <BigButton onClick={() => navigate('/progress')}>Voir ma progression</BigButton>
     </div>
   )
 }

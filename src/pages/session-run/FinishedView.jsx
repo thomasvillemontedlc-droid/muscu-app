@@ -43,7 +43,7 @@ export function FinishedView({ session, data }) {
         title="Étirements"
         hint="Suggestions générales, pas un programme de récupération personnalisé."
         initialItems={stretches.map((s) => ({
-          id: s.muscleId,
+          id: s.id,
           muscleLabel: s.muscleLabel,
           name: s.name,
           durationSeconds: s.holdSeconds,
@@ -131,7 +131,7 @@ export function FinishedView({ session, data }) {
           </p>
           <ul>
             {stretches.map((stretch) => (
-              <li key={stretch.muscleId}>
+              <li key={stretch.id}>
                 <span className="stretch-suggestions__muscle">{stretch.muscleLabel}</span>
                 <span>{stretch.name}</span>
                 <span className="stretch-suggestions__hold">{stretch.holdSeconds}s</span>

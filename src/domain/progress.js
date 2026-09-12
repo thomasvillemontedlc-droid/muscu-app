@@ -38,6 +38,27 @@ function getWeekStart(date) {
   return d
 }
 
+// Semaines (lundi à lundi) de la plus ancienne concernée par la période à la
+// semaine en cours, une entrée même pour les semaines sans donnée (`value`
+// vaut alors undefined) : partagé par getSessionsPerWeek et
+// getWeeklyBestLoad pour que leurs graphiques s'alignent sur le même axe.
+function buildWeeklySeries(periodKey, valuesByWeekKey) {
+  const currentWeekStart = getWeekStart(new Date())
+  const days = PROGRESS_PERIOD_DAYS[periodKey]
+  const firstWeekStart =
+    days != null
+      ? getWeekStart(new Date(Date.now() - days * 24 * 3600 * 1000))
+      : valuesByWeekKey.size > 0
+        ? new Date(Math.min(...valuesByWeekKey.keys()))
+        : currentWeekStart
+
+  const weeks = []
+  for (let t = firstWeekStart.getTime(); t <= currentWeekStart.getTime(); t += 7 * 24 * 3600 * 1000) {
+    weeks.push({ weekStart: new Date(t), value: valuesByWeekKey.get(t) })
+  }
+  return weeks
+}
+
 // Nombre de séances au moins entamées par semaine sur la période, une
 // entrée par semaine même à 0 (pour un graphique sans trou), de la semaine
 // la plus ancienne concernée jusqu'à la semaine en cours.
@@ -50,20 +71,7 @@ export function getSessionsPerWeek(sessions, periodKey) {
     counts.set(key, (counts.get(key) ?? 0) + 1)
   }
 
-  const currentWeekStart = getWeekStart(new Date())
-  const days = PROGRESS_PERIOD_DAYS[periodKey]
-  const firstWeekStart =
-    days != null
-      ? getWeekStart(new Date(Date.now() - days * 24 * 3600 * 1000))
-      : counts.size > 0
-        ? new Date(Math.min(...counts.keys()))
-        : currentWeekStart
-
-  const weeks = []
-  for (let t = firstWeekStart.getTime(); t <= currentWeekStart.getTime(); t += 7 * 24 * 3600 * 1000) {
-    weeks.push({ weekStart: new Date(t), count: counts.get(t) ?? 0 })
-  }
-  return weeks
+  return buildWeeklySeries(periodKey, counts).map(({ weekStart, value }) => ({ weekStart, count: value ?? 0 }))
 }
 
 // {id, name} de chaque exercice effectivement complété au moins une fois
@@ -114,4 +122,24 @@ export function getBestSetHistory(sessions, exerciseId, periodKey) {
   }
 
   return rows.sort((a, b) => b.date.localeCompare(a.date))
+}
+
+// Meilleure charge (ou durée, pour un exercice "au temps") par semaine sur
+// la période, pour le graphique d'évolution sous le sélecteur d'exercice de
+// l'onglet Progression : une entrée par semaine, `value` à undefined si
+// aucune séance cette semaine-là (trou dans le graphique plutôt qu'une
+// chute trompeuse à zéro).
+export function getWeeklyBestLoad(sessions, exerciseId, periodKey) {
+  const rows = getBestSetHistory(sessions, exerciseId, periodKey)
+  const unit = rows[0]?.unit ?? 'weight'
+  const bestByWeek = new Map()
+
+  for (const row of rows) {
+    const key = getWeekStart(row.date).getTime()
+    const value = row.unit === 'time' ? row.reps : row.weight
+    const current = bestByWeek.get(key)
+    if (current == null || value > current) bestByWeek.set(key, value)
+  }
+
+  return { unit, weeks: buildWeeklySeries(periodKey, bestByWeek) }
 }

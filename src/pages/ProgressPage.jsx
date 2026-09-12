@@ -6,10 +6,12 @@ import {
   getPeriodStats,
   getSessionsInPeriod,
   getSessionsPerWeek,
+  getWeeklyBestLoad,
 } from '../domain/progress.js'
 import { getCumulativeMuscleVolumes, getMuscleIntensities } from '../domain/muscleHeatmap.js'
 import { getMostNeglectedMuscles } from '../domain/recovery.js'
 import { BodyHeatmap, BodyHeatmapLegend } from '../components/BodyHeatmap.jsx'
+import { LoadTrendChart } from '../components/LoadTrendChart.jsx'
 import { MuscleRecoveryRow } from '../components/MuscleRecoveryRow.jsx'
 import { WeeklyBarChart } from '../components/WeeklyBarChart.jsx'
 
@@ -38,6 +40,7 @@ export function ProgressPage() {
   const exercises = getCompletedExercisesInPeriod(data.sessions, period)
   const selectedExerciseId = exercises.some((e) => e.id === exerciseId) ? exerciseId : (exercises[0]?.id ?? '')
   const bestSets = selectedExerciseId ? getBestSetHistory(data.sessions, selectedExerciseId, period) : []
+  const loadTrend = selectedExerciseId ? getWeeklyBestLoad(data.sessions, selectedExerciseId, period) : null
 
   const intensities = getMuscleIntensities(getCumulativeMuscleVolumes(sessionsInPeriod))
   const neglected = getMostNeglectedMuscles(data.sessions)
@@ -89,6 +92,8 @@ export function ProgressPage() {
                 ))}
               </select>
             </label>
+
+            {loadTrend && <LoadTrendChart weeks={loadTrend.weeks} unit={loadTrend.unit} />}
 
             <div className="progress-table-wrap">
               <table className="progress-table">

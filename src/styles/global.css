@@ -308,13 +308,21 @@ input[type='number']:focus {
   border-bottom: none;
 }
 
+/* Zoom sur la figure "position de départ" en haut à gauche de
+   l'illustration (voir components/ExerciseThumbnail.jsx) : nos images
+   suivent toutes le même gabarit généré, donc un cadrage CSS fixe (au lieu
+   d'un simple object-fit: cover, qui montrerait l'image entière rétrécie
+   et illisible) fonctionne uniformément sans fichier de vignette séparé. */
 .exercise-picker__thumb {
+  display: inline-block;
   width: 36px;
   height: 36px;
   flex-shrink: 0;
   border-radius: 6px;
-  object-fit: cover;
-  background: var(--color-surface-2);
+  background-color: var(--color-surface-2);
+  background-repeat: no-repeat;
+  background-size: 220% 200%;
+  background-position: 0% 16%;
 }
 
 .exercise-picker__muscle-filter {
@@ -753,15 +761,50 @@ input.set-row__input {
   font-size: 0.9rem;
 }
 
-/* Champs poids/reps mis en avant pendant l'exercice actif et la révision
-   post-repos : plus grands que dans les listes de séries classiques. */
-.exercise-active__image {
+.exercise-image-viewer__trigger {
   display: block;
   width: 100%;
-  max-width: 280px;
-  height: auto;
-  margin: 12px auto;
+  min-height: var(--touch-min);
+  margin: 4px 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 600;
 }
+
+.exercise-image-viewer__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.exercise-image-viewer__image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.exercise-image-viewer__close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+/* Champs poids/reps mis en avant pendant l'exercice actif et la révision
+   post-repos : plus grands que dans les listes de séries classiques. */
 
 .exercise-active__fields {
   position: relative;
@@ -1426,8 +1469,9 @@ input.set-row__input {
   font-size: 0.9rem;
 }
 
-.routine-runner__item-duration {
+input.routine-runner__item-duration {
   width: 56px;
+  flex-shrink: 0;
   text-align: center;
 }
 
@@ -1464,6 +1508,22 @@ input.set-row__input {
   background: var(--color-surface-2);
   color: var(--color-text);
   font-weight: 600;
+}
+
+.routine-runner__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.routine-runner__suggestion {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.85rem;
+  padding: 6px 12px;
 }
 
 .routine-runner__progress {

@@ -14,7 +14,7 @@ import { vibrateSuccess } from '../../lib/haptics.js'
 import { useRestTimer } from '../../hooks/useRestTimer.js'
 import { RestBanner } from '../../components/RestBanner.jsx'
 import { DurationField } from '../../components/DurationField.jsx'
-import { ExerciseImage } from '../../components/ExerciseImage.jsx'
+import { ExerciseImageViewer } from '../../components/ExerciseImageViewer.jsx'
 import { ExerciseProgressBar } from '../../components/ExerciseProgressBar.jsx'
 import { SetComparisonTable } from '../../components/SetComparisonTable.jsx'
 import { StepperField } from '../../components/StepperField.jsx'
@@ -151,7 +151,7 @@ export function ExerciseView({ session, data, setData }) {
 
       <SetComparisonTable entry={entry} last={last} currentSetIndex={session.currentSetIndex} />
 
-      <ExerciseImage key={entry.exerciseName} name={entry.exerciseName} className="exercise-active__image" />
+      <ExerciseImageViewer key={entry.exerciseName} name={entry.exerciseName} />
 
       <div className={`exercise-active__fields${validating ? ' exercise-active__fields--validated' : ''}`}>
         {validating && <span className="exercise-active__check">✓</span>}

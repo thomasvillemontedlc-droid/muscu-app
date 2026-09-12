@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { getExerciseMuscles, getMuscleLabel, MUSCLE_GROUPS } from '../domain/muscleGroups.js'
-import { ExerciseImage } from './ExerciseImage.jsx'
+import { ExerciseThumbnail } from './ExerciseThumbnail.jsx'
 import { BigButton } from './BigButton.jsx'
 
 // Champ texte avec suggestions cliquables, triées pour faire remonter les
@@ -90,7 +90,7 @@ export function ExercisePicker({ exercises, suggestedIds = [], onAdd }) {
               <li key={exercise.id}>
                 {/* onMouseDown (pas onClick) pour s'exécuter avant le onBlur du champ */}
                 <button type="button" onMouseDown={() => handleSelect(exercise)}>
-                  <ExerciseImage
+                  <ExerciseThumbnail
                     key={exercise.name}
                     name={exercise.name}
                     className="exercise-picker__thumb"

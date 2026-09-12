@@ -7,7 +7,7 @@ import { NumberField } from './NumberField.jsx'
 // un (échauffement avant séance, étirements en fin de séance) : liste
 // modifiable avant de lancer (durée, ajout, retrait), puis défilement
 // automatique d'un mouvement à l'autre une fois le temps écoulé.
-export function RoutineRunner({ title, hint, initialItems, onDone, skipLabel = 'Passer' }) {
+export function RoutineRunner({ title, hint, initialItems, suggestions = [], onDone, skipLabel = 'Passer' }) {
   const [items, setItems] = useState(initialItems)
   const [running, setRunning] = useState(false)
   const [index, setIndex] = useState(0)
@@ -58,12 +58,21 @@ export function RoutineRunner({ title, hint, initialItems, onDone, skipLabel = '
     setItems((prev) => prev.map((item) => (item.id === id ? { ...item, durationSeconds } : item)))
   }
 
-  function handleAdd() {
-    const name = newName.trim()
+  function addItem(name) {
     if (!name) return
     setItems((prev) => [...prev, { id: crypto.randomUUID(), muscleLabel: null, name, durationSeconds: 30 }])
+  }
+
+  function handleAdd() {
+    addItem(newName.trim())
     setNewName('')
   }
+
+  const addedNames = new Set(items.map((item) => item.name))
+  const query = newName.trim().toLowerCase()
+  const visibleSuggestions = suggestions.filter(
+    (name) => !addedNames.has(name) && (query === '' || name.toLowerCase().includes(query)),
+  )
 
   if (running) {
     const current = items[index]
@@ -138,6 +147,21 @@ export function RoutineRunner({ title, hint, initialItems, onDone, skipLabel = '
           Ajouter
         </button>
       </div>
+
+      {visibleSuggestions.length > 0 && (
+        <div className="routine-runner__suggestions">
+          {visibleSuggestions.map((name) => (
+            <button
+              key={name}
+              type="button"
+              className="routine-runner__suggestion"
+              onClick={() => addItem(name)}
+            >
+              + {name}
+            </button>
+          ))}
+        </div>
+      )}
 
       <BigButton onClick={handleStart} disabled={items.length === 0}>
         Lancer

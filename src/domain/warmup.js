@@ -40,6 +40,36 @@ const WARMUP_MOVES = {
 const DEFAULT_WARMUP_MOVE = 'Jumping jacks ou marche sur place'
 const DEFAULT_WARMUP_SECONDS = 30
 
+// Alternatives par muscle proposées dans le champ "Ajouter un mouvement" de
+// l'échauffement (voir components/RoutineRunner.jsx), en plus du mouvement
+// déjà pré-rempli par muscle (WARMUP_MOVES ci-dessus) : de quoi varier sans
+// resaisir à la main.
+const WARMUP_MOVE_OPTIONS = {
+  pectoraux: ['Ouvertures de bras (swings horizontaux)', 'Pompes contre un mur'],
+  dorsaux: ['Tirage élastique léger', "Étirement actif 'chat-vache'"],
+  trapezes: ['Cercles des épaules', 'Rotations douces de la nuque'],
+  deltoides: ['Élévations latérales à vide', 'Cercles de bras'],
+  biceps: ['Flexions légères des coudes à vide'],
+  triceps: ['Rotations des bras'],
+  'avant-bras': ['Étirements des poignets'],
+  brachial: ['Rotations des avant-bras'],
+  abdominaux: ['Gainage léger (15s)'],
+  obliques: ['Flexions latérales du buste'],
+  lombaires: ['Rotations du bassin'],
+  quadriceps: ['Fentes avant à vide', 'Montées de genoux'],
+  'ischio-jambiers': ['Balancements de jambe', 'Squats à vide'],
+  fessiers: ['Pont fessier à vide', 'Fentes avant à vide'],
+  mollets: ['Sautillements légers'],
+  adducteurs: ['Fentes latérales à vide'],
+  abducteurs: ['Marche latérale (pas chassés)'],
+}
+
+const GENERAL_WARMUP_OPTIONS = [
+  DEFAULT_WARMUP_MOVE,
+  'Corde à sauter légère',
+  'Vélo ou rameur à faible intensité',
+]
+
 // Suggestions d'échauffement pour une liste de muscles (sortie de
 // getPlannedMusclesWorked) : un mouvement par muscle concerné, sans doublon
 // de mouvement, plus un mouvement général si aucun muscle n'est identifié.
@@ -59,4 +89,26 @@ export function getWarmupSuggestions(muscleIds) {
   }
 
   return moves
+}
+
+// Noms de mouvements à proposer dans le champ "Ajouter un mouvement" de
+// l'échauffement (voir components/RoutineRunner.jsx#suggestions) : les
+// alternatives des muscles ciblés par la séance à venir, puis quelques
+// options générales, sans doublon.
+export function getWarmupMoveSuggestions(muscleIds) {
+  const seen = new Set()
+  const suggestions = []
+
+  function add(name) {
+    if (seen.has(name)) return
+    seen.add(name)
+    suggestions.push(name)
+  }
+
+  for (const muscleId of muscleIds) {
+    for (const name of WARMUP_MOVE_OPTIONS[muscleId] ?? []) add(name)
+  }
+  for (const name of GENERAL_WARMUP_OPTIONS) add(name)
+
+  return suggestions
 }

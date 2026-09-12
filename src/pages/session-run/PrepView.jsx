@@ -10,7 +10,7 @@ import {
   setRestSeconds,
   startSession,
 } from '../../domain/sessionRunner.js'
-import { getPlannedMusclesWorked, getWarmupSuggestions } from '../../domain/warmup.js'
+import { getPlannedMusclesWorked, getWarmupMoveSuggestions, getWarmupSuggestions } from '../../domain/warmup.js'
 import { DraggableList } from '../../components/DraggableList.jsx'
 import { ExercisePicker } from '../../components/ExercisePicker.jsx'
 import { NumberField } from '../../components/NumberField.jsx'
@@ -106,6 +106,7 @@ export function PrepView({ session, data, setData }) {
         title="Échauffement"
         hint="Suggestions générales, pas un échauffement personnalisé."
         initialItems={getWarmupSuggestions(getPlannedMusclesWorked(session))}
+        suggestions={getWarmupMoveSuggestions(getPlannedMusclesWorked(session))}
         skipLabel="Passer l'échauffement"
         onDone={handleStart}
       />

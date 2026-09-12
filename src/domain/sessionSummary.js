@@ -122,7 +122,12 @@ export function buildSessionSummary(sessions, session) {
       const currentMax = getMaxMetric(entry.sets, unit)
       const previousMax = last ? getMaxMetric(last.sets, unit) : null
 
-      const progressKg = previousMax !== null ? currentMax - previousMax : null
+      // Arrondi à 1 décimale pour effacer l'imprécision binaire des nombres
+      // flottants (ex : 62.5 - 65.6 = -3.099999999999943 en JS) avant tout
+      // affichage ou calcul dérivé (progressPercent doit refléter le même
+      // écart que celui affiché).
+      const rawProgressKg = previousMax !== null ? currentMax - previousMax : null
+      const progressKg = rawProgressKg !== null ? Math.round(rawProgressKg * 10) / 10 : null
       const progressPercent =
         progressKg !== null && previousMax > 0 ? Math.round((progressKg / previousMax) * 100) : null
 

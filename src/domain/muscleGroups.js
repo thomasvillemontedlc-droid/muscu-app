@@ -232,6 +232,10 @@ export const EXERCISE_MUSCLES = {
   thruster: { name: 'Thruster', primary: ['quadriceps', 'deltoides'], secondary: ['fessiers', 'triceps'] },
   burpees: { name: 'Burpees', primary: ['quadriceps', 'pectoraux'], secondary: ['abdominaux', 'deltoides', 'triceps'] },
   'kettlebell-swing': { name: 'Kettlebell swing', primary: ['fessiers', 'ischio-jambiers'], secondary: ['lombaires', 'deltoides', 'abdominaux'] },
+
+  // Cardio (pas de groupe musculaire de musculation ciblé : primary/secondary
+  // vides plutôt qu'un 18e groupe rien que pour lui, voir MUSCLE_GROUPS).
+  rameur: { name: 'Rameur', primary: [], secondary: [] },
 }
 
 // Alias : noms courts/génériques que l'utilisateur est susceptible d'avoir
@@ -300,6 +304,7 @@ const TIME_BASED_EXERCISE_KEYS = new Set([
   'marche-sur-la-pointe-des-pieds',
   'marche-sur-les-talons',
   'marche-laterale-avec-elastique',
+  'rameur',
 ])
 
 export function getExerciseUnit(exerciseName) {

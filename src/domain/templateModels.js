@@ -142,6 +142,51 @@ export const TEMPLATE_STRUCTURES = [
       },
     ],
   },
+  {
+    key: 'real',
+    label: 'Mes séances réelles',
+    models: [
+      {
+        // "Oiseau haltères (optionnel, à cocher/décocher selon le temps)"
+        // dans mes-seances-reelles.md : la parenthèse est une note d'usage
+        // ("à faire si le temps le permet"), pas le nom de l'exercice —
+        // ajouté normalement, à retirer à la main les jours où on le saute
+        // (comme n'importe quel exercice d'une séance type).
+        name: 'Pull (réel)',
+        exercises: [
+          { name: 'Tractions', sets: 3, reps: 12 },
+          { name: 'Tirage horizontal poulie basse', sets: 3, reps: 12 },
+          { name: 'Tirage vertical poulie haute', sets: 3, reps: 12 },
+          { name: 'Curl marteau (haltère ou machine)', sets: 3, reps: 12 },
+          { name: 'Curl biceps à la poulie basse', sets: 3, reps: 12 },
+        ],
+      },
+      {
+        name: 'Push (réel)',
+        exercises: [
+          { name: 'Développé couché barre', sets: 3, reps: 8 },
+          { name: 'Développé incliné barre', sets: 3, reps: 8 },
+          { name: 'Écarté à la poulie vis-à-vis', sets: 3, reps: 15 },
+          { name: 'Dips machine', sets: 3, reps: 12 },
+          { name: 'Extension nuque haltère', sets: 3, reps: 12 },
+          { name: 'Extension triceps à la poulie haute', sets: 3, reps: 12 },
+          { name: 'Oiseau haltères', sets: 3, reps: 15 },
+        ],
+      },
+      {
+        name: 'Jambes (réel)',
+        exercises: [
+          { name: 'Presse à cuisses', sets: 3, reps: 12 },
+          { name: 'Fentes marchées', sets: 3, reps: 15 },
+          { name: 'Leg curl assis', sets: 3, reps: 11 },
+          { name: 'Extension mollets assis', sets: 3, reps: 15 },
+          { name: 'Machine adducteurs (serrer)', sets: 3, reps: 15 },
+          { name: 'Machine abducteurs (écarter)', sets: 3, reps: 15 },
+          { name: 'Gainage planche', sets: 3, reps: 40 },
+        ],
+      },
+    ],
+  },
 ]
 
 // Crée un template à partir d'un modèle prédéfini : chaque exercice est

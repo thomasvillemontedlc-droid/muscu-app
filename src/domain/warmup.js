@@ -40,6 +40,12 @@ const WARMUP_MOVES = {
 const DEFAULT_WARMUP_MOVE = 'Jumping jacks ou marche sur place'
 const DEFAULT_WARMUP_SECONDS = 30
 
+// Mise en jambes générale avant tout le reste (voir mes-seances-reelles.md)
+// : proposée en premier dans la liste, quels que soient les muscles ciblés
+// par la séance — contrairement aux mouvements de WARMUP_MOVES ci-dessous,
+// qui eux dépendent des muscles prévus.
+const RAMEUR_WARMUP = { id: 'rameur', muscleLabel: null, name: 'Rameur', durationSeconds: 5 * 60 }
+
 // Alternatives par muscle proposées dans le champ "Ajouter un mouvement" de
 // l'échauffement (voir components/RoutineRunner.jsx), en plus du mouvement
 // déjà pré-rempli par muscle (WARMUP_MOVES ci-dessus) : de quoi varier sans
@@ -64,18 +70,19 @@ const WARMUP_MOVE_OPTIONS = {
   abducteurs: ['Marche latérale (pas chassés)'],
 }
 
-const GENERAL_WARMUP_OPTIONS = [
-  DEFAULT_WARMUP_MOVE,
-  'Corde à sauter légère',
-  'Vélo ou rameur à faible intensité',
-]
+// Rameur y figure aussi (pas seulement dans RAMEUR_WARMUP) : redevient
+// proposable via "Ajouter un mouvement" si jamais retiré de la liste par
+// défaut (voir components/RoutineRunner.jsx, qui masque déjà les
+// suggestions correspondant à un mouvement déjà présent).
+const GENERAL_WARMUP_OPTIONS = [RAMEUR_WARMUP.name, DEFAULT_WARMUP_MOVE, 'Corde à sauter légère']
 
 // Suggestions d'échauffement pour une liste de muscles (sortie de
-// getPlannedMusclesWorked) : un mouvement par muscle concerné, sans doublon
-// de mouvement, plus un mouvement général si aucun muscle n'est identifié.
+// getPlannedMusclesWorked) : le rameur en premier pour TOUTE séance (voir
+// RAMEUR_WARMUP), puis un mouvement par muscle concerné, sans doublon de
+// mouvement, plus un mouvement général si aucun muscle n'est identifié.
 export function getWarmupSuggestions(muscleIds) {
-  const seen = new Set()
-  const moves = []
+  const seen = new Set([RAMEUR_WARMUP.name])
+  const moves = [RAMEUR_WARMUP]
 
   for (const muscleId of muscleIds) {
     const name = WARMUP_MOVES[muscleId] ?? DEFAULT_WARMUP_MOVE
@@ -84,7 +91,7 @@ export function getWarmupSuggestions(muscleIds) {
     moves.push({ id: muscleId, muscleLabel: getMuscleLabel(muscleId), name, durationSeconds: DEFAULT_WARMUP_SECONDS })
   }
 
-  if (moves.length === 0) {
+  if (moves.length === 1) {
     moves.push({ id: 'general', muscleLabel: null, name: DEFAULT_WARMUP_MOVE, durationSeconds: DEFAULT_WARMUP_SECONDS })
   }
 

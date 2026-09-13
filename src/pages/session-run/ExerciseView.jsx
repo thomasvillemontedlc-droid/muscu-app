@@ -16,6 +16,7 @@ import { useRestTimer } from '../../hooks/useRestTimer.js'
 import { RestBanner } from '../../components/RestBanner.jsx'
 import { DurationField } from '../../components/DurationField.jsx'
 import { ExerciseImageViewer } from '../../components/ExerciseImageViewer.jsx'
+import { ExerciseThumbnail } from '../../components/ExerciseThumbnail.jsx'
 import { ExerciseProgressBar } from '../../components/ExerciseProgressBar.jsx'
 import { SetComparisonTable } from '../../components/SetComparisonTable.jsx'
 import { StepperField } from '../../components/StepperField.jsx'
@@ -134,8 +135,13 @@ export function ExerciseView({ session, data, setData }) {
       <div className="page rest-page">
         {navButtons}
         <ExerciseProgressBar session={session} />
-        <p className="rest-page__next-label">Prochain exercice</p>
-        <h2 className="rest-page__next-name">{entry.exerciseName}</h2>
+        <div className="rest-page__next">
+          <ExerciseThumbnail name={entry.exerciseName} className="rest-page__next-thumb" />
+          <div>
+            <p className="rest-page__next-label">Prochain exercice</p>
+            <h2 className="rest-page__next-name">{entry.exerciseName}</h2>
+          </div>
+        </div>
         <RestBanner timer={timer} />
         <p className="rest-page__set-detail">
           Série {session.currentSetIndex + 1} / {entry.sets.length}

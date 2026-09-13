@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { createTemplate, deleteTemplate, sortTemplatesForToday } from '../domain/templates.js'
+import { createTemplateFromModel, TEMPLATE_STRUCTURES } from '../domain/templateModels.js'
 import { startSessionFromTemplate } from '../domain/sessions.js'
 import { BigButton } from '../components/BigButton.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
@@ -18,6 +19,15 @@ export function TemplatesListPage() {
     const { template, templates } = createTemplate(data.templates, newName)
     setData({ ...data, templates })
     setNewName('')
+    navigate(`/templates/${template.id}`)
+  }
+
+  // Un modèle ne fait que préremplir exercices et séries/répétitions par
+  // défaut (voir domain/templateModels.js) : la séance type qui en résulte
+  // est ensuite identique à une créée à la main, modifiable et renommable.
+  function handleCreateFromModel(model) {
+    const { template, templates, exercises } = createTemplateFromModel(data.templates, data.exercises, model)
+    setData({ ...data, templates, exercises })
     navigate(`/templates/${template.id}`)
   }
 
@@ -44,8 +54,29 @@ export function TemplatesListPage() {
           onChange={(e) => setNewName(e.target.value)}
           aria-label="Nom de la nouvelle séance type"
         />
-        <BigButton type="submit">Créer</BigButton>
+        <BigButton type="submit">Créer une séance vide</BigButton>
       </form>
+
+      <section className="template-model-picker">
+        <p className="template-model-picker__hint">Ou partir d'un modèle prédéfini :</p>
+        {TEMPLATE_STRUCTURES.map((structure) => (
+          <div key={structure.key} className="template-model-group">
+            <h3>{structure.label}</h3>
+            <div className="template-model-group__buttons">
+              {structure.models.map((model) => (
+                <button
+                  key={model.name}
+                  type="button"
+                  className="template-model-button"
+                  onClick={() => handleCreateFromModel(model)}
+                >
+                  {model.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </section>
 
       {data.templates.length === 0 && <p className="empty-state">Aucune séance type pour l'instant.</p>}
 

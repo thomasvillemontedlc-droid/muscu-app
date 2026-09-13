@@ -3,18 +3,25 @@ import { getExerciseById } from './exercises.js'
 import { getLastPerformance } from './history.js'
 
 // Crée une nouvelle séance à partir d'un template, en pré-remplissant chaque
-// exercice avec les poids/reps de la dernière fois (moins de saisie = mieux).
-// La séance démarre en phase "prep" (écran de préparation), voir
-// domain/sessionRunner.js pour la suite du déroulé guidé.
+// exercice avec les poids/reps de la dernière fois (moins de saisie =
+// mieux) ; à défaut (jamais fait), les séries/répétitions par défaut du
+// modèle d'origine si le template en a mémorisé (voir
+// domain/templateModels.js#createTemplateFromModel — un template créé
+// vide ou à la main n'a pas de defaultSets, on retombe alors sur une
+// série vide comme avant). La séance démarre en phase "prep" (écran de
+// préparation), voir domain/sessionRunner.js pour la suite du déroulé guidé.
 export function startSessionFromTemplate(sessions, template, exercises) {
   const entries = template.exerciseIds.map((exerciseId) => {
     const exercise = getExerciseById(exercises, exerciseId)
     const last = getLastPerformance(sessions, exerciseId)
+    const defaultSets = template.defaultSets?.[exerciseId]
 
     return {
       exerciseId,
       exerciseName: exercise?.name ?? 'Exercice supprimé',
-      sets: last ? last.sets.map((set) => ({ ...set })) : [{ weight: 0, reps: 0 }],
+      sets: last
+        ? last.sets.map((set) => ({ ...set }))
+        : (defaultSets?.map((set) => ({ ...set })) ?? [{ weight: 0, reps: 0 }]),
     }
   })
 

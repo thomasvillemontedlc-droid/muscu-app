@@ -1667,14 +1667,20 @@ input.set-row__input {
 
 .routine-runner__item {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
   padding: 8px 0;
   border-top: 1px solid var(--color-border);
 }
 
 .routine-runner__item:first-child {
   border-top: none;
+}
+
+.routine-runner__item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .routine-runner__item-info {
@@ -1695,8 +1701,7 @@ input.set-row__input {
 }
 
 input.routine-runner__item-duration {
-  width: 56px;
-  flex-shrink: 0;
+  width: 100%;
   text-align: center;
 }
 

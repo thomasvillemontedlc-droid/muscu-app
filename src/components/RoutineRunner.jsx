@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { vibrateSuccess } from '../lib/haptics.js'
 import { BigButton } from './BigButton.jsx'
-import { NumberField } from './NumberField.jsx'
+import { DurationField } from './DurationField.jsx'
 
 // Déroulé générique d'une petite liste de mouvements chronométrés, un par
 // un (échauffement avant séance, étirements en fin de séance) : liste
@@ -114,25 +114,26 @@ export function RoutineRunner({ title, hint, initialItems, suggestions = [], onD
         <ul className="routine-runner__list">
           {items.map((item) => (
             <li key={item.id} className="routine-runner__item">
-              <div className="routine-runner__item-info">
-                {item.muscleLabel && <span className="routine-runner__item-muscle">{item.muscleLabel}</span>}
-                <span className="routine-runner__item-name">{item.name}</span>
+              <div className="routine-runner__item-header">
+                <div className="routine-runner__item-info">
+                  {item.muscleLabel && <span className="routine-runner__item-muscle">{item.muscleLabel}</span>}
+                  <span className="routine-runner__item-name">{item.name}</span>
+                </div>
+                <button
+                  type="button"
+                  className="routine-runner__item-remove"
+                  onClick={() => handleRemove(item.id)}
+                  aria-label={`Retirer ${item.name}`}
+                >
+                  ✕
+                </button>
               </div>
-              <NumberField
+              <DurationField
                 className="routine-runner__item-duration"
                 value={item.durationSeconds}
                 onChange={(value) => handleDurationChange(item.id, value)}
-                aria-label={`Durée ${item.name} en secondes`}
+                aria-label={`Durée ${item.name}`}
               />
-              <span>s</span>
-              <button
-                type="button"
-                className="routine-runner__item-remove"
-                onClick={() => handleRemove(item.id)}
-                aria-label={`Retirer ${item.name}`}
-              >
-                ✕
-              </button>
             </li>
           ))}
         </ul>

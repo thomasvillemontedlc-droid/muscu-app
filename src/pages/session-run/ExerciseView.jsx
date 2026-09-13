@@ -174,6 +174,15 @@ export function ExerciseView({ session, data, setData }) {
           <span>{isTimeBased ? 'Durée' : 'Répétitions'}</span>
           {isTimeBased ? (
             <DurationField
+              // ExerciseView ne démonte jamais entre deux séries, deux
+              // exercices, ni même deux séances (SessionRunPage ne key
+              // pas sur session.id, voir son commentaire sur la
+              // persistance du chrono de repos) : sans cette key, le
+              // chrono au temps (running/refs internes, voir
+              // DurationField.jsx) resterait un état React local
+              // partagé entre tout ça, au lieu de repartir à zéro à
+              // chaque nouvelle série.
+              key={`${session.id}-${entry.exerciseId}-${session.currentSetIndex}`}
               className="exercise-active__input"
               value={set.reps}
               onChange={handleRepsChange}

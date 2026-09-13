@@ -151,7 +151,12 @@ export function PrepView({ session, data, setData }) {
 
             {entry.sets.map((set, setIndex) => (
               <SetRow
-                key={setIndex}
+                // Voir ExerciseView.jsx : SessionRunPage ne remonte jamais
+                // entre deux séances (pas de key sur session.id), donc un
+                // key uniquement basé sur setIndex laisserait le chrono
+                // d'un champ Durée (DurationField, exercices "au temps")
+                // partager son état entre deux séances différentes.
+                key={`${session.id}-${entry.exerciseId}-${setIndex}`}
                 index={setIndex}
                 weight={set.weight}
                 reps={set.reps}

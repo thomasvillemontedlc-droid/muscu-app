@@ -224,6 +224,23 @@ input[type='number']:focus {
 }
 
 /* Liste des séances types */
+/* Repliée par défaut : la création de séance est une action secondaire par
+   rapport à la mise en avant du haut d'écran (.featured-session). */
+.template-create-toggle {
+  margin-bottom: 16px;
+}
+
+.template-create-toggle summary {
+  color: var(--color-muted);
+  min-height: var(--touch-min);
+  line-height: var(--touch-min);
+  cursor: pointer;
+}
+
+.template-create-toggle[open] summary {
+  margin-bottom: 8px;
+}
+
 .template-create {
   display: flex;
   gap: 8px;
@@ -265,7 +282,10 @@ input[type='number']:focus {
   padding: 8px 14px;
 }
 
-.next-program-session {
+/* Bloc mis en avant en haut de l'écran d'accueil : "Reprendre ma séance"
+   (séance en cours) ou "Commencer [nom]" (suggestion du jour) — un seul des
+   deux à la fois, voir TemplatesListPage.jsx. */
+.featured-session {
   background: var(--color-surface);
   border: 1px solid var(--color-primary);
   border-radius: var(--radius);
@@ -273,16 +293,30 @@ input[type='number']:focus {
   margin-bottom: 16px;
 }
 
-.next-program-session__label {
+.featured-session__label {
   color: var(--color-muted);
   font-size: 0.8rem;
   margin: 0 0 2px;
 }
 
-.next-program-session__name {
+.featured-session__name {
   font-size: 1.15rem;
   font-weight: 600;
   margin: 0 0 8px;
+}
+
+.featured-session__detail {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  margin: 0 0 8px;
+}
+
+.featured-session__exercises {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 10px;
+  color: var(--color-muted);
+  font-size: 0.9rem;
 }
 
 .charge-suggestion {
@@ -365,6 +399,30 @@ input[type='number']:focus {
 
 .template-list__actions {
   margin-top: 8px;
+}
+
+/* Menu "⋯" : regroupe les actions secondaires (pour l'instant seulement
+   Supprimer) pour qu'elles n'aient plus la même proéminence que Lancer. */
+.template-list__menu {
+  margin-top: 4px;
+}
+
+.template-list__menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 1.3rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.template-list__menu-trigger::-webkit-details-marker {
+  display: none;
 }
 
 /* Édition de séance type */

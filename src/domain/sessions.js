@@ -93,6 +93,19 @@ export function getSessionStatus(session) {
   return completedCount > 0 ? 'partial' : 'not-done'
 }
 
+// Séance "en cours" pour l'écran d'accueil (bloc "Reprendre ma séance") :
+// démarrée (startedAt posé par domain/sessionRunner.js#startSession) mais
+// pas encore terminée. Une séance en phase 'prep' jamais vraiment
+// commencée (juste créée via "Lancer" puis abandonnée sans y toucher) ne
+// compte pas : sinon revenir en arrière depuis l'écran de préparation sans
+// rien faire ferait apparaître un faux "reprendre" pour une séance vide.
+// S'il y en a plusieurs (cas limite), la plus récemment démarrée gagne.
+export function getInProgressSession(sessions) {
+  const active = sessions.filter((s) => s.phase && s.phase !== 'finished' && s.startedAt != null)
+  if (active.length === 0) return null
+  return active.reduce((latest, s) => (s.startedAt > latest.startedAt ? s : latest))
+}
+
 // Filtre les séances pour l'export ciblé vers une IA (Réglages). "last" =
 // la plus récente séance (peu importe son statut), pas forcément celle
 // juste terminée si l'utilisateur navigue plus tard.

@@ -102,40 +102,51 @@ export function TemplatesListPage() {
       <details className="template-create-toggle">
         <summary>Créer une nouvelle séance</summary>
 
-        <form className="template-create" onSubmit={handleCreate}>
-          <input
-            type="text"
-            placeholder="Nom de la séance (ex: Push day)"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            aria-label="Nom de la nouvelle séance type"
-          />
-          <BigButton type="submit">Créer une séance vide</BigButton>
-        </form>
+        <div className="template-create-panel">
+          <p className="template-create-panel__label">Nouvelle séance — ces actions créent une séance type</p>
 
-        <section className="template-model-picker">
-          <p className="template-model-picker__hint">Ou partir d'un modèle prédéfini :</p>
-          {TEMPLATE_STRUCTURES.map((structure) => (
-            <div key={structure.key} className="template-model-group">
-              <h3>{structure.label}</h3>
-              <div className="template-model-group__buttons">
-                {structure.models.map((model) => (
-                  <button
-                    key={model.name}
-                    type="button"
-                    className="template-model-button"
-                    onClick={() => handleCreateFromModel(model)}
-                  >
-                    {model.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </section>
+          <form className="template-create" onSubmit={handleCreate}>
+            <input
+              type="text"
+              placeholder="Nom de la séance (ex: Push day)"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              aria-label="Nom de la nouvelle séance type"
+            />
+            <BigButton type="submit">Séance personnalisée</BigButton>
+          </form>
+
+          <section className="template-model-picker">
+            <p className="template-model-picker__hint">Modèles de séances</p>
+            {TEMPLATE_STRUCTURES.map((structure) => (
+              <details key={structure.key} className="template-model-group">
+                <summary>{structure.label}</summary>
+                <div className="template-model-group__buttons">
+                  {structure.models.map((model) => (
+                    <button
+                      key={model.name}
+                      type="button"
+                      className="template-model-button"
+                      onClick={() => handleCreateFromModel(model)}
+                    >
+                      {model.name}
+                    </button>
+                  ))}
+                </div>
+              </details>
+            ))}
+          </section>
+        </div>
       </details>
 
       {data.templates.length === 0 && <p className="empty-state">Aucune séance type pour l'instant.</p>}
+
+      {data.templates.length > 0 && (
+        <div className="template-list-header">
+          <h2>Mes séances enregistrées</h2>
+          <p className="template-list-header__hint">Déjà prêtes : lancez-les directement.</p>
+        </div>
+      )}
 
       <ul className="template-list">
         {sortedTemplates.map((template) => (

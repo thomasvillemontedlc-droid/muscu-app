@@ -241,6 +241,25 @@ input[type='number']:focus {
   margin-bottom: 8px;
 }
 
+/* Regroupe visuellement toutes les actions qui créent une NOUVELLE séance
+   type (personnalisée ou depuis un modèle), pour qu'on ne les confonde pas
+   avec les séances déjà enregistrées listées plus bas (.template-list),
+   qui se lancent directement sans passer par cette carte. */
+.template-create-panel {
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.template-create-panel__label {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0 0 10px;
+}
+
 .template-create {
   display: flex;
   gap: 8px;
@@ -248,7 +267,7 @@ input[type='number']:focus {
 }
 
 .template-model-picker {
-  margin-bottom: 20px;
+  margin-bottom: 4px;
 }
 
 .template-model-picker__hint {
@@ -261,10 +280,16 @@ input[type='number']:focus {
   margin-bottom: 10px;
 }
 
-.template-model-group h3 {
+.template-model-group summary {
   font-size: 0.85rem;
   color: var(--color-muted);
-  margin: 0 0 6px;
+  min-height: var(--touch-min);
+  line-height: var(--touch-min);
+  cursor: pointer;
+}
+
+.template-model-group[open] summary {
+  margin-bottom: 6px;
 }
 
 .template-model-group__buttons {
@@ -371,6 +396,24 @@ input[type='number']:focus {
 .rotation-proposal__input {
   flex: 1;
   min-width: 0;
+}
+
+/* Sépare visuellement les séances déjà enregistrées (lancées directement,
+   sans créer de nouvelle séance type) du bloc de création au-dessus. */
+.template-list-header {
+  border-top: 1px solid var(--color-border);
+  padding-top: 12px;
+  margin: 4px 0 12px;
+}
+
+.template-list-header h2 {
+  margin: 0 0 2px;
+}
+
+.template-list-header__hint {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  margin: 0;
 }
 
 .template-list {

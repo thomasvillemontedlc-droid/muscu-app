@@ -144,7 +144,7 @@ export const TEMPLATE_STRUCTURES = [
   },
   {
     key: 'real',
-    label: 'Mes séances réelles',
+    label: 'Structure 3 séances/semaine',
     models: [
       {
         // "Oiseau haltères (optionnel, à cocher/décocher selon le temps)"

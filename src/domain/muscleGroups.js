@@ -236,6 +236,9 @@ export const EXERCISE_MUSCLES = {
   // Cardio (pas de groupe musculaire de musculation ciblé : primary/secondary
   // vides plutôt qu'un 18e groupe rien que pour lui, voir MUSCLE_GROUPS).
   rameur: { name: 'Rameur', primary: [], secondary: [] },
+  velo: { name: 'Vélo', primary: [], secondary: [] },
+  elliptique: { name: 'Elliptique', primary: [], secondary: [] },
+  'tapis-de-course': { name: 'Tapis de course', primary: [], secondary: [] },
 }
 
 // Alias : noms courts/génériques que l'utilisateur est susceptible d'avoir
@@ -305,6 +308,9 @@ const TIME_BASED_EXERCISE_KEYS = new Set([
   'marche-sur-les-talons',
   'marche-laterale-avec-elastique',
   'rameur',
+  'velo',
+  'elliptique',
+  'tapis-de-course',
 ])
 
 export function getExerciseUnit(exerciseName) {

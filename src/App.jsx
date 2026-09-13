@@ -10,6 +10,7 @@ import { TemplateEditPage } from './pages/TemplateEditPage.jsx'
 import { SessionRunPage } from './pages/SessionRunPage.jsx'
 import { HistoryPage } from './pages/HistoryPage.jsx'
 import { ProgressPage } from './pages/ProgressPage.jsx'
+import { ProgramPage } from './pages/ProgramPage.jsx'
 import { SettingsPage } from './pages/SettingsPage.jsx'
 import { PrintPage } from './pages/PrintPage.jsx'
 
@@ -30,6 +31,7 @@ function App() {
                 <Route path="/sessions/:sessionId" element={<SessionRunPage />} />
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/progress" element={<ProgressPage />} />
+                <Route path="/program" element={<ProgramPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/print" element={<PrintPage />} />
               </Routes>

@@ -15,7 +15,7 @@ export function getMuscleCoverage(sessionsInPeriod) {
 // exercices : un template n'a pas de séries réalisées à filtrer (contrairement
 // à une séance), juste une liste d'exercices dont on prend le muscle
 // principal (voir domain/muscleGroups.js#getExerciseMuscles).
-function getTemplateMuscles(template, exercises) {
+export function getTemplateMuscles(template, exercises) {
   const muscles = new Set()
   for (const exerciseId of template.exerciseIds) {
     const exercise = exercises.find((e) => e.id === exerciseId)
@@ -23,6 +23,24 @@ function getTemplateMuscles(template, exercises) {
     for (const muscleId of getExerciseMuscles(exercise.name).primary) muscles.add(muscleId)
   }
   return muscles
+}
+
+// Muscles PRINCIPAUX couverts par un programme hebdomadaire (union sur
+// tous ses templates), vs ceux qu'aucune de ses séances ne travaille
+// jamais — vérification structurelle du programme lui-même (domain/program.js),
+// indépendante de tout historique de séances réelles (voir getMuscleCoverage
+// ci-dessus pour la version basée sur ce qui a été effectivement fait).
+export function getProgramMuscleCoverage(program, templates, exercises) {
+  const covered = new Set()
+  for (const templateId of program.templateIds) {
+    const template = templates.find((t) => t.id === templateId)
+    if (!template) continue
+    for (const muscleId of getTemplateMuscles(template, exercises)) covered.add(muscleId)
+  }
+  return {
+    covered: MUSCLE_GROUPS.filter((id) => covered.has(id)),
+    uncovered: MUSCLE_GROUPS.filter((id) => !covered.has(id)),
+  }
 }
 
 // Sélection gloutonne des séances types qui couvrent le mieux les muscles

@@ -137,6 +137,24 @@ export function SettingsPage() {
       </section>
 
       <section className="settings-section">
+        <h2>Programme</h2>
+        <label className="prep-field">
+          <span>Durée d'un bloc avant rotation des exercices</span>
+          <select
+            className="prep-field__select"
+            value={data.settings.rotationWeeks}
+            onChange={(e) => setData({ ...data, settings: { ...data.settings, rotationWeeks: Number(e.target.value) } })}
+          >
+            {[2, 3, 4, 6].map((weeks) => (
+              <option key={weeks} value={weeks}>
+                {weeks} semaines
+              </option>
+            ))}
+          </select>
+        </label>
+      </section>
+
+      <section className="settings-section">
         <h2>Sauvegarde</h2>
         <p>
           Toutes tes données restent uniquement sur ce téléphone (localStorage). Exporte

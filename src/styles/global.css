@@ -265,6 +265,68 @@ input[type='number']:focus {
   padding: 8px 14px;
 }
 
+.next-program-session {
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.next-program-session__label {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  margin: 0 0 2px;
+}
+
+.next-program-session__name {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.rotation-proposal {
+  margin-top: 12px;
+}
+
+.rotation-proposal__template {
+  margin-bottom: 16px;
+}
+
+.rotation-proposal__template h3 {
+  font-size: 0.95rem;
+  margin: 0 0 8px;
+}
+
+.rotation-proposal__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.rotation-proposal__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.rotation-proposal__old {
+  flex: 1;
+  min-width: 0;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  text-decoration: line-through;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rotation-proposal__input {
+  flex: 1;
+  min-width: 0;
+}
+
 .template-list {
   list-style: none;
   padding: 0;

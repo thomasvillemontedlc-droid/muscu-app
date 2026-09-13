@@ -44,5 +44,15 @@ function migrate(data) {
     migrated = { ...migrated, exercises: seedDefaultExercises(migrated.exercises) }
   }
 
+  // v2 -> v3 : ajoute le programme hebdomadaire (vide) et ses réglages de
+  // rotation, absents des données existantes.
+  if (previousVersion < 3) {
+    migrated = {
+      ...migrated,
+      weeklyProgram: migrated.weeklyProgram ?? { templateIds: [], blockStartDate: null },
+      settings: { rotationWeeks: 4, ...migrated.settings },
+    }
+  }
+
   return migrated
 }

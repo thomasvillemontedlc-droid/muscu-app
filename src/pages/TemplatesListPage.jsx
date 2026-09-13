@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { createTemplate, deleteTemplate, sortTemplatesForToday } from '../domain/templates.js'
 import { createTemplateFromModel, TEMPLATE_STRUCTURES } from '../domain/templateModels.js'
+import { getNextProgramTemplateId } from '../domain/program.js'
 import { startSessionFromTemplate } from '../domain/sessions.js'
 import { BigButton } from '../components/BigButton.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
@@ -12,6 +13,11 @@ export function TemplatesListPage() {
   const [newName, setNewName] = useState('')
   const [pendingDeleteId, setPendingDeleteId] = useState(null)
   const navigate = useNavigate()
+
+  const nextProgramTemplateId = getNextProgramTemplateId(data.weeklyProgram, data.sessions)
+  const nextProgramTemplate = nextProgramTemplateId
+    ? data.templates.find((t) => t.id === nextProgramTemplateId)
+    : null
 
   function handleCreate(e) {
     e.preventDefault()
@@ -45,6 +51,18 @@ export function TemplatesListPage() {
   return (
     <div className="page">
       <h1>Mes séances</h1>
+
+      {nextProgramTemplate && (
+        <section className="next-program-session">
+          <p className="next-program-session__label">Prochaine séance du programme</p>
+          <p className="next-program-session__name">{nextProgramTemplate.name}</p>
+          <BigButton onClick={() => handleStart(nextProgramTemplate)}>Lancer</BigButton>
+        </section>
+      )}
+
+      <Link to="/program" className="back-link">
+        Programme hebdomadaire →
+      </Link>
 
       <form className="template-create" onSubmit={handleCreate}>
         <input

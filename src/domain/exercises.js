@@ -1,4 +1,5 @@
 import { createId } from '../storage/ids.js'
+import { slugify } from '../lib/slugify.js'
 import { getSeedExercises, resolveExerciseCanonicalKey } from './muscleGroups.js'
 
 function normalize(name) {
@@ -68,8 +69,26 @@ export function setExerciseBarWeight(exercises, exerciseId, barWeight) {
 }
 
 // Pas d'incrément des boutons +/- de charge, mémorisé par exercice (voir
-// components/WeightField.jsx#getDefaultWeightStep pour la valeur par défaut
-// tant que rien n'est mémorisé ici).
+// getEffectiveWeightStep ci-dessous pour la valeur par défaut tant que rien
+// n'est mémorisé ici).
 export function setExerciseWeightStep(exercises, exerciseId, weightStep) {
   return exercises.map((e) => (e.id === exerciseId ? { ...e, weightStep } : e))
+}
+
+// Pas d'incrément par défaut des boutons +/- de charge, avant tout réglage
+// mémorisé sur l'exercice : 1,25kg pour une barre (petits disques), 1kg
+// pour une poulie ou des haltères, dont les paliers disponibles sont plus
+// fins.
+function getDefaultWeightStep(name) {
+  const slug = slugify(name ?? '')
+  if (slug.includes('poulie') || slug.includes('haltere')) return 1
+  return 1.25
+}
+
+// Pas d'incrément effectif d'un exercice (réglage mémorisé sur l'exercice,
+// sinon le défaut ci-dessus) : source commune à components/WeightField.jsx
+// (boutons +/-) et domain/chargeSuggestion.js (montant de la hausse
+// proposée), pour ne jamais désaccorder les deux.
+export function getEffectiveWeightStep(exercise) {
+  return exercise?.weightStep ?? getDefaultWeightStep(exercise?.name)
 }

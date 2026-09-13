@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { slugify } from '../lib/slugify.js'
+import { getEffectiveWeightStep } from '../domain/exercises.js'
 import { NumberField } from './NumberField.jsx'
 import { StepperField } from './StepperField.jsx'
 
@@ -20,16 +21,6 @@ function isDumbbellExercise(name) {
 // poids total de ce côté, sans barre à additionner.
 function hasSharedBar(name) {
   return slugify(name ?? '').includes('barre')
-}
-
-// Pas d'incrément par défaut des boutons +/- de charge (voir
-// domain/exercises.js#setExerciseWeightStep pour l'override mémorisé par
-// exercice) : 1,25kg pour une barre (petits disques), 1kg pour une poulie
-// ou des haltères, dont les paliers disponibles sont plus fins.
-function getDefaultWeightStep(name) {
-  const slug = slugify(name ?? '')
-  if (slug.includes('poulie') || slug.includes('haltere')) return 1
-  return 1.25
 }
 
 function computePerSide(total, barWeight) {
@@ -66,7 +57,7 @@ export function WeightField({
   // saisie de "poids par côté" représente déjà le poids total de ce côté,
   // rien à additionner.
   const barWeight = hasBar ? (exercise?.barWeight ?? DEFAULT_BAR_WEIGHT) : 0
-  const step = exercise?.weightStep ?? getDefaultWeightStep(exercise?.name)
+  const step = getEffectiveWeightStep(exercise)
   const [perSide, setPerSide] = useState(() => computePerSide(value, barWeight))
   const [editingStep, setEditingStep] = useState(false)
 

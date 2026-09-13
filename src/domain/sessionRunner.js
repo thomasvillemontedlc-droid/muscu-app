@@ -1,5 +1,5 @@
 import { getLastPerformance } from './history.js'
-import { getSessionById, updateSession } from './sessions.js'
+import { getSessionById, updateSession, withTarget } from './sessions.js'
 
 // Les poids/reps sont toujours écrits via domain/sessions.js#updateSet, en
 // direct depuis les écrans (même logique "tout se sauvegarde au fil de la
@@ -30,7 +30,7 @@ export function addExerciseEntryToSession(sessions, sessionId, exercise) {
   const entry = {
     exerciseId: exercise.id,
     exerciseName: exercise.name,
-    sets: last ? last.sets.map((set) => ({ ...set })) : [{ weight: 0, reps: 0 }],
+    sets: last ? last.sets.map(withTarget) : [{ weight: 0, reps: 0, targetReps: 0 }],
   }
 
   return updateSession(sessions, sessionId, { entries: [...session.entries, entry] })

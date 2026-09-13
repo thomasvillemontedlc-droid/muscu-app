@@ -8,15 +8,17 @@ function toLocalDayKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
-// Dernière performance enregistrée sur un exercice donné, tous templates confondus.
-// Sert à pré-remplir les champs quand on relance une séance (fonctionnalité 3).
+// Dernière performance enregistrée sur un exercice donné, tous templates
+// confondus. Sert à pré-remplir les champs quand on relance une séance
+// (fonctionnalité 3), et à évaluer la suggestion de hausse de charge (voir
+// domain/chargeSuggestion.js, qui a aussi besoin du ressenti saisi ce jour-là).
 export function getLastPerformance(sessions, exerciseId) {
   const sorted = [...sessions].sort((a, b) => b.date.localeCompare(a.date))
 
   for (const session of sorted) {
     const entry = session.entries.find((e) => e.exerciseId === exerciseId)
     if (entry && entry.sets.length > 0) {
-      return { date: session.date, sets: entry.sets }
+      return { date: session.date, sets: entry.sets, feeling: entry.feeling ?? null }
     }
   }
 

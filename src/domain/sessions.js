@@ -2,6 +2,17 @@ import { createId } from '../storage/ids.js'
 import { getExerciseById } from './exercises.js'
 import { getLastPerformance } from './history.js'
 
+// Fige la répétition pré-remplie comme objectif de LA SÉRIE À VENIR
+// (targetReps), écrasant un éventuel targetReps hérité de la source (`set`
+// vient de la dernière performance ou d'un modèle : son propre targetReps,
+// s'il en a un, appartient à SA séance, pas à celle-ci). `reps` restera
+// modifiable pour noter ce qui a été réellement fait, targetReps ne bouge
+// plus — c'est ce qui permet à domain/chargeSuggestion.js de comparer
+// objectif et réalisé après coup, une fois `reps` écrasé.
+export function withTarget(set) {
+  return { ...set, targetReps: set.reps }
+}
+
 // Crée une nouvelle séance à partir d'un template, en pré-remplissant chaque
 // exercice avec les poids/reps de la dernière fois (moins de saisie =
 // mieux) ; à défaut (jamais fait), les séries/répétitions par défaut du
@@ -20,8 +31,8 @@ export function startSessionFromTemplate(sessions, template, exercises) {
       exerciseId,
       exerciseName: exercise?.name ?? 'Exercice supprimé',
       sets: last
-        ? last.sets.map((set) => ({ ...set }))
-        : (defaultSets?.map((set) => ({ ...set })) ?? [{ weight: 0, reps: 0 }]),
+        ? last.sets.map(withTarget)
+        : (defaultSets?.map(withTarget) ?? [{ weight: 0, reps: 0, targetReps: 0 }]),
     }
   })
 
@@ -114,7 +125,7 @@ export function deleteSession(sessions, sessionId) {
   return sessions.filter((s) => s.id !== sessionId)
 }
 
-export function addSet(sessions, sessionId, exerciseId, set = { weight: 0, reps: 0 }) {
+export function addSet(sessions, sessionId, exerciseId, set = { weight: 0, reps: 0, targetReps: 0 }) {
   return mapEntry(sessions, sessionId, exerciseId, (entry) => ({
     ...entry,
     sets: [...entry.sets, { ...set }],
@@ -144,6 +155,14 @@ export function updateSet(sessions, sessionId, exerciseId, setIndex, changes) {
 // | 'facile' | null, note: string }. feeling peut être null pour l'effacer.
 export function setEntryFeeling(sessions, sessionId, exerciseId, feeling) {
   return mapEntry(sessions, sessionId, exerciseId, (entry) => ({ ...entry, feeling }))
+}
+
+// Marque la suggestion de hausse de charge (domain/chargeSuggestion.js)
+// comme traitée pour cet exercice, qu'elle ait été acceptée ou refusée —
+// pour ne plus la reproposer si on navigue entre exercices dans la même
+// séance (elle est réévaluée à neuf sur chaque nouvelle séance).
+export function markChargeSuggestionResolved(sessions, sessionId, exerciseId) {
+  return mapEntry(sessions, sessionId, exerciseId, (entry) => ({ ...entry, chargeSuggestionResolved: true }))
 }
 
 function mapEntry(sessions, sessionId, exerciseId, transform) {

@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { getChargeSuggestion } from '../../domain/chargeSuggestion.js'
 import { getLastPerformance } from '../../domain/history.js'
 import { getExerciseUnit } from '../../domain/muscleGroups.js'
-import { updateSet } from '../../domain/sessions.js'
+import { markChargeSuggestionResolved, updateSet } from '../../domain/sessions.js'
 import { setExerciseBarWeight, setExerciseWeightMode, setExerciseWeightStep } from '../../domain/exercises.js'
 import {
   finishCurrentExerciseEarly,
@@ -38,6 +39,14 @@ export function ExerciseView({ session, data, setData }) {
   const isTimeBased = getExerciseUnit(entry.exerciseName) === 'time'
   const otherSessions = data.sessions.filter((s) => s.id !== session.id)
   const last = getLastPerformance(otherSessions, entry.exerciseId)
+  // Seulement à l'arrivée sur la toute première série de l'exercice (pas à
+  // chaque série), et pas pour un exercice au temps (pas de "charge" à
+  // proposer pour un gainage). entry.chargeSuggestionResolved évite de la
+  // reproposer si on navigue entre exercices sans avoir répondu.
+  const chargeSuggestion =
+    !isTimeBased && session.currentSetIndex === 0 && !entry.chargeSuggestionResolved
+      ? getChargeSuggestion(otherSessions, entry.exerciseId, exercise)
+      : null
 
   function handleRepsChange(reps) {
     setData({
@@ -109,6 +118,22 @@ export function ExerciseView({ session, data, setData }) {
     setData({ ...data, sessions: skipRest(data.sessions, session.id) })
   }
 
+  function handleAcceptChargeSuggestion() {
+    setData((current) => {
+      const sessions = updateSet(current.sessions, session.id, entry.exerciseId, 0, {
+        weight: chargeSuggestion.newWeight,
+      })
+      return { ...current, sessions: markChargeSuggestionResolved(sessions, session.id, entry.exerciseId) }
+    })
+  }
+
+  function handleDeclineChargeSuggestion() {
+    setData((current) => ({
+      ...current,
+      sessions: markChargeSuggestionResolved(current.sessions, session.id, entry.exerciseId),
+    }))
+  }
+
   const navButtons = (
     <div className="exercise-active__nav">
       {session.currentSetIndex > 0 && (
@@ -165,6 +190,22 @@ export function ExerciseView({ session, data, setData }) {
       <p className="session-date">
         Série {session.currentSetIndex + 1} / {entry.sets.length}
       </p>
+
+      {chargeSuggestion && (
+        <div className="charge-suggestion">
+          <p className="charge-suggestion__text">
+            La dernière fois, tu as réussi toutes tes séries avec un ressenti{' '}
+            {chargeSuggestion.feelingValue === 'facile' ? 'facile' : 'bien comme ça'}. Passer à{' '}
+            {chargeSuggestion.newWeight}kg ?
+          </p>
+          <div className="charge-suggestion__actions">
+            <BigButton onClick={handleAcceptChargeSuggestion}>Passer à {chargeSuggestion.newWeight}kg</BigButton>
+            <BigButton variant="secondary" onClick={handleDeclineChargeSuggestion}>
+              Garder {chargeSuggestion.currentWeight}kg
+            </BigButton>
+          </div>
+        </div>
+      )}
 
       {!last && <p className="last-performance last-performance--empty">Première fois sur cet exercice</p>}
 

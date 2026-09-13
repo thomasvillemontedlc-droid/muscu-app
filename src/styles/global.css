@@ -1127,26 +1127,23 @@ input.set-row__input {
 
 .rest-page__next {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
+  text-align: center;
+  gap: 2px;
   margin-top: 8px;
 }
 
-/* Même recadrage que .exercise-picker__thumb (background-size/position en
-   %, donc indépendant de la taille de la vignette) : zoom sur la figure
-   "position de départ" en haut à gauche de l'illustration plutôt que
-   l'image entière rétrécie. */
-.rest-page__next-thumb {
-  display: inline-block;
-  width: 56px;
-  height: 56px;
+/* Volontairement grande et non recadrée (contrairement à
+   .exercise-picker__thumb, qui zoome) : l'image complète doit rester
+   visible, dans ses propres proportions (height: auto). */
+.rest-page__next-image {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
   border-radius: var(--radius);
-  flex-shrink: 0;
-  background-color: var(--color-surface-2);
-  background-repeat: no-repeat;
-  background-size: 220% 200%;
-  background-position: 0% 16%;
+  margin-bottom: 6px;
 }
 
 .rest-page__next-label {

@@ -15,8 +15,8 @@ import { vibrateSuccess } from '../../lib/haptics.js'
 import { useRestTimer } from '../../hooks/useRestTimer.js'
 import { RestBanner } from '../../components/RestBanner.jsx'
 import { DurationField } from '../../components/DurationField.jsx'
+import { ExerciseImage } from '../../components/ExerciseImage.jsx'
 import { ExerciseImageViewer } from '../../components/ExerciseImageViewer.jsx'
-import { ExerciseThumbnail } from '../../components/ExerciseThumbnail.jsx'
 import { ExerciseProgressBar } from '../../components/ExerciseProgressBar.jsx'
 import { SetComparisonTable } from '../../components/SetComparisonTable.jsx'
 import { StepperField } from '../../components/StepperField.jsx'
@@ -123,12 +123,14 @@ export function ExerciseView({ session, data, setData }) {
   )
 
   // Pendant le repos (décompte encore en cours, pas le dépassement une fois
-  // à zéro), le chrono doit rester l'élément dominant de l'écran : on
-  // masque le reste (image, tableau, saisie) plutôt que de le faire
-  // cohabiter avec un chrono réduit. Le nom du prochain exercice est
-  // également mis en avant (gros, au-dessus du chrono, voir CSS) sans lui
-  // faire concurrence : le chrono garde sa taille et son espace dédié
-  // (flex:1). Dès le dépassement, l'écran normal revient pour permettre
+  // à zéro), le chrono doit rester l'élément dominant de l'écran EN TAILLE
+  // (police, voir CSS) : on masque le reste de l'écran actif (tableau,
+  // saisie) plutôt que de le faire cohabiter. L'image du prochain exercice
+  // est volontairement grande et non recadrée (contrairement à
+  // ExerciseThumbnail utilisée dans le sélecteur) : elle prend l'espace
+  // disponible autour du chrono, quitte à rendre l'écran plus grand que la
+  // fenêtre (défilement), mais ne réduit jamais la taille du chrono
+  // lui-même. Dès le dépassement, l'écran normal revient pour permettre
   // d'enchaîner sur la série suivante.
   if (timer && !timer.isOvershoot) {
     return (
@@ -136,11 +138,9 @@ export function ExerciseView({ session, data, setData }) {
         {navButtons}
         <ExerciseProgressBar session={session} />
         <div className="rest-page__next">
-          <ExerciseThumbnail name={entry.exerciseName} className="rest-page__next-thumb" />
-          <div>
-            <p className="rest-page__next-label">Prochain exercice</p>
-            <h2 className="rest-page__next-name">{entry.exerciseName}</h2>
-          </div>
+          <ExerciseImage key={entry.exerciseName} name={entry.exerciseName} className="rest-page__next-image" />
+          <p className="rest-page__next-label">Prochain exercice</p>
+          <h2 className="rest-page__next-name">{entry.exerciseName}</h2>
         </div>
         <RestBanner timer={timer} />
         <p className="rest-page__set-detail">

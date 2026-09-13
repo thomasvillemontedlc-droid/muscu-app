@@ -193,7 +193,7 @@ export function ExerciseView({ session, data, setData }) {
               value={set.reps}
               onChange={handleRepsChange}
               disabled={validating}
-              aria-label="Durée en secondes"
+              aria-label="Durée"
             />
           ) : (
             <StepperField

@@ -42,7 +42,7 @@ export function SetRow({
               className="set-row__input"
               value={reps}
               onChange={onChangeReps}
-              aria-label={`Durée série ${index + 1} en secondes`}
+              aria-label={`Durée série ${index + 1}`}
             />
           ) : (
             <NumberField

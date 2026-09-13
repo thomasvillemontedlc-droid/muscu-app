@@ -1060,20 +1060,6 @@ input.set-row__input {
   text-align: center;
 }
 
-.duration-field__input-row {
-  position: relative;
-}
-
-.duration-field__unit {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-muted);
-  font-size: 1rem;
-  pointer-events: none;
-}
-
 .duration-field__toggle {
   display: block;
   width: 100%;

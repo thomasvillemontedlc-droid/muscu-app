@@ -3,9 +3,13 @@ import { NumberField } from './NumberField.jsx'
 
 // Chrono intégré pour les exercices "au temps" (gainage, planche...) : le
 // bouton alimente directement le champ en secondes pendant qu'il tourne,
-// pour éviter d'avoir à mesurer à part puis retaper la durée. Le champ
-// reste modifiable à la main quand le chrono est arrêté (correction, ou
-// saisie d'une durée déjà connue).
+// pour éviter d'avoir à mesurer à part puis retaper la durée. Minutes et
+// secondes saisies séparément (mêmes classes .rest-duration-fields que le
+// temps de repos dans PrepView.jsx, pour la même affordance) mais `value`/
+// `onChange` restent en secondes totales côté appelant : la conversion se
+// fait ici, sans rien changer pour ExerciseView.jsx ni SetRow.jsx. Les
+// champs restent modifiables à la main quand le chrono est arrêté
+// (correction, ou saisie d'une durée déjà connue).
 export function DurationField({ value, onChange, className, disabled, 'aria-label': ariaLabel }) {
   const [running, setRunning] = useState(false)
   const startRef = useRef(0)
@@ -30,17 +34,37 @@ export function DurationField({ value, onChange, className, disabled, 'aria-labe
     setRunning(false)
   }
 
+  function handleMinutesChange(minutes) {
+    onChange(minutes * 60 + (value % 60))
+  }
+
+  function handleSecondsChange(seconds) {
+    onChange(Math.floor(value / 60) * 60 + seconds)
+  }
+
   return (
     <div className="duration-field">
-      <div className="duration-field__input-row">
-        <NumberField
-          className={className}
-          value={value}
-          onChange={onChange}
-          disabled={disabled || running}
-          aria-label={ariaLabel}
-        />
-        <span className="duration-field__unit">s</span>
+      <div className="rest-duration-fields">
+        <label className="rest-duration-fields__field">
+          <NumberField
+            className={className}
+            value={Math.floor(value / 60)}
+            onChange={handleMinutesChange}
+            disabled={disabled || running}
+            aria-label={ariaLabel ? `${ariaLabel} (minutes)` : 'Minutes'}
+          />
+          <span>min</span>
+        </label>
+        <label className="rest-duration-fields__field">
+          <NumberField
+            className={className}
+            value={value % 60}
+            onChange={handleSecondsChange}
+            disabled={disabled || running}
+            aria-label={ariaLabel ? `${ariaLabel} (secondes)` : 'Secondes'}
+          />
+          <span>s</span>
+        </label>
       </div>
       {running ? (
         <button type="button" className="duration-field__toggle duration-field__toggle--active" onClick={handleStop}>

@@ -25,6 +25,7 @@ import { StepperField } from '../../components/StepperField.jsx'
 import { WeightField } from '../../components/WeightField.jsx'
 import { Confetti } from '../../components/Confetti.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
+import { OnboardingTip } from '../../components/OnboardingTip.jsx'
 
 // Délai pendant lequel le retour visuel (vert + coche + confettis) reste
 // affiché avant de réellement avancer à la série/l'écran suivant — assez
@@ -173,6 +174,11 @@ export function ExerciseView({ session, data, setData }) {
           <h2 className="rest-page__next-name">{entry.exerciseName}</h2>
         </div>
         <RestBanner timer={timer} onAdjust={handleAdjustRest} />
+        <OnboardingTip
+          id="rest-adjust"
+          selector=".rest-timer"
+          text="Ajuste le repos en direct avec +15s/-15s. Une alarme sonne à la fin."
+        />
         <p className="rest-page__set-detail">
           Série {session.currentSetIndex + 1} / {entry.sets.length}
         </p>
@@ -272,6 +278,12 @@ export function ExerciseView({ session, data, setData }) {
           />
         </label>
       </div>
+
+      <OnboardingTip
+        id="exercise-input"
+        selector=".weight-field__mode-toggle"
+        text={'Poids et répétitions se règlent avec les boutons +/-. "Saisir par côté" pour un haltère par bras.'}
+      />
 
       <BigButton onClick={handleValidate} disabled={validating}>
         {validating ? 'Série validée ✓' : 'Valider la série'}

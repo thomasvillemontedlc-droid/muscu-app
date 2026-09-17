@@ -2137,66 +2137,50 @@ input.routine-runner__item-duration {
   margin-top: 20px;
 }
 
-.onboarding-card {
-  position: relative;
-  max-width: 400px;
+.tip-highlight {
+  position: fixed;
+  border: 2px solid var(--color-primary);
+  border-radius: 12px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 25%, transparent);
+  pointer-events: none;
+  z-index: 90;
+  animation: tip-pulse 1.6s ease-in-out infinite;
 }
 
-.onboarding-skip {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  border: none;
-  background: transparent;
-  color: var(--color-muted);
-  font-size: 0.85rem;
-  padding: 4px 8px;
-  cursor: pointer;
+@keyframes tip-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 25%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--color-primary) 12%, transparent);
+  }
 }
 
-.onboarding-step-count {
-  margin: 0 0 4px;
-  color: var(--color-muted);
-  font-size: 0.8rem;
+.tip-bubble {
+  position: fixed;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  z-index: 91;
 }
 
-.onboarding-title {
+.tip-bubble__text {
   margin: 0 0 8px;
-  padding-right: 60px;
-  font-size: 1.2rem;
-}
-
-.onboarding-text {
-  margin: 0;
+  font-size: 0.85rem;
   color: var(--color-text);
 }
 
-.onboarding-dots {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 20px;
-}
-
-.onboarding-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-border);
-}
-
-.onboarding-dot--active {
-  background: var(--color-primary);
-}
-
-.onboarding-nav {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.onboarding-nav .big-button {
-  flex: 1;
-  width: auto;
-  margin: 0;
+.tip-bubble__close {
+  display: block;
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 4px 6px;
 }

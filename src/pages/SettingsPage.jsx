@@ -5,9 +5,11 @@ import { useThemeContext } from '../hooks/ThemeContext.jsx'
 import { filterSessionsByScope } from '../domain/sessions.js'
 import { seedDefaultExercises } from '../domain/exercises.js'
 import { parseImportedData } from '../storage/storage.js'
+import { resetSeenTips } from '../storage/onboarding.js'
 import { BigButton } from '../components/BigButton.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { AlertDialog } from '../components/AlertDialog.jsx'
+import { OnboardingTip } from '../components/OnboardingTip.jsx'
 
 const SCOPE_LABELS = {
   last: 'La séance la plus récente',
@@ -23,7 +25,7 @@ const THEME_LABELS = {
   light: 'Clair',
 }
 
-export function SettingsPage({ onReplayTutorial }) {
+export function SettingsPage() {
   const { data, setData } = useAppDataContext()
   const { theme, setTheme } = useThemeContext()
   const navigate = useNavigate()
@@ -118,6 +120,14 @@ export function SettingsPage({ onReplayTutorial }) {
     )
   }
 
+  // Oublie les bulles déjà vues (voir storage/onboarding.js) et repart de
+  // l'accueil : chaque bulle réapparaîtra à la prochaine visite de son écran
+  // plutôt que d'afficher un unique récapitulatif hors contexte.
+  function handleReplayTutorial() {
+    resetSeenTips()
+    navigate('/')
+  }
+
   return (
     <div className="page">
       <h1>Réglages</h1>
@@ -192,7 +202,9 @@ export function SettingsPage({ onReplayTutorial }) {
           </ul>
         )}
 
-        <BigButton onClick={handleExport}>Exporter (JSON)</BigButton>
+        <BigButton id="tip-settings-export" onClick={handleExport}>
+          Exporter (JSON)
+        </BigButton>
         <BigButton variant="secondary" onClick={handleImportClick}>
           Importer
         </BigButton>
@@ -238,10 +250,16 @@ export function SettingsPage({ onReplayTutorial }) {
 
       <section className="settings-section">
         <h2>Aide</h2>
-        <BigButton variant="secondary" onClick={onReplayTutorial}>
+        <BigButton variant="secondary" onClick={handleReplayTutorial}>
           Revoir le tutoriel
         </BigButton>
       </section>
+
+      <OnboardingTip
+        id="settings-export"
+        selector="#tip-settings-export"
+        text="Exporte tes séances en JSON, ou en PDF juste en dessous."
+      />
 
       <ConfirmDialog
         open={pendingImport != null}

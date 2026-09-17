@@ -9,6 +9,7 @@ import { TrendDot } from '../components/TrendDot.jsx'
 import { BodyHeatmap, BodyHeatmapLegend } from '../components/BodyHeatmap.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { getFeelingLabel } from '../components/FeelingPicker.jsx'
+import { OnboardingTip } from '../components/OnboardingTip.jsx'
 
 const STATUS_LABELS = {
   done: '✓ Faite',
@@ -156,6 +157,12 @@ export function HistoryPage() {
           })}
         </section>
       ))}
+
+      <OnboardingTip
+        id="history-status"
+        selector=".history-session__status"
+        text="Chaque séance garde un statut : faite, partielle ou non faite."
+      />
 
       <ConfirmDialog
         open={pendingDeleteId != null}

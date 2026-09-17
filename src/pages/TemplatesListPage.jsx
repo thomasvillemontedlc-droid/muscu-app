@@ -7,6 +7,7 @@ import { getNextProgramTemplateId } from '../domain/program.js'
 import { getInProgressSession, startSessionFromTemplate } from '../domain/sessions.js'
 import { BigButton } from '../components/BigButton.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
+import { OnboardingTip } from '../components/OnboardingTip.jsx'
 
 export function TemplatesListPage() {
   const { data, setData } = useAppDataContext()
@@ -99,7 +100,7 @@ export function TemplatesListPage() {
         Programme hebdomadaire →
       </Link>
 
-      <details className="template-create-toggle">
+      <details id="tip-home-create" className="template-create-toggle">
         <summary>Créer une nouvelle séance</summary>
 
         <div className="template-create-panel">
@@ -182,6 +183,12 @@ export function TemplatesListPage() {
           </li>
         ))}
       </ul>
+
+      <OnboardingTip
+        id="home-create"
+        selector="#tip-home-create"
+        text="Crée ta première séance ici : personnalisée, ou depuis un modèle prêt à l'emploi."
+      />
 
       <ConfirmDialog
         open={pendingDeleteId != null}

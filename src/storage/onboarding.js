@@ -1,12 +1,30 @@
-const ONBOARDING_KEY = 'muscu-app-onboarding-seen'
+const SEEN_TIPS_KEY = 'muscu-app-onboarding-tips-seen'
 
-// Séparé de storage.js/STORAGE_KEY : ce flag suit uniquement si le tutoriel
-// a déjà été vu sur cet appareil, indépendamment des données de séances
-// (donc pas concerné par export/import ou réinitialisation du catalogue).
-export function hasSeenOnboarding() {
-  return localStorage.getItem(ONBOARDING_KEY) === 'true'
+// Une bulle par écran/fonctionnalité, chacune vue indépendamment (voir
+// components/OnboardingTip.jsx) : pas de séquence à suivre dans l'ordre, la
+// première visite de chaque écran suffit à déclencher sa bulle. Séparé de
+// storage.js/STORAGE_KEY car ce n'est pas une donnée de séance.
+function readSeenTips() {
+  try {
+    const raw = localStorage.getItem(SEEN_TIPS_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
 }
 
-export function markOnboardingSeen() {
-  localStorage.setItem(ONBOARDING_KEY, 'true')
+export function hasSeenTip(id) {
+  return readSeenTips()[id] === true
+}
+
+export function markTipSeen(id) {
+  const seen = readSeenTips()
+  seen[id] = true
+  localStorage.setItem(SEEN_TIPS_KEY, JSON.stringify(seen))
+}
+
+// "Revoir le tutoriel" (Réglages) : oublie tout, chaque bulle réapparaîtra à
+// la prochaine visite de son écran plutôt que toutes d'un coup.
+export function resetSeenTips() {
+  localStorage.removeItem(SEEN_TIPS_KEY)
 }

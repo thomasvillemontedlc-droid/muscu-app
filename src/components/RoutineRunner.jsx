@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { vibrateSuccess } from '../lib/haptics.js'
 import { BigButton } from './BigButton.jsx'
 import { DurationField } from './DurationField.jsx'
+import { OnboardingTip } from './OnboardingTip.jsx'
 
 // Déroulé générique d'une petite liste de mouvements chronométrés, un par
 // un (échauffement avant séance, étirements en fin de séance) : liste
@@ -10,7 +11,7 @@ import { DurationField } from './DurationField.jsx'
 // manuel via "Passer ce mouvement" (goToNext), sans attendre le décompte
 // ni annuler le reste de la routine (skipLabel/onDone abandonnent
 // TOUTE la routine, c'est différent).
-export function RoutineRunner({ title, hint, initialItems, suggestions = [], onDone, skipLabel = 'Passer' }) {
+export function RoutineRunner({ title, hint, initialItems, suggestions = [], onDone, skipLabel = 'Passer', tip }) {
   const [items, setItems] = useState(initialItems)
   const [running, setRunning] = useState(false)
   const [index, setIndex] = useState(0)
@@ -139,7 +140,7 @@ export function RoutineRunner({ title, hint, initialItems, suggestions = [], onD
         </ul>
       )}
 
-      <div className="routine-runner__add">
+      <div id={tip ? `tip-${tip.id}` : undefined} className="routine-runner__add">
         <input
           className="routine-runner__add-input"
           value={newName}
@@ -151,6 +152,8 @@ export function RoutineRunner({ title, hint, initialItems, suggestions = [], onD
           Ajouter
         </button>
       </div>
+
+      {tip && <OnboardingTip id={tip.id} selector={`#tip-${tip.id}`} text={tip.text} />}
 
       {visibleSuggestions.length > 0 && (
         <div className="routine-runner__suggestions">

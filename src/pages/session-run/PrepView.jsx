@@ -109,6 +109,10 @@ export function PrepView({ session, data, setData }) {
         suggestions={getWarmupMoveSuggestions(getPlannedMusclesWorked(session))}
         skipLabel="Passer l'échauffement"
         onDone={handleStart}
+        tip={{
+          id: 'warmup-customize',
+          text: "Ajoute, retire ou change la durée de chaque mouvement. Même principe pour les étirements en fin de séance.",
+        }}
       />
     )
   }

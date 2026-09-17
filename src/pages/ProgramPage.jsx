@@ -12,6 +12,7 @@ import { getProgramMuscleCoverage } from '../domain/muscleCoverage.js'
 import { getMuscleLabel } from '../domain/muscleGroups.js'
 import { applyRotationProposal, proposeRotation } from '../domain/rotation.js'
 import { BigButton } from '../components/BigButton.jsx'
+import { OnboardingTip } from '../components/OnboardingTip.jsx'
 
 export function ProgramPage() {
   const { data, setData } = useAppDataContext()
@@ -169,7 +170,7 @@ export function ProgramPage() {
         )}
       </section>
 
-      <section className="progress-section">
+      <section id="tip-program-rotation" className="progress-section">
         <h2>Rotation des exercices</h2>
         {program.templateIds.length === 0 ? (
           <p className="empty-state">Ajoute des séances au programme pour activer la rotation.</p>
@@ -221,6 +222,12 @@ export function ProgramPage() {
           </>
         )}
       </section>
+
+      <OnboardingTip
+        id="program-rotation"
+        selector="#tip-program-rotation"
+        text="Planifie tes séances de la semaine ; l'app propose ensuite une rotation d'exercices tous les X semaines."
+      />
     </div>
   )
 }

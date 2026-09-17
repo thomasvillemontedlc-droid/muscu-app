@@ -129,7 +129,10 @@ export function TemplatesListPage() {
                       className="template-model-button"
                       onClick={() => handleCreateFromModel(model)}
                     >
-                      {model.name}
+                      <span className="template-model-button__name">{model.name}</span>
+                      {model.subtitle && (
+                        <span className="template-model-button__subtitle">{model.subtitle}</span>
+                      )}
                     </button>
                   ))}
                 </div>

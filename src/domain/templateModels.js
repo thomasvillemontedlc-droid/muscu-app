@@ -15,6 +15,7 @@ export const TEMPLATE_STRUCTURES = [
     models: [
       {
         name: 'Modèle Push A',
+        subtitle: 'Barres & haltères',
         exercises: [
           { name: 'Développé couché barre', sets: 4, reps: 8 },
           { name: 'Développé militaire haltères assis', sets: 3, reps: 10 },
@@ -25,6 +26,7 @@ export const TEMPLATE_STRUCTURES = [
       },
       {
         name: 'Modèle Push B',
+        subtitle: 'Machines & poulies',
         exercises: [
           { name: 'Développé incliné haltères', sets: 4, reps: 10 },
           { name: 'Développé à la machine convergente', sets: 3, reps: 10 },
@@ -35,6 +37,7 @@ export const TEMPLATE_STRUCTURES = [
       },
       {
         name: 'Modèle Pull A',
+        subtitle: 'Tractions & barre',
         exercises: [
           { name: 'Tractions pronation', sets: 4, reps: 0 },
           { name: 'Rowing barre buste penché', sets: 3, reps: 10 },
@@ -45,6 +48,7 @@ export const TEMPLATE_STRUCTURES = [
       },
       {
         name: 'Modèle Pull B',
+        subtitle: 'Haltères unilatéral',
         exercises: [
           { name: 'Tirage vertical poulie haute (prise neutre)', sets: 4, reps: 10 },
           { name: 'Rowing haltère unilatéral', sets: 3, reps: 10 },
@@ -55,6 +59,7 @@ export const TEMPLATE_STRUCTURES = [
       },
       {
         name: 'Modèle Jambes A',
+        subtitle: 'Squat & machines',
         exercises: [
           { name: 'Squat barre', sets: 4, reps: 8 },
           { name: 'Leg curl allongé', sets: 3, reps: 12 },
@@ -65,6 +70,7 @@ export const TEMPLATE_STRUCTURES = [
       },
       {
         name: 'Modèle Jambes B',
+        subtitle: 'Hanches & ischios',
         exercises: [
           { name: 'Fentes bulgares', sets: 3, reps: 10 },
           { name: 'Soulevé de terre roumain', sets: 4, reps: 8 },

@@ -1,7 +1,12 @@
 import { useState } from 'react'
 import { getOrCreateExercise } from '../../domain/exercises.js'
 import { getExercisesUsedInTemplate } from '../../domain/history.js'
-import { addExerciseEntryToSession, finishSessionEarly, pickExercise } from '../../domain/sessionRunner.js'
+import {
+  addExerciseEntryToSession,
+  adjustRestSeconds,
+  finishSessionEarly,
+  pickExercise,
+} from '../../domain/sessionRunner.js'
 import { setEntryFeeling } from '../../domain/sessions.js'
 import { useRestTimer } from '../../hooks/useRestTimer.js'
 import { RestBanner } from '../../components/RestBanner.jsx'
@@ -23,6 +28,10 @@ export function PickExerciseView({ session, data, setData }) {
     setData({ ...data, sessions: finishSessionEarly(data.sessions, session.id) })
   }
 
+  function handleAdjustRest(deltaSeconds) {
+    setData({ ...data, sessions: adjustRestSeconds(data.sessions, session.id, deltaSeconds) })
+  }
+
   function handleFeelingChange(exerciseId, feeling) {
     setData({ ...data, sessions: setEntryFeeling(data.sessions, session.id, exerciseId, feeling) })
   }
@@ -41,7 +50,7 @@ export function PickExerciseView({ session, data, setData }) {
       <h1>Exercices</h1>
       <p className="last-performance">{session.templateName}</p>
 
-      <RestBanner timer={timer} />
+      <RestBanner timer={timer} onAdjust={handleAdjustRest} />
 
       <ul className="pick-exercise-list">
         {session.entries.map((entry) => {

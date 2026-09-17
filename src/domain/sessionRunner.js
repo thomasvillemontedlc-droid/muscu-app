@@ -48,6 +48,18 @@ export function setRestSeconds(sessions, sessionId, restSeconds) {
   return updateSession(sessions, sessionId, { restSeconds })
 }
 
+// Ajuste le temps restant d'un repos déjà en cours (boutons +15s/-15s) : on
+// modifie restSeconds, pas restStartedAt, donc le chrono continue de courir
+// sans se réinitialiser (voir useRestTimer.js, remainingMs recalculé à
+// partir des deux). Peut faire passer sous zéro comme au-dessus, le
+// dépassement se comporte alors normalement.
+export function adjustRestSeconds(sessions, sessionId, deltaSeconds) {
+  const session = getSessionById(sessions, sessionId)
+  if (!session) return sessions
+
+  return setRestSeconds(sessions, sessionId, session.restSeconds + deltaSeconds)
+}
+
 // Étape 1 -> étape 2 : démarre sur le premier exercice de la liste.
 // "Commencer par" n'est pas un champ séparé (source de désync avec l'ordre
 // réel après un glisser-déposer) : c'est toujours entries[0]. Choisir un

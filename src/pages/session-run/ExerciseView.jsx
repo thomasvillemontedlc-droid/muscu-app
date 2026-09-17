@@ -5,6 +5,7 @@ import { getExerciseUnit } from '../../domain/muscleGroups.js'
 import { markChargeSuggestionResolved, updateSet } from '../../domain/sessions.js'
 import { setExerciseBarWeight, setExerciseWeightMode, setExerciseWeightStep } from '../../domain/exercises.js'
 import {
+  adjustRestSeconds,
   finishCurrentExerciseEarly,
   goToExerciseList,
   goToPreviousSet,
@@ -118,6 +119,10 @@ export function ExerciseView({ session, data, setData }) {
     setData({ ...data, sessions: skipRest(data.sessions, session.id) })
   }
 
+  function handleAdjustRest(deltaSeconds) {
+    setData({ ...data, sessions: adjustRestSeconds(data.sessions, session.id, deltaSeconds) })
+  }
+
   function handleAcceptChargeSuggestion() {
     setData((current) => {
       const sessions = updateSet(current.sessions, session.id, entry.exerciseId, 0, {
@@ -167,7 +172,7 @@ export function ExerciseView({ session, data, setData }) {
           <p className="rest-page__next-label">Prochain exercice</p>
           <h2 className="rest-page__next-name">{entry.exerciseName}</h2>
         </div>
-        <RestBanner timer={timer} />
+        <RestBanner timer={timer} onAdjust={handleAdjustRest} />
         <p className="rest-page__set-detail">
           Série {session.currentSetIndex + 1} / {entry.sets.length}
         </p>
@@ -184,7 +189,7 @@ export function ExerciseView({ session, data, setData }) {
 
       <ExerciseProgressBar session={session} />
 
-      <RestBanner timer={timer} />
+      <RestBanner timer={timer} onAdjust={handleAdjustRest} />
 
       <h1>{entry.exerciseName}</h1>
       <p className="session-date">

@@ -1202,7 +1202,10 @@ input.set-row__input {
 }
 
 .rest-timer {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
   padding: 24px 0;
 }
 
@@ -1214,6 +1217,19 @@ input.set-row__input {
 
 .rest-timer--overshoot .rest-timer__clock {
   color: var(--color-danger);
+}
+
+.rest-timer__adjust {
+  min-height: 40px;
+  min-width: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 /* Écran de repos "dominant" (voir ExerciseView.jsx) : le chrono garde sa
@@ -1236,6 +1252,12 @@ input.set-row__input {
 
 .rest-page .rest-timer__clock {
   font-size: 5.5rem;
+}
+
+.rest-page .rest-timer__adjust {
+  min-height: 48px;
+  min-width: 48px;
+  font-size: 1rem;
 }
 
 .rest-page__next {

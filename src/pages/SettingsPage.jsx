@@ -23,7 +23,7 @@ const THEME_LABELS = {
   light: 'Clair',
 }
 
-export function SettingsPage() {
+export function SettingsPage({ onReplayTutorial }) {
   const { data, setData } = useAppDataContext()
   const { theme, setTheme } = useThemeContext()
   const navigate = useNavigate()
@@ -234,6 +234,13 @@ export function SettingsPage() {
           Le fichier est téléchargé puis un nouvel onglet s'ouvre : glisse-le manuellement dans la
           conversation une fois là-bas, ce n'est pas automatique.
         </p>
+      </section>
+
+      <section className="settings-section">
+        <h2>Aide</h2>
+        <BigButton variant="secondary" onClick={onReplayTutorial}>
+          Revoir le tutoriel
+        </BigButton>
       </section>
 
       <ConfirmDialog

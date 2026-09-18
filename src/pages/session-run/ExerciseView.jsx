@@ -1,14 +1,22 @@
 import { useState } from 'react'
 import { getChargeSuggestion } from '../../domain/chargeSuggestion.js'
-import { getLastPerformance } from '../../domain/history.js'
+import { getExercisesUsedInTemplate, getLastPerformance } from '../../domain/history.js'
 import { getExerciseUnit } from '../../domain/muscleGroups.js'
 import { markChargeSuggestionResolved, updateSet } from '../../domain/sessions.js'
-import { setExerciseBarWeight, setExerciseWeightMode, setExerciseWeightStep } from '../../domain/exercises.js'
 import {
+  getOrCreateExercise,
+  setExerciseBarWeight,
+  setExerciseWeightMode,
+  setExerciseWeightStep,
+} from '../../domain/exercises.js'
+import {
+  addExerciseEntryToSession,
   adjustRestSeconds,
   finishCurrentExerciseEarly,
   goToExerciseList,
   goToPreviousSet,
+  removeExerciseEntryFromSession,
+  reorderSessionEntries,
   skipRest,
   validateCurrentSet,
 } from '../../domain/sessionRunner.js'
@@ -16,6 +24,9 @@ import { unlockAudio } from '../../lib/alarm.js'
 import { vibrateSuccess } from '../../lib/haptics.js'
 import { useRestTimer } from '../../hooks/useRestTimer.js'
 import { RestBanner } from '../../components/RestBanner.jsx'
+import { MiniRestTimer } from '../../components/MiniRestTimer.jsx'
+import { DraggableList } from '../../components/DraggableList.jsx'
+import { ExercisePicker } from '../../components/ExercisePicker.jsx'
 import { DurationField } from '../../components/DurationField.jsx'
 import { ExerciseImage } from '../../components/ExerciseImage.jsx'
 import { ExerciseImageViewer } from '../../components/ExerciseImageViewer.jsx'
@@ -34,6 +45,12 @@ const VALIDATE_FEEDBACK_MS = 450
 
 export function ExerciseView({ session, data, setData }) {
   const [validating, setValidating] = useState(false)
+  // Modifier la séance pendant le repos (voir handleReorderEdit et
+  // consorts) : un simple bool local, pas une phase de la séance — le
+  // chrono (useRestTimer ci-dessous) continue de tourner exactement
+  // pareil pendant que ce bool est vrai, rien d'autre ne change tant
+  // qu'on ne touche pas explicitement à la liste d'exercices.
+  const [editingSession, setEditingSession] = useState(false)
   const timer = useRestTimer(session)
   const entry = session.entries.find((e) => e.exerciseId === session.currentExerciseId)
   const set = entry.sets[session.currentSetIndex]
@@ -41,6 +58,7 @@ export function ExerciseView({ session, data, setData }) {
   const isTimeBased = getExerciseUnit(entry.exerciseName) === 'time'
   const otherSessions = data.sessions.filter((s) => s.id !== session.id)
   const last = getLastPerformance(otherSessions, entry.exerciseId)
+  const suggestedIds = getExercisesUsedInTemplate(otherSessions, session.templateName)
   // Seulement à l'arrivée sur la toute première série de l'exercice (pas à
   // chaque série), et pas pour un exercice au temps (pas de "charge" à
   // proposer pour un gainage). entry.chargeSuggestionResolved évite de la
@@ -124,6 +142,32 @@ export function ExerciseView({ session, data, setData }) {
     setData({ ...data, sessions: adjustRestSeconds(data.sessions, session.id, deltaSeconds) })
   }
 
+  function handleReorderEntries(fromIndex, toIndex) {
+    setData({ ...data, sessions: reorderSessionEntries(data.sessions, session.id, fromIndex, toIndex) })
+  }
+
+  function handleMoveEntry(index, direction) {
+    const targetIndex = index + direction
+    if (targetIndex < 0 || targetIndex >= session.entries.length) return
+    handleReorderEntries(index, targetIndex)
+  }
+
+  // L'exercice en cours (celui dont on attend la prochaine série) ne peut
+  // pas être retiré ici : le retirer laisserait currentExerciseId pointer
+  // sur rien, et il n'y a pas d'écran vers lequel retomber proprement dans
+  // ce cas. Le réordonner reste possible (currentExerciseId ne dépend pas
+  // de la position dans le tableau).
+  function handleRemoveEntry(exerciseId) {
+    if (exerciseId === session.currentExerciseId) return
+    setData({ ...data, sessions: removeExerciseEntryFromSession(data.sessions, session.id, exerciseId) })
+  }
+
+  function handleAddExerciseEntry(name) {
+    const { exercise: added, exercises } = getOrCreateExercise(data.exercises, name)
+    const sessions = addExerciseEntryToSession(data.sessions, session.id, added)
+    setData({ ...data, exercises, sessions })
+  }
+
   function handleAcceptChargeSuggestion() {
     setData((current) => {
       const sessions = updateSet(current.sessions, session.id, entry.exerciseId, 0, {
@@ -152,6 +196,67 @@ export function ExerciseView({ session, data, setData }) {
       </button>
     </div>
   )
+
+  // Modification de la séance pendant le repos : même écran/mêmes actions
+  // que celui de préparation (réordonner, ajouter, retirer un exercice —
+  // pas les séries, hors sujet ici), mais le chrono continue de tourner en
+  // vrai (même hook useRestTimer, juste affiché en mini format dans un
+  // coin) : ni la phase ni currentExerciseId/currentSetIndex ne bougent
+  // tant qu'on ne valide pas de série, donc rien de la série en cours ne se
+  // perd en repassant par cet écran. Vérifié AVANT le rest-page ci-dessous :
+  // sinon, tant que le repos est actif, ce dernier reprendrait toujours la
+  // main et cet écran ne serait jamais atteignable.
+  if (editingSession) {
+    return (
+      <div className="page">
+        <MiniRestTimer timer={timer} />
+        <h1>Modifier ma séance</h1>
+
+        <DraggableList
+          className="prep-exercise-list"
+          items={session.entries}
+          getKey={(sessionEntry) => sessionEntry.exerciseId}
+          onReorder={handleReorderEntries}
+          renderItem={(sessionEntry, index, dragHandleProps) => (
+            <div className="prep-exercise">
+              <div className="prep-exercise__header">
+                <button type="button" className="prep-exercise__handle" aria-label="Réordonner (appui long)" {...dragHandleProps}>
+                  ⠿
+                </button>
+                <span className="prep-exercise__name">{sessionEntry.exerciseName}</span>
+                <button type="button" className="prep-exercise__remove" onClick={() => handleMoveEntry(index, -1)} aria-label="Monter">
+                  ↑
+                </button>
+                <button type="button" className="prep-exercise__remove" onClick={() => handleMoveEntry(index, 1)} aria-label="Descendre">
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  className="prep-exercise__remove"
+                  onClick={() => handleRemoveEntry(sessionEntry.exerciseId)}
+                  disabled={sessionEntry.exerciseId === session.currentExerciseId}
+                  aria-label="Retirer de cette séance"
+                  title={
+                    sessionEntry.exerciseId === session.currentExerciseId
+                      ? "Exercice en cours, ne peut pas être retiré maintenant"
+                      : undefined
+                  }
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+        />
+
+        <ExercisePicker exercises={data.exercises} suggestedIds={suggestedIds} onAdd={handleAddExerciseEntry} />
+
+        <BigButton onClick={() => setEditingSession(false)}>
+          {timer && !timer.isOvershoot ? 'Revenir au repos' : "Continuer sur l'exercice suivant"}
+        </BigButton>
+      </div>
+    )
+  }
 
   // Pendant le repos (décompte encore en cours, pas le dépassement une fois
   // à zéro), le chrono doit rester l'élément dominant de l'écran EN TAILLE
@@ -184,6 +289,9 @@ export function ExerciseView({ session, data, setData }) {
         </p>
         <button type="button" className="rest-page__skip" onClick={handleSkipRest}>
           Passer le repos
+        </button>
+        <button type="button" className="rest-page__skip" onClick={() => setEditingSession(true)}>
+          Modifier ma séance
         </button>
       </div>
     )

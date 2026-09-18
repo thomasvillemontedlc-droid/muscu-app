@@ -1,9 +1,4 @@
-function formatClock(ms) {
-  const totalSeconds = Math.ceil(Math.abs(ms) / 1000)
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-  return `${minutes}:${String(seconds).padStart(2, '0')}`
-}
+import { formatClock } from '../lib/formatClock.js'
 
 // Affiche le chrono de repos en cours, si actif. N'affiche rien avant la
 // toute première série de la séance (aucun repos à décompter).

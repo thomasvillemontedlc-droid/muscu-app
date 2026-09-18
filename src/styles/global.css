@@ -223,6 +223,31 @@ input[type='number']:focus {
   color: var(--color-text);
 }
 
+/* Incrustation du chrono de repos pendant la modification de la séance en
+   plein écran (voir ExerciseView.jsx#editingSession) : à côté du bouton de
+   thème plutôt que dessus, même ligne. */
+.mini-rest-timer {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 12px);
+  right: 60px;
+  z-index: 10;
+  min-height: 40px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.mini-rest-timer--overshoot {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
 /* Liste des séances types */
 /* Repliée par défaut : la création de séance est une action secondaire par
    rapport à la mise en avant du haut d'écran (.featured-session). */

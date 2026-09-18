@@ -354,7 +354,7 @@ export function ExerciseView({ session, data, setData }) {
         <TourStep
           id="rest-adjust"
           selector=".rest-timer"
-          text="Ajuste le repos en direct avec +15s/-15s. Une alarme sonne à la fin."
+          text="Ajuste le repos en direct avec +15s/-15s, ou un temps personnalisé juste en dessous. Une alarme sonne à la fin."
         />
         <p className="rest-page__set-detail">
           Série {session.currentSetIndex + 1} / {entry.sets.length}

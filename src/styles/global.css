@@ -1309,10 +1309,17 @@ input.set-row__input {
 
 .rest-timer {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 0;
+}
+
+.rest-timer__row {
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 16px;
-  padding: 24px 0;
 }
 
 .rest-timer__clock {
@@ -1336,6 +1343,40 @@ input.set-row__input {
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
+}
+
+.rest-timer__custom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rest-timer__custom-button {
+  min-height: 32px;
+  min-width: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rest-timer__custom-input {
+  width: 56px;
+  min-height: 32px;
+  text-align: center;
+  padding: 0 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.rest-timer__custom-unit {
+  color: var(--color-muted);
+  font-size: 0.85rem;
 }
 
 /* Écran de repos "dominant" (voir ExerciseView.jsx) : le chrono garde sa
@@ -1364,6 +1405,18 @@ input.set-row__input {
   min-height: 48px;
   min-width: 48px;
   font-size: 1rem;
+}
+
+.rest-page .rest-timer__custom-button {
+  min-height: 40px;
+  min-width: 40px;
+  font-size: 1.2rem;
+}
+
+.rest-page .rest-timer__custom-input {
+  min-height: 40px;
+  width: 64px;
+  font-size: 1.1rem;
 }
 
 .rest-page__next {

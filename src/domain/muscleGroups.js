@@ -239,6 +239,11 @@ export const EXERCISE_MUSCLES = {
   velo: { name: 'Vélo', primary: [], secondary: [] },
   elliptique: { name: 'Elliptique', primary: [], secondary: [] },
   'tapis-de-course': { name: 'Tapis de course', primary: [], secondary: [] },
+  // Bloc d'étirements suivi comme un exercice au temps à part entière (ex.
+  // jour "Cardio léger & mobilité" de la Structure H), plutôt que la
+  // suggestion automatique en fin de séance (domain/stretches.js) qui ne
+  // détecterait aucun muscle sur une séance purement cardio.
+  'etirements-complets': { name: 'Étirements complets', primary: [], secondary: [] },
 }
 
 // Alias : noms courts/génériques que l'utilisateur est susceptible d'avoir
@@ -311,6 +316,7 @@ const TIME_BASED_EXERCISE_KEYS = new Set([
   'velo',
   'elliptique',
   'tapis-de-course',
+  'etirements-complets',
 ])
 
 export function getExerciseUnit(exerciseName) {

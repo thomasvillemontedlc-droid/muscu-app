@@ -16,7 +16,7 @@ import { createTemplateFromModel, FREQUENCY_STRUCTURE_KEYS, TEMPLATE_STRUCTURES 
 import { BigButton } from '../components/BigButton.jsx'
 import { TourStep } from '../components/TourStep.jsx'
 
-const FREQUENCY_OPTIONS = [2, 3, 4, 5, 6]
+const FREQUENCY_OPTIONS = [2, 3, 4, 5, 6, 7]
 
 export function ProgramPage() {
   const { data, setData } = useAppDataContext()

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { vibrateSuccess } from '../lib/haptics.js'
 import { BigButton } from './BigButton.jsx'
 import { DurationField } from './DurationField.jsx'
-import { OnboardingTip } from './OnboardingTip.jsx'
+import { TourStep } from './TourStep.jsx'
 
 // Déroulé générique d'une petite liste de mouvements chronométrés, un par
 // un (échauffement avant séance, étirements en fin de séance) : liste
@@ -153,7 +153,7 @@ export function RoutineRunner({ title, hint, initialItems, suggestions = [], onD
         </button>
       </div>
 
-      {tip && <OnboardingTip id={tip.id} selector={`#tip-${tip.id}`} text={tip.text} />}
+      {tip && <TourStep id={tip.id} selector={`#tip-${tip.id}`} text={tip.text} />}
 
       {visibleSuggestions.length > 0 && (
         <div className="routine-runner__suggestions">

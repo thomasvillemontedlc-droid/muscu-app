@@ -8,7 +8,7 @@ import { getMostNeglectedMuscles } from '../domain/recovery.js'
 import { BodyHeatmap, BodyHeatmapLegend } from '../components/BodyHeatmap.jsx'
 import { MuscleRecoveryRow } from '../components/MuscleRecoveryRow.jsx'
 import { WeeklyBarChart } from '../components/WeeklyBarChart.jsx'
-import { OnboardingTip } from '../components/OnboardingTip.jsx'
+import { TourStep } from '../components/TourStep.jsx'
 
 const PERIOD_OPTIONS = [
   { value: 'week', label: 'Cette semaine' },
@@ -122,7 +122,7 @@ export function ProgressPage() {
         <BodyHeatmapLegend intensities={intensities} />
       </section>
 
-      <OnboardingTip
+      <TourStep
         id="progress-heatmap"
         selector="#tip-progress-heatmap"
         text="Tendances par exercice et carte musculaire cumulée des zones travaillées."

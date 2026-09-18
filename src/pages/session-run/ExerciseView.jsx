@@ -25,7 +25,7 @@ import { StepperField } from '../../components/StepperField.jsx'
 import { WeightField } from '../../components/WeightField.jsx'
 import { Confetti } from '../../components/Confetti.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
-import { OnboardingTip } from '../../components/OnboardingTip.jsx'
+import { TourStep } from '../../components/TourStep.jsx'
 
 // Délai pendant lequel le retour visuel (vert + coche + confettis) reste
 // affiché avant de réellement avancer à la série/l'écran suivant — assez
@@ -147,7 +147,7 @@ export function ExerciseView({ session, data, setData }) {
           ← Série précédente
         </button>
       )}
-      <button type="button" className="back-link" onClick={handleGoToList}>
+      <button id="tip-exercise-flow" type="button" className="back-link" onClick={handleGoToList}>
         ← Tous les exercices
       </button>
     </div>
@@ -174,7 +174,7 @@ export function ExerciseView({ session, data, setData }) {
           <h2 className="rest-page__next-name">{entry.exerciseName}</h2>
         </div>
         <RestBanner timer={timer} onAdjust={handleAdjustRest} />
-        <OnboardingTip
+        <TourStep
           id="rest-adjust"
           selector=".rest-timer"
           text="Ajuste le repos en direct avec +15s/-15s. Une alarme sonne à la fin."
@@ -192,6 +192,11 @@ export function ExerciseView({ session, data, setData }) {
   return (
     <div className="page">
       {navButtons}
+      <TourStep
+        id="exercise-flow"
+        selector="#tip-exercise-flow"
+        text="Chaque série validée enchaîne automatiquement sur la suivante. Reviens à la liste à tout moment ici."
+      />
 
       <ExerciseProgressBar session={session} />
 
@@ -279,7 +284,7 @@ export function ExerciseView({ session, data, setData }) {
         </label>
       </div>
 
-      <OnboardingTip
+      <TourStep
         id="exercise-input"
         selector=".weight-field__mode-toggle"
         text={'Poids et répétitions se règlent avec les boutons +/-. "Saisir par côté" pour un haltère par bras.'}

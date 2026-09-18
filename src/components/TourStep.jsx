@@ -1,31 +1,36 @@
 import { useEffect, useState } from 'react'
-import { hasSeenTip, markTipSeen } from '../storage/onboarding.js'
+import { useAppDataContext } from '../hooks/AppDataContext.jsx'
+import { getCurrentTourStepId } from '../domain/tour.js'
+import { dismissStep } from '../storage/tour.js'
 
 const BUBBLE_WIDTH = 240
 const EDGE_MARGIN = 8
 const GAP = 10
 
-// Surligne un élément réel de l'écran (via son sélecteur CSS, pas une copie
-// ou une capture) avec une bulle de texte à côté, la première fois qu'on
-// tombe dessus. `selector` est cherché dans le DOM tant que la bulle n'a pas
-// été vue — un sondage léger plutôt qu'un seul essai au montage, pour
-// couvrir le cas où l'élément visé apparaît un peu après (ex. écran vide au
-// premier passage). Ne bloque jamais l'interaction avec le reste de l'écran
-// (pas d'overlay plein écran) : juste un contour + un petit texte.
-export function OnboardingTip({ id, selector, text }) {
-  const [seen, setSeen] = useState(() => hasSeenTip(id))
-  const [rect, setRect] = useState(null)
+// Une étape du parcours guidé (voir domain/tour.js) : surligne un élément
+// réel de l'écran (via son sélecteur CSS, pas une copie ou une capture)
+// avec une bulle de texte à côté, uniquement quand c'est son tour dans le
+// parcours. Le sondage régulier (au lieu d'un seul essai au montage) sert
+// deux choses à la fois : attendre qu'un élément qui apparaît après coup
+// soit présent, et remarquer qu'une étape précédente vient d'être ignorée
+// ailleurs sur l'écran (dismissStep touche le localStorage, pas un state
+// React partagé). Ne bloque jamais l'interaction avec le reste de l'écran.
+export function TourStep({ id, selector, text }) {
+  const { data } = useAppDataContext()
+  const [state, setState] = useState({ active: false, rect: null })
 
   useEffect(() => {
-    if (seen) return
-
     function update() {
+      if (getCurrentTourStepId(data) !== id) {
+        setState((prev) => (prev.active || prev.rect ? { active: false, rect: null } : prev))
+        return
+      }
       const el = document.querySelector(selector)
-      setRect(el ? el.getBoundingClientRect() : null)
+      setState({ active: true, rect: el ? el.getBoundingClientRect() : null })
     }
 
     update()
-    const poll = setInterval(update, 500)
+    const poll = setInterval(update, 400)
     window.addEventListener('resize', update)
     window.addEventListener('scroll', update, true)
     return () => {
@@ -33,14 +38,15 @@ export function OnboardingTip({ id, selector, text }) {
       window.removeEventListener('resize', update)
       window.removeEventListener('scroll', update, true)
     }
-  }, [seen, selector])
+  }, [id, selector, data])
 
   function handleDismiss() {
-    markTipSeen(id)
-    setSeen(true)
+    dismissStep(id)
+    setState({ active: false, rect: null })
   }
 
-  if (seen || !rect) return null
+  if (!state.active || !state.rect) return null
+  const rect = state.rect
 
   const placeAbove = window.innerHeight - rect.bottom < 160
   const bubbleLeft = Math.min(

@@ -7,7 +7,7 @@ import { getNextProgramTemplateId } from '../domain/program.js'
 import { getInProgressSession, startSessionFromTemplate } from '../domain/sessions.js'
 import { BigButton } from '../components/BigButton.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
-import { OnboardingTip } from '../components/OnboardingTip.jsx'
+import { TourStep } from '../components/TourStep.jsx'
 
 export function TemplatesListPage() {
   const { data, setData } = useAppDataContext()
@@ -184,10 +184,15 @@ export function TemplatesListPage() {
         ))}
       </ul>
 
-      <OnboardingTip
-        id="home-create"
+      <TourStep
+        id="create-first-session"
         selector="#tip-home-create"
         text="Crée ta première séance ici : personnalisée, ou depuis un modèle prêt à l'emploi."
+      />
+      <TourStep
+        id="create-second-session"
+        selector="#tip-home-create"
+        text="Crée une deuxième séance, pour avoir de quoi alterner d'une fois sur l'autre."
       />
 
       <ConfirmDialog

@@ -13,7 +13,7 @@ import { getMuscleLabel } from '../domain/muscleGroups.js'
 import { applyRotationProposal, proposeRotation } from '../domain/rotation.js'
 import { createTemplateFromModel, FREQUENCY_STRUCTURE_KEYS, TEMPLATE_STRUCTURES } from '../domain/templateModels.js'
 import { BigButton } from '../components/BigButton.jsx'
-import { OnboardingTip } from '../components/OnboardingTip.jsx'
+import { TourStep } from '../components/TourStep.jsx'
 
 const FREQUENCY_OPTIONS = [2, 3, 4, 5, 6]
 
@@ -178,6 +178,12 @@ export function ProgramPage() {
               </button>
             ))}
           </div>
+
+          <TourStep
+            id="program-frequency"
+            selector=".frequency-picker"
+            text="Choisis ton nombre de séances par semaine : l'app propose un programme adapté et une rotation régulière des exercices."
+          />
 
           {frequency && structureOptions.length > 1 && (
             <div className="structure-picker">
@@ -359,10 +365,10 @@ export function ProgramPage() {
         )}
       </section>
 
-      <OnboardingTip
+      <TourStep
         id="program-rotation"
         selector="#tip-program-rotation"
-        text="Planifie tes séances de la semaine ; l'app propose ensuite une rotation d'exercices tous les X semaines."
+        text="Réglable dans Réglages : tous les combien de semaines changer d'exercices. Au moment venu, choisis une variante par séance ou garde-la telle quelle."
       />
     </div>
   )

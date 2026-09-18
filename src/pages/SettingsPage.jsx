@@ -5,11 +5,11 @@ import { useThemeContext } from '../hooks/ThemeContext.jsx'
 import { filterSessionsByScope } from '../domain/sessions.js'
 import { seedDefaultExercises } from '../domain/exercises.js'
 import { parseImportedData } from '../storage/storage.js'
-import { resetSeenTips } from '../storage/onboarding.js'
+import { resetTour } from '../storage/tour.js'
 import { BigButton } from '../components/BigButton.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { AlertDialog } from '../components/AlertDialog.jsx'
-import { OnboardingTip } from '../components/OnboardingTip.jsx'
+import { TourStep } from '../components/TourStep.jsx'
 
 const SCOPE_LABELS = {
   last: 'La séance la plus récente',
@@ -120,11 +120,12 @@ export function SettingsPage() {
     )
   }
 
-  // Oublie les bulles déjà vues (voir storage/onboarding.js) et repart de
-  // l'accueil : chaque bulle réapparaîtra à la prochaine visite de son écran
-  // plutôt que d'afficher un unique récapitulatif hors contexte.
+  // Oublie les étapes ignorées manuellement (voir storage/tour.js) et
+  // repart de l'accueil : le parcours guidé reprend au premier point encore
+  // pertinent (voir domain/tour.js), pas forcément la toute première étape
+  // si certaines sont déjà accomplies dans les faits.
   function handleReplayTutorial() {
-    resetSeenTips()
+    resetTour()
     navigate('/')
   }
 
@@ -255,7 +256,7 @@ export function SettingsPage() {
         </BigButton>
       </section>
 
-      <OnboardingTip
+      <TourStep
         id="settings-export"
         selector="#tip-settings-export"
         text="Exporte tes séances en JSON, ou en PDF juste en dessous."

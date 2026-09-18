@@ -9,6 +9,7 @@ import { TrendDot } from '../../components/TrendDot.jsx'
 import { BodyHeatmap, BodyHeatmapLegend } from '../../components/BodyHeatmap.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
 import { RoutineRunner } from '../../components/RoutineRunner.jsx'
+import { TourStep } from '../../components/TourStep.jsx'
 
 function formatRest(totalSeconds) {
   const minutes = Math.floor(totalSeconds / 60)
@@ -141,6 +142,12 @@ export function FinishedView({ session, data }) {
           <BigButton variant="secondary" onClick={() => setRunningStretches(true)}>
             Lancer les étirements
           </BigButton>
+
+          <TourStep
+            id="stretches"
+            selector=".stretch-suggestions"
+            text="Des étirements adaptés aux muscles travaillés te sont proposés à chaque fin de séance."
+          />
         </section>
       )}
 

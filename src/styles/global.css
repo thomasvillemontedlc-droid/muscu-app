@@ -384,33 +384,50 @@ input[type='number']:focus {
   margin: 0 0 8px;
 }
 
-.rotation-proposal__list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.rotation-proposal__row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.rotation-proposal__old {
-  flex: 1;
-  min-width: 0;
+.rotation-proposal__current {
   color: var(--color-muted);
   font-size: 0.85rem;
-  text-decoration: line-through;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.rotation-proposal__input {
-  flex: 1;
+.rotation-proposal__options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 16px;
+}
+
+.rotation-proposal__option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.rotation-proposal__option input {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.rotation-proposal__option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   min-width: 0;
+}
+
+.rotation-proposal__option-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.rotation-proposal__option-preview {
+  color: var(--color-muted);
+  font-size: 0.8rem;
 }
 
 /* Sépare visuellement les séances déjà enregistrées (lancées directement,
@@ -893,6 +910,39 @@ input.set-row__input {
   padding: 14px;
   color: var(--color-muted);
   font-size: 0.9rem;
+}
+
+.frequency-picker {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.frequency-picker__option {
+  flex: 1;
+  min-height: var(--touch-min);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.frequency-picker__option--active {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.structure-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.structure-picker .big-button {
+  margin: 0;
 }
 
 /* Lancement guidé d'une séance (préparation, exercice actif, repos, choix) */

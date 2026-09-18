@@ -32,6 +32,7 @@ Format : **Nom de l'exercice** — muscle principal | muscles secondaires
 - **Tractions prise serrée** — dorsaux | biceps, avant-bras
 - **Tirage vertical poulie haute (pronation)** — dorsaux | biceps, trapèzes
 - **Tirage vertical poulie haute (supination)** — dorsaux | biceps
+- **Tirage vertical poulie haute** — dorsaux | biceps, trapèzes (prise non précisée, utilisé tel quel dans Structure D — Pull (réel))
 - **Tirage vertical prise neutre** — dorsaux | biceps
 - **Tirage horizontal poulie basse** — dorsaux | trapèzes, biceps, lombaires
 - **Rowing barre buste penché** — dorsaux | trapèzes, biceps, lombaires
@@ -92,6 +93,7 @@ Format : **Nom de l'exercice** — muscle principal | muscles secondaires
 
 - **Extension triceps à la poulie haute (barre)** — triceps
 - **Extension triceps à la poulie haute (corde)** — triceps
+- **Extension triceps à la poulie haute** — triceps (accessoire non précisé, utilisé tel quel dans Structure D — Push (réel))
 - **Extension triceps à la poulie (prise inversée)** — triceps
 - **Barre au front (skull crusher)** — triceps
 - **Extension nuque haltère** — triceps

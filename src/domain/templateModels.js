@@ -10,7 +10,7 @@ import { getOrCreateExercise } from './exercises.js'
 // fourchette indiquée (30-45s -> 40s).
 // Modèles Pecs/Dos/Épaules/Jambes/Bras/Abdos de la Structure B, réutilisés
 // tels quels par la Structure F (5 séances/semaine, qui fusionne Bras+Abdos
-// en un seul modèle) et par la Structure H (7 séances/semaine, qui reprend
+// en un seul modèle) et par la Structure G (7 séances/semaine, qui reprend
 // les six et ajoute un 7e jour cardio léger) — extraits ici pour ne définir
 // leurs exercices qu'une fois.
 const pecsModel = {
@@ -308,7 +308,7 @@ export const TEMPLATE_STRUCTURES = [
   },
   {
     key: 'sevenday',
-    label: 'Structure H — Cardio léger & mobilité (7 séances par semaine)',
+    label: 'Structure G — Cardio léger & mobilité (7 séances par semaine)',
     models: [
       pecsModel,
       dosModel,
@@ -334,7 +334,7 @@ export const TEMPLATE_STRUCTURES = [
   },
   {
     key: 'lowerfocus',
-    label: 'Structure I — Focus bas du corps',
+    label: 'Structure H — Focus bas du corps',
     models: [
       {
         name: 'Modèle Focus bas du corps A',
@@ -368,9 +368,9 @@ export const TEMPLATE_STRUCTURES = [
 // Fréquence hebdomadaire (nombre de séances/semaine) -> clé(s) de
 // TEMPLATE_STRUCTURES adaptées, voir structure-frequence.md ("Comportement
 // attendu dans l'app"). Plusieurs clés = l'utilisateur choisit laquelle
-// suivre (à 6/semaine, Structure G : PPL x2 [Structure A] ou split complet
-// [Structure B], toutes deux déjà pensées pour cette fréquence — pas de
-// modèles dédiés en plus, juste ce choix).
+// suivre (à 6/semaine : PPL x2 [Structure A] ou split complet [Structure
+// B], toutes deux déjà pensées pour cette fréquence — pas de modèles dédiés
+// en plus, juste ce choix, et donc pas de lettre de structure à part).
 export const FREQUENCY_STRUCTURE_KEYS = {
   2: ['fullbody'],
   3: ['real'],

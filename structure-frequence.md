@@ -6,11 +6,13 @@ d'entraînement différentes, pour que l'app propose un point de départ
 adapté à combien de fois par semaine on s'entraîne réellement.
 
 Les lettres suivent l'ordre des fréquences (C = 2 séances/semaine
-jusqu'à H = 7), pas l'ordre dans lequel les structures ont été
-ajoutées : une structure existante a pu changer de lettre depuis une
-version précédente de ce document. La Structure I (Focus bas du
-corps) fait exception : indépendante de toute fréquence, elle vient
-en dernier.
+jusqu'à G = 7), sans trou ni lettre sautée, et pas forcément l'ordre
+dans lequel les structures ont été ajoutées : une structure existante
+a pu changer de lettre depuis une version précédente de ce document.
+La fréquence 6 n'a pas de structure dédiée (voir "Comportement
+attendu" plus bas) et ne consomme donc pas de lettre. La Structure H
+(Focus bas du corps) fait exception : indépendante de toute
+fréquence, elle vient en dernier.
 
 ---
 
@@ -114,17 +116,7 @@ modeles-seances.md, Structure B — les réutiliser tels quels.)
 
 ---
 
-## Structure G — 6 séances par semaine
-
-Déjà couverte par la Structure A (PPL, deux fois dans la semaine)
-ou par la Structure B (les six modèles, un par jour). Ne pas créer
-de nouveaux modèles ici : au moment de choisir un programme
-hebdomadaire à 6 séances, proposer à l'utilisateur son choix entre
-"PPL x2" (Structure A) et "Split complet" (Structure B).
-
----
-
-## Structure H — Cardio léger & mobilité (7 séances par semaine)
+## Structure G — Cardio léger & mobilité (7 séances par semaine)
 
 Reprend les six modèles de la Structure B (Pecs, Dos, Épaules,
 Jambes, Bras, Abdos) et ajoute un 7e jour, pensé comme jour de
@@ -141,7 +133,7 @@ quels.)
 
 ---
 
-## Structure I — Focus bas du corps
+## Structure H — Focus bas du corps
 
 Séance qui donne la priorité aux jambes et fessiers, avec un travail
 complémentaire réduit du haut du corps pour rester équilibré sur la
@@ -176,9 +168,12 @@ Variante
 - Au moment de créer un programme hebdomadaire, proposer d'abord la
   question "Combien de séances par semaine ?" (2 à 7), puis afficher
   la ou les structures adaptées à cette fréquence : 2 → Structure C,
-  3 → Structure D, 4 → Structure E, 5 → Structure F, 6 → Structure G
-  (choix entre Structure A ou B), 7 → Structure H.
-- La Structure I (Focus bas du corps) reste disponible à part,
+  3 → Structure D, 4 → Structure E, 5 → Structure F, 7 → Structure G.
+- À 6 séances par semaine, pas de structure dédiée ni de nouveaux
+  modèles : proposer directement le choix entre "PPL x2" (Structure
+  A, deux fois dans la semaine) et "Split complet" (Structure B, les
+  six modèles, un par jour). Ce choix ne consomme pas de lettre.
+- La Structure H (Focus bas du corps) reste disponible à part,
   utilisable en complément ou en remplacement d'une séance jambes
   classique dans n'importe quelle fréquence, sans être présentée
   comme réservée à un public particulier.

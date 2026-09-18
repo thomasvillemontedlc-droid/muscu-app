@@ -164,6 +164,18 @@ export function updateSet(sessions, sessionId, exerciseId, setIndex, changes) {
   }))
 }
 
+// Comme updateSet, mais ne touche QUE la série visée — pas de propagation
+// aux suivantes. Sert à corriger une série précise depuis un écran qui
+// n'est pas le déroulé guidé (ex. "Modifier ma séance" pendant le repos,
+// voir ExerciseView.jsx) : là, les séries suivantes peuvent déjà avoir été
+// faites avec des valeurs différentes, qu'il ne faut surtout pas écraser.
+export function updateSingleSet(sessions, sessionId, exerciseId, setIndex, changes) {
+  return mapEntry(sessions, sessionId, exerciseId, (entry) => ({
+    ...entry,
+    sets: entry.sets.map((set, i) => (i === setIndex ? { ...set, ...changes } : set)),
+  }))
+}
+
 // Ressenti optionnel sur un exercice complété : { value: 'difficile' | 'ok'
 // | 'facile' | null, note: string }. feeling peut être null pour l'effacer.
 export function setEntryFeeling(sessions, sessionId, exerciseId, feeling) {

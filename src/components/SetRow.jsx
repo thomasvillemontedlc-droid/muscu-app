@@ -17,6 +17,7 @@ export function SetRow({
   onChangeWeightMode,
   onChangeBarWeight,
   onRemove,
+  removeDisabled = false,
 }) {
   const isTimeBased = getExerciseUnit(exercise?.name) === 'time'
 
@@ -28,7 +29,9 @@ export function SetRow({
           type="button"
           className="set-row__remove"
           onClick={onRemove}
+          disabled={removeDisabled}
           aria-label={`Supprimer la série ${index + 1}`}
+          title={removeDisabled ? 'Série en cours, ne peut pas être retirée maintenant' : undefined}
         >
           ✕
         </button>

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { getChargeSuggestion } from '../../domain/chargeSuggestion.js'
 import { getExercisesUsedInTemplate, getLastPerformance } from '../../domain/history.js'
 import { getExerciseUnit } from '../../domain/muscleGroups.js'
-import { markChargeSuggestionResolved, updateSet } from '../../domain/sessions.js'
+import { addSet, markChargeSuggestionResolved, removeSet, updateSet, updateSingleSet } from '../../domain/sessions.js'
 import {
   getOrCreateExercise,
   setExerciseBarWeight,
@@ -27,6 +27,7 @@ import { RestBanner } from '../../components/RestBanner.jsx'
 import { MiniRestTimer } from '../../components/MiniRestTimer.jsx'
 import { DraggableList } from '../../components/DraggableList.jsx'
 import { ExercisePicker } from '../../components/ExercisePicker.jsx'
+import { SetRow } from '../../components/SetRow.jsx'
 import { DurationField } from '../../components/DurationField.jsx'
 import { ExerciseImage } from '../../components/ExerciseImage.jsx'
 import { ExerciseImageViewer } from '../../components/ExerciseImageViewer.jsx'
@@ -168,6 +169,54 @@ export function ExerciseView({ session, data, setData }) {
     setData({ ...data, exercises, sessions })
   }
 
+  // Édition d'une série précise depuis l'écran de modification (n'importe
+  // quel exercice, n'importe quelle série) : updateSingleSet (contrairement
+  // à updateSet utilisé par le déroulé guidé) ne touche que cette série,
+  // pour ne jamais écraser des séries déjà faites avec des valeurs
+  // différentes.
+  function handleEditSetWeightChange(exerciseId, setIndex, weight) {
+    setData((current) => ({
+      ...current,
+      sessions: updateSingleSet(current.sessions, session.id, exerciseId, setIndex, { weight }),
+    }))
+  }
+
+  function handleEditSetRepsChange(exerciseId, setIndex, reps) {
+    setData((current) => ({
+      ...current,
+      sessions: updateSingleSet(current.sessions, session.id, exerciseId, setIndex, { reps }),
+    }))
+  }
+
+  function handleEditWeightModeChange(exerciseId, weightInputMode) {
+    setData((current) => ({
+      ...current,
+      exercises: setExerciseWeightMode(current.exercises, exerciseId, weightInputMode),
+    }))
+  }
+
+  function handleEditBarWeightChange(exerciseId, barWeight) {
+    setData((current) => ({
+      ...current,
+      exercises: setExerciseBarWeight(current.exercises, exerciseId, barWeight),
+    }))
+  }
+
+  function handleAddSetToEntry(exerciseId) {
+    const targetEntry = session.entries.find((e) => e.exerciseId === exerciseId)
+    const lastSet = targetEntry.sets[targetEntry.sets.length - 1] ?? { weight: 0, reps: 0 }
+    setData({ ...data, sessions: addSet(data.sessions, session.id, exerciseId, lastSet) })
+  }
+
+  // Retirer une série de l'exercice en cours décalerait les index des
+  // séries suivantes sans que currentSetIndex ne bouge en face : la série
+  // qu'on croit être en train de faire ne serait plus la bonne au retour.
+  // Ajouter une série (toujours en fin de liste) ne pose pas ce problème.
+  function handleRemoveSetFromEntry(exerciseId, setIndex) {
+    if (exerciseId === session.currentExerciseId) return
+    setData({ ...data, sessions: removeSet(data.sessions, session.id, exerciseId, setIndex) })
+  }
+
   function handleAcceptChargeSuggestion() {
     setData((current) => {
       const sessions = updateSet(current.sessions, session.id, entry.exerciseId, 0, {
@@ -198,14 +247,17 @@ export function ExerciseView({ session, data, setData }) {
   )
 
   // Modification de la séance pendant le repos : même écran/mêmes actions
-  // que celui de préparation (réordonner, ajouter, retirer un exercice —
-  // pas les séries, hors sujet ici), mais le chrono continue de tourner en
-  // vrai (même hook useRestTimer, juste affiché en mini format dans un
-  // coin) : ni la phase ni currentExerciseId/currentSetIndex ne bougent
-  // tant qu'on ne valide pas de série, donc rien de la série en cours ne se
-  // perd en repassant par cet écran. Vérifié AVANT le rest-page ci-dessous :
-  // sinon, tant que le repos est actif, ce dernier reprendrait toujours la
-  // main et cet écran ne serait jamais atteignable.
+  // que celui de préparation (réordonner, ajouter, retirer un exercice,
+  // éditer poids/répétitions de n'importe quelle série), mais le chrono
+  // continue de tourner en vrai (même hook useRestTimer, juste affiché en
+  // mini format dans un coin) : ni la phase ni currentExerciseId/
+  // currentSetIndex ne bougent tant qu'on ne valide pas de série, donc rien
+  // de la série en cours ne se perd en repassant par cet écran. Retirer un
+  // exercice ou une série de l'EXERCICE EN COURS reste bloqué (voir
+  // handleRemoveEntry/handleRemoveSetFromEntry) : ça décalerait les index
+  // sans que currentExerciseId/currentSetIndex ne suivent. Vérifié AVANT le
+  // rest-page ci-dessous : sinon, tant que le repos est actif, ce dernier
+  // reprendrait toujours la main et cet écran ne serait jamais atteignable.
   if (editingSession) {
     return (
       <div className="page">
@@ -217,36 +269,56 @@ export function ExerciseView({ session, data, setData }) {
           items={session.entries}
           getKey={(sessionEntry) => sessionEntry.exerciseId}
           onReorder={handleReorderEntries}
-          renderItem={(sessionEntry, index, dragHandleProps) => (
-            <div className="prep-exercise">
-              <div className="prep-exercise__header">
-                <button type="button" className="prep-exercise__handle" aria-label="Réordonner (appui long)" {...dragHandleProps}>
-                  ⠿
-                </button>
-                <span className="prep-exercise__name">{sessionEntry.exerciseName}</span>
-                <button type="button" className="prep-exercise__remove" onClick={() => handleMoveEntry(index, -1)} aria-label="Monter">
-                  ↑
-                </button>
-                <button type="button" className="prep-exercise__remove" onClick={() => handleMoveEntry(index, 1)} aria-label="Descendre">
-                  ↓
-                </button>
-                <button
-                  type="button"
-                  className="prep-exercise__remove"
-                  onClick={() => handleRemoveEntry(sessionEntry.exerciseId)}
-                  disabled={sessionEntry.exerciseId === session.currentExerciseId}
-                  aria-label="Retirer de cette séance"
-                  title={
-                    sessionEntry.exerciseId === session.currentExerciseId
-                      ? "Exercice en cours, ne peut pas être retiré maintenant"
-                      : undefined
-                  }
-                >
-                  ✕
+          renderItem={(sessionEntry, index, dragHandleProps) => {
+            const isCurrentExercise = sessionEntry.exerciseId === session.currentExerciseId
+            const entryExercise = data.exercises.find((e) => e.id === sessionEntry.exerciseId)
+            return (
+              <div className="prep-exercise">
+                <div className="prep-exercise__header">
+                  <button type="button" className="prep-exercise__handle" aria-label="Réordonner (appui long)" {...dragHandleProps}>
+                    ⠿
+                  </button>
+                  <span className="prep-exercise__name">{sessionEntry.exerciseName}</span>
+                  <button type="button" className="prep-exercise__remove" onClick={() => handleMoveEntry(index, -1)} aria-label="Monter">
+                    ↑
+                  </button>
+                  <button type="button" className="prep-exercise__remove" onClick={() => handleMoveEntry(index, 1)} aria-label="Descendre">
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    className="prep-exercise__remove"
+                    onClick={() => handleRemoveEntry(sessionEntry.exerciseId)}
+                    disabled={isCurrentExercise}
+                    aria-label="Retirer de cette séance"
+                    title={isCurrentExercise ? "Exercice en cours, ne peut pas être retiré maintenant" : undefined}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {sessionEntry.sets.map((set, setIndex) => (
+                  <SetRow
+                    key={setIndex}
+                    index={setIndex}
+                    weight={set.weight}
+                    reps={set.reps}
+                    exercise={entryExercise}
+                    onChangeWeight={(weight) => handleEditSetWeightChange(sessionEntry.exerciseId, setIndex, weight)}
+                    onChangeReps={(reps) => handleEditSetRepsChange(sessionEntry.exerciseId, setIndex, reps)}
+                    onChangeWeightMode={(mode) => handleEditWeightModeChange(sessionEntry.exerciseId, mode)}
+                    onChangeBarWeight={(barWeight) => handleEditBarWeightChange(sessionEntry.exerciseId, barWeight)}
+                    onRemove={() => handleRemoveSetFromEntry(sessionEntry.exerciseId, setIndex)}
+                    removeDisabled={isCurrentExercise}
+                  />
+                ))}
+
+                <button type="button" className="add-set-button" onClick={() => handleAddSetToEntry(sessionEntry.exerciseId)}>
+                  + Ajouter une série
                 </button>
               </div>
-            </div>
-          )}
+            )
+          }}
         />
 
         <ExercisePicker exercises={data.exercises} suggestedIds={suggestedIds} onAdd={handleAddExerciseEntry} />

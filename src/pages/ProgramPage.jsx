@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import {
   addTemplateToProgram,
@@ -8,6 +8,7 @@ import {
   moveTemplateInProgram,
   removeTemplateFromProgram,
 } from '../domain/program.js'
+import { startSessionFromTemplate } from '../domain/sessions.js'
 import { getProgramMuscleCoverage } from '../domain/muscleCoverage.js'
 import { getMuscleLabel } from '../domain/muscleGroups.js'
 import { applyRotationProposal, proposeRotation } from '../domain/rotation.js'
@@ -19,6 +20,7 @@ const FREQUENCY_OPTIONS = [2, 3, 4, 5, 6]
 
 export function ProgramPage() {
   const { data, setData } = useAppDataContext()
+  const navigate = useNavigate()
   const program = data.weeklyProgram
   const rotationWeeks = data.settings.rotationWeeks
   const [templateToAdd, setTemplateToAdd] = useState('')
@@ -30,13 +32,18 @@ export function ProgramPage() {
 
   const structureOptions = frequency ? FREQUENCY_STRUCTURE_KEYS[frequency] : []
   const activeStructure = structureKey ? TEMPLATE_STRUCTURES.find((s) => s.key === structureKey) : null
+  // À 2, 4 ou 5 séances/semaine, la structure proposée a exactement ce
+  // nombre de modèles (pas de limite à poser). À 3 ou 6, la structure
+  // choisie (A ou B) en a 6 au total : on borne alors la sélection au
+  // nombre demandé, pour que "3 séances/semaine" en ajoute bien 3 et pas 6.
+  const maxSelectable = activeStructure && activeStructure.models.length > frequency ? frequency : null
 
-  // Toutes les séances de la structure cochées par défaut : à 2, 4 ou 5
-  // séances/semaine ça correspond exactement au nombre voulu (une structure
-  // dédiée à cette fréquence), à 3 ou 6 la structure choisie (A ou B) en a 6
-  // au total et l'utilisateur décoche celles qu'il ne veut pas.
+  // Cochées par défaut : les `maxSelectable` premières si la structure en a
+  // plus que demandé, sinon toutes (cas où le compte correspond déjà).
   useEffect(() => {
-    setCheckedModelNames(new Set(activeStructure?.models.map((m) => m.name) ?? []))
+    const models = activeStructure?.models ?? []
+    const defaultModels = maxSelectable != null ? models.slice(0, maxSelectable) : models
+    setCheckedModelNames(new Set(defaultModels.map((m) => m.name)))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [structureKey])
 
@@ -63,6 +70,12 @@ export function ProgramPage() {
     persistProgram(removeTemplateFromProgram(program, templateId))
   }
 
+  function handleStart(template) {
+    const { session, sessions } = startSessionFromTemplate(data.sessions, template, data.exercises)
+    setData({ ...data, sessions })
+    navigate(`/sessions/${session.id}`)
+  }
+
   function handleSelectFrequency(freq) {
     setFrequency(freq)
     const keys = FREQUENCY_STRUCTURE_KEYS[freq]
@@ -75,8 +88,14 @@ export function ProgramPage() {
   function toggleModelChecked(name) {
     setCheckedModelNames((prev) => {
       const next = new Set(prev)
-      if (next.has(name)) next.delete(name)
-      else next.add(name)
+      if (next.has(name)) {
+        next.delete(name)
+      } else {
+        // Ignore le clic plutôt que de dépasser la limite : cocher une
+        // 4e séance sur "3 séances/semaine" n'aurait pas de sens.
+        if (maxSelectable != null && next.size >= maxSelectable) return prev
+        next.add(name)
+      }
       return next
     })
   }
@@ -204,20 +223,28 @@ export function ProgramPage() {
 
           {activeStructure && (
             <div className="structure-model-checklist">
-              <p className="progress-section__hint">{activeStructure.label}</p>
+              <p className="progress-section__hint">
+                {activeStructure.label}
+                {maxSelectable != null && ` — choisis ${maxSelectable} séance${maxSelectable > 1 ? 's' : ''} parmi les ${activeStructure.models.length}`}
+              </p>
               <ul className="session-checklist">
-                {activeStructure.models.map((model) => (
-                  <li key={model.name}>
-                    <label className="session-checklist__row">
-                      <input
-                        type="checkbox"
-                        checked={checkedModelNames.has(model.name)}
-                        onChange={() => toggleModelChecked(model.name)}
-                      />
-                      <span>{model.name}</span>
-                    </label>
-                  </li>
-                ))}
+                {activeStructure.models.map((model) => {
+                  const checked = checkedModelNames.has(model.name)
+                  const capped = maxSelectable != null && !checked && checkedModelNames.size >= maxSelectable
+                  return (
+                    <li key={model.name}>
+                      <label className="session-checklist__row">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={capped}
+                          onChange={() => toggleModelChecked(model.name)}
+                        />
+                        <span>{model.name}</span>
+                      </label>
+                    </li>
+                  )
+                })}
               </ul>
               <BigButton onClick={handleBuildProgramFromModels} disabled={checkedModelNames.size === 0}>
                 Ajouter ces séances au programme
@@ -241,6 +268,14 @@ export function ProgramPage() {
               <li key={template.id} className="exercise-list__item">
                 <span className="exercise-list__name">{template.name}</span>
                 <div className="exercise-list__actions">
+                  <button
+                    type="button"
+                    className="exercise-list__start"
+                    onClick={() => handleStart(template)}
+                    disabled={template.exerciseIds.length === 0}
+                  >
+                    Lancer
+                  </button>
                   <button type="button" onClick={() => handleMove(index, -1)} aria-label="Monter">
                     ↑
                   </button>
@@ -312,11 +347,22 @@ export function ProgramPage() {
               {rotationWeeks} semaines, réglable dans Réglages).
             </p>
 
-            {!proposal && (
-              <BigButton variant="secondary" onClick={handleGenerateProposal}>
-                {rotationDue ? 'Proposer la rotation' : 'Proposer la rotation maintenant (avant la date prévue)'}
-              </BigButton>
-            )}
+            {!proposal &&
+              (rotationDue ? (
+                <BigButton variant="secondary" onClick={handleGenerateProposal}>
+                  Proposer la rotation
+                </BigButton>
+              ) : (
+                <>
+                  <p className="progress-section__hint">
+                    Rotation disponible dans {rotationWeeks - weeksElapsed} semaine
+                    {rotationWeeks - weeksElapsed > 1 ? 's' : ''}.
+                  </p>
+                  <button type="button" className="subtle-button" onClick={handleGenerateProposal}>
+                    Proposer la rotation maintenant (avant la date prévue)
+                  </button>
+                </>
+              ))}
 
             {proposal && (
               <div className="rotation-proposal">

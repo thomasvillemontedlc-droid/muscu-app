@@ -196,7 +196,7 @@ input[type='number']:focus {
   padding: 10px 0;
   color: var(--color-muted);
   text-decoration: none;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
 .bottom-nav__link.active {
@@ -279,7 +279,7 @@ input[type='number']:focus {
 
 .template-create-panel__label {
   color: var(--color-muted);
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   margin: 0 0 10px;
@@ -306,7 +306,7 @@ input[type='number']:focus {
 }
 
 .template-model-group summary {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--color-muted);
   min-height: var(--touch-min);
   line-height: var(--touch-min);
@@ -338,12 +338,12 @@ input[type='number']:focus {
 }
 
 .template-model-button__name {
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 
 .template-model-button__subtitle {
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   color: var(--color-muted);
 }
 
@@ -360,7 +360,7 @@ input[type='number']:focus {
 
 .featured-session__label {
   color: var(--color-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   margin: 0 0 2px;
 }
 
@@ -452,7 +452,7 @@ input[type='number']:focus {
 
 .rotation-proposal__option-preview {
   color: var(--color-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
 /* Sépare visuellement les séances déjà enregistrées (lancées directement,
@@ -649,6 +649,7 @@ input[type='number']:focus {
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text);
+  font-size: 1rem;
 }
 
 .exercise-picker__empty {
@@ -732,7 +733,7 @@ input[type='number']:focus {
 .set-row__field span {
   display: block;
   color: var(--color-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   margin-bottom: 4px;
 }
 
@@ -769,7 +770,7 @@ input.set-row__input {
 
 .week-tracker__label {
   color: var(--color-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
 .week-tracker__circle {
@@ -1241,7 +1242,7 @@ input.set-row__input {
   border: none;
   background: transparent;
   color: var(--color-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   text-decoration: underline;
   padding: 4px 0;
 }
@@ -1268,7 +1269,7 @@ input.set-row__input {
 .weight-field__row span {
   display: block;
   color: var(--color-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   margin-bottom: 4px;
 }
 
@@ -1286,7 +1287,7 @@ input.set-row__input {
   border: none;
   background: transparent;
   color: var(--color-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   text-decoration: underline;
   padding: 4px 0;
 }
@@ -1467,7 +1468,7 @@ input.set-row__input {
   border: none;
   background: transparent;
   color: var(--color-muted);
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   text-decoration: underline;
 }
 
@@ -1519,7 +1520,7 @@ input.set-row__input {
 .set-comparison th {
   color: var(--color-muted);
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
 .set-comparison__row--current td {
@@ -1574,7 +1575,7 @@ input.set-row__input {
   border: none;
   background: transparent;
   color: var(--color-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   text-decoration: underline;
   padding: 4px 0;
 }
@@ -1586,7 +1587,7 @@ input.set-row__input {
 .weight-field__step-edit span {
   display: block;
   color: var(--color-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   margin-bottom: 2px;
 }
 
@@ -1734,7 +1735,7 @@ input.set-row__input {
 
 .session-summary__best-badge {
   margin-left: auto;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--color-primary);
   white-space: nowrap;
@@ -1840,7 +1841,7 @@ input.set-row__input {
 
 .stretch-suggestions__hint {
   color: var(--color-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   margin: 0 0 10px;
 }
 
@@ -1916,7 +1917,7 @@ input.set-row__input {
 
 .routine-runner__item-muscle {
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
 .routine-runner__item-name {
@@ -2036,7 +2037,7 @@ input.routine-runner__item-duration {
 }
 
 .weekly-bar-chart__count {
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   color: var(--color-muted);
   margin-bottom: 2px;
 }
@@ -2048,7 +2049,7 @@ input.routine-runner__item-duration {
 }
 
 .weekly-bar-chart__label {
-  font-size: 0.6rem;
+  font-size: 0.85rem;
   color: var(--color-muted);
   margin-top: 4px;
   writing-mode: vertical-rl;
@@ -2142,7 +2143,7 @@ input.routine-runner__item-duration {
 
 .muscle-recovery-row__status {
   margin-left: auto;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 600;
   padding: 3px 10px;
   border-radius: 999px;
@@ -2324,7 +2325,7 @@ input.routine-runner__item-duration {
   background: transparent;
   color: var(--color-primary);
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   cursor: pointer;
   padding: 4px 6px;
 }

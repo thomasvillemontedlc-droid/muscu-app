@@ -248,6 +248,21 @@ input[type='number']:focus {
   border-color: var(--color-danger);
 }
 
+/* Bouton de retour en haut de l'écran "Modifier ma séance" (voir
+   ExerciseView.jsx) : reste collé en haut pendant qu'on fait défiler la
+   liste d'exercices/séries, pour qu'il soit toujours atteignable sans tout
+   remonter — un même bouton existe aussi en bas de l'écran. `top` reprend
+   le même espace que .app__content réserve pour les icônes fixes (mini
+   chrono, thème) : sans ça, en collant à 0, ce bouton grimperait sous ces
+   icônes au lieu de rester en dessous. */
+.edit-session__return--top {
+  position: sticky;
+  top: calc(env(safe-area-inset-top) + 56px);
+  z-index: 5;
+  padding: 8px 0;
+  background: var(--color-bg);
+}
+
 /* Liste des séances types */
 /* Repliée par défaut : la création de séance est une action secondaire par
    rapport à la mise en avant du haut d'écran (.featured-session). */

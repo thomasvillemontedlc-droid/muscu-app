@@ -264,6 +264,18 @@ export function ExerciseView({ session, data, setData }) {
         <MiniRestTimer timer={timer} />
         <h1>Modifier ma séance</h1>
 
+        {/* Dupliqué en haut (voir aussi le même bouton en bas) : la liste
+            d'exercices/séries à modifier peut être longue, ce bouton doit
+            rester atteignable sans avoir à tout faire défiler. Reste un
+            simple retour d'état local (setEditingSession(false)), pas une
+            navigation — le repos ou l'exercice en cours n'ont jamais bougé
+            pendant l'édition. */}
+        <div className="edit-session__return edit-session__return--top">
+          <BigButton onClick={() => setEditingSession(false)}>
+            {timer && !timer.isOvershoot ? 'Retour au repos' : 'Revenir à mon exercice'}
+          </BigButton>
+        </div>
+
         <DraggableList
           className="prep-exercise-list"
           items={session.entries}
@@ -324,7 +336,7 @@ export function ExerciseView({ session, data, setData }) {
         <ExercisePicker exercises={data.exercises} suggestedIds={suggestedIds} onAdd={handleAddExerciseEntry} />
 
         <BigButton onClick={() => setEditingSession(false)}>
-          {timer && !timer.isOvershoot ? 'Revenir au repos' : "Continuer sur l'exercice suivant"}
+          {timer && !timer.isOvershoot ? 'Retour au repos' : 'Revenir à mon exercice'}
         </BigButton>
       </div>
     )

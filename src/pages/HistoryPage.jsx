@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { getSessionsGroupedByDate, getWeekActivity } from '../domain/history.js'
-import { deleteSession, getSessionStatus } from '../domain/sessions.js'
+import { deleteSession, getSessionStatus, setEntryFeeling, updateSingleSet } from '../domain/sessions.js'
+import { setExerciseBarWeight, setExerciseWeightMode } from '../domain/exercises.js'
 import { buildSessionSummary, getTrendFromDiff } from '../domain/sessionSummary.js'
 import { getMuscleIntensities, getMuscleVolumes, hasAnyIntensity } from '../domain/muscleHeatmap.js'
 import { formatSet } from '../lib/formatSet.js'
 import { TrendDot } from '../components/TrendDot.jsx'
 import { BodyHeatmap, BodyHeatmapLegend } from '../components/BodyHeatmap.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
-import { getFeelingLabel } from '../components/FeelingPicker.jsx'
+import { FeelingPicker, getFeelingLabel } from '../components/FeelingPicker.jsx'
+import { SetRow } from '../components/SetRow.jsx'
 import { TourStep } from '../components/TourStep.jsx'
 
 const STATUS_LABELS = {
@@ -42,6 +44,11 @@ export function HistoryPage() {
   const today = new Date()
   const [expandedHeatmaps, setExpandedHeatmaps] = useState(new Set())
   const [pendingDeleteId, setPendingDeleteId] = useState(null)
+  // Édition a posteriori d'une séance déjà faite (poids/reps/ressenti) : un
+  // simple bool d'affichage, aucune des fonctions utilisées ci-dessous
+  // (updateSingleSet, setEntryFeeling) ne touche phase/completedExerciseIds,
+  // donc le statut de la séance (faite/partielle) ne bouge jamais ici.
+  const [editingSessionId, setEditingSessionId] = useState(null)
 
   function confirmDeleteSession() {
     setData({ ...data, sessions: deleteSession(data.sessions, pendingDeleteId) })
@@ -55,6 +62,32 @@ export function HistoryPage() {
       else next.add(sessionId)
       return next
     })
+  }
+
+  function handleEditWeightChange(sessionId, exerciseId, setIndex, weight) {
+    setData((current) => ({
+      ...current,
+      sessions: updateSingleSet(current.sessions, sessionId, exerciseId, setIndex, { weight }),
+    }))
+  }
+
+  function handleEditRepsChange(sessionId, exerciseId, setIndex, reps) {
+    setData((current) => ({
+      ...current,
+      sessions: updateSingleSet(current.sessions, sessionId, exerciseId, setIndex, { reps }),
+    }))
+  }
+
+  function handleEditWeightModeChange(exerciseId, weightInputMode) {
+    setData((current) => ({ ...current, exercises: setExerciseWeightMode(current.exercises, exerciseId, weightInputMode) }))
+  }
+
+  function handleEditBarWeightChange(exerciseId, barWeight) {
+    setData((current) => ({ ...current, exercises: setExerciseBarWeight(current.exercises, exerciseId, barWeight) }))
+  }
+
+  function handleEditFeelingChange(sessionId, exerciseId, feeling) {
+    setData((current) => ({ ...current, sessions: setEntryFeeling(current.sessions, sessionId, exerciseId, feeling) }))
   }
 
   return (
@@ -87,6 +120,7 @@ export function HistoryPage() {
             const isHeatmapExpanded = expandedHeatmaps.has(session.id)
             const intensities = getMuscleIntensities(getMuscleVolumes(session))
             const hasHeatmap = hasAnyIntensity(intensities)
+            const isEditing = editingSessionId === session.id
 
             return (
               <div key={session.id} className="history-session">
@@ -100,36 +134,71 @@ export function HistoryPage() {
                 <ul className="history-session__exercises">
                   {session.entries.map((entry) => {
                     const progress = summaryByExerciseId.get(entry.exerciseId)
+                    const entryExercise = data.exercises.find((e) => e.id === entry.exerciseId)
                     return (
                       <li key={entry.exerciseId}>
                         <span className="history-session__exercise-name">
                           <TrendDot trend={progress?.trend ?? 'neutral'} />
                           {entry.exerciseName}
                         </span>
-                        <span className="history-session__sets">
-                          {entry.sets.map((s) => formatSet(s, entry.exerciseName)).join(', ')}
-                        </span>
-                        {progress && progress.progressKg != null && (
-                          <span className={`history-session__progress volume-diff--${getTrendFromDiff(progress.progressKg)}`}>
-                            {progress.progressKg > 0 ? '+' : ''}
-                            {progress.progressKg}
-                            {progress.progressUnit}
-                            {progress.progressPercent != null
-                              ? ` (${progress.progressKg > 0 ? '+' : ''}${progress.progressPercent}%)`
-                              : ''}{' '}
-                            vs dernière fois
-                          </span>
-                        )}
-                        {entry.feeling && (entry.feeling.value || entry.feeling.note) && (
-                          <span className="history-session__feeling">
-                            {getFeelingLabel(entry.feeling.value)}
-                            {entry.feeling.note ? ` — ${entry.feeling.note}` : ''}
-                          </span>
+
+                        {isEditing ? (
+                          <>
+                            {entry.sets.map((set, setIndex) => (
+                              <SetRow
+                                key={setIndex}
+                                index={setIndex}
+                                weight={set.weight}
+                                reps={set.reps}
+                                exercise={entryExercise}
+                                onChangeWeight={(weight) => handleEditWeightChange(session.id, entry.exerciseId, setIndex, weight)}
+                                onChangeReps={(reps) => handleEditRepsChange(session.id, entry.exerciseId, setIndex, reps)}
+                                onChangeWeightMode={(mode) => handleEditWeightModeChange(entry.exerciseId, mode)}
+                                onChangeBarWeight={(barWeight) => handleEditBarWeightChange(entry.exerciseId, barWeight)}
+                                removeDisabled
+                              />
+                            ))}
+                            <FeelingPicker
+                              feeling={entry.feeling}
+                              onChange={(feeling) => handleEditFeelingChange(session.id, entry.exerciseId, feeling)}
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <span className="history-session__sets">
+                              {entry.sets.map((s) => formatSet(s, entry.exerciseName)).join(', ')}
+                            </span>
+                            {progress && progress.progressKg != null && (
+                              <span className={`history-session__progress volume-diff--${getTrendFromDiff(progress.progressKg)}`}>
+                                {progress.progressKg > 0 ? '+' : ''}
+                                {progress.progressKg}
+                                {progress.progressUnit}
+                                {progress.progressPercent != null
+                                  ? ` (${progress.progressKg > 0 ? '+' : ''}${progress.progressPercent}%)`
+                                  : ''}{' '}
+                                vs dernière fois
+                              </span>
+                            )}
+                            {entry.feeling && (entry.feeling.value || entry.feeling.note) && (
+                              <span className="history-session__feeling">
+                                {getFeelingLabel(entry.feeling.value)}
+                                {entry.feeling.note ? ` — ${entry.feeling.note}` : ''}
+                              </span>
+                            )}
+                          </>
                         )}
                       </li>
                     )
                   })}
                 </ul>
+
+                <button
+                  type="button"
+                  className="subtle-button"
+                  onClick={() => setEditingSessionId(isEditing ? null : session.id)}
+                >
+                  {isEditing ? 'Terminé' : 'Modifier cette séance'}
+                </button>
 
                 {hasHeatmap && (
                   <>

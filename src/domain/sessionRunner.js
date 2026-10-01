@@ -1,5 +1,7 @@
 import { getLastPerformance } from './history.js'
+import { getExerciseUnit } from './muscleGroups.js'
 import { getSessionById, updateSession, withTarget } from './sessions.js'
+import { getGoalDefaultReps } from './trainingGoal.js'
 
 // Les poids/reps sont toujours écrits via domain/sessions.js#updateSet, en
 // direct depuis les écrans (même logique "tout se sauvegarde au fil de la
@@ -19,21 +21,47 @@ export function reorderSessionEntries(sessions, sessionId, fromIndex, toIndex) {
 
 // Ajoute un exercice à cette séance uniquement (le template d'origine n'est
 // pas modifié). Préremplit avec la dernière performance connue, comme à la
-// création de la séance.
+// création de la séance ; à défaut (jamais fait), les reps par défaut
+// suivent l'objectif Force/Endurance de la séance s'il est réglé (voir
+// setSessionGoal), sinon 0 comme avant.
 export function addExerciseEntryToSession(sessions, sessionId, exercise) {
   const session = getSessionById(sessions, sessionId)
   if (!session) return sessions
 
   const otherSessions = sessions.filter((s) => s.id !== sessionId)
   const last = getLastPerformance(otherSessions, exercise.id)
+  const goalReps = session.goal ? getGoalDefaultReps(session.goal) : null
+  const fallbackReps = goalReps != null && getExerciseUnit(exercise.name) !== 'time' ? goalReps : 0
 
   const entry = {
     exerciseId: exercise.id,
     exerciseName: exercise.name,
-    sets: last ? last.sets.map(withTarget) : [{ weight: 0, reps: 0, targetReps: 0 }],
+    sets: last ? last.sets.map(withTarget) : [{ weight: 0, reps: fallbackReps, targetReps: fallbackReps }],
   }
 
   return updateSession(sessions, sessionId, { entries: [...session.entries, entry] })
+}
+
+// Choisit l'objectif Force/Endurance de la séance (ou le réinitialise à
+// neutre avec goal=null) et ajuste aussitôt les répétitions par défaut des
+// exercices SANS historique réel (voir domain/trainingGoal.js) : un exercice
+// déjà fait avant garde sa dernière vraie performance, jamais écrasée ici.
+// Les exercices "au temps" (gainage...) ne sont jamais touchés, reps y
+// représente une durée, pas un nombre de répétitions.
+export function setSessionGoal(sessions, sessionId, goal) {
+  const session = getSessionById(sessions, sessionId)
+  if (!session) return sessions
+
+  const defaultReps = getGoalDefaultReps(goal)
+  const otherSessions = sessions.filter((s) => s.id !== sessionId)
+
+  const entries = session.entries.map((entry) => {
+    if (defaultReps == null || getExerciseUnit(entry.exerciseName) === 'time') return entry
+    if (getLastPerformance(otherSessions, entry.exerciseId)) return entry
+    return { ...entry, sets: entry.sets.map((set) => ({ ...set, reps: defaultReps, targetReps: defaultReps })) }
+  })
+
+  return updateSession(sessions, sessionId, { goal, entries })
 }
 
 export function removeExerciseEntryFromSession(sessions, sessionId, exerciseId) {

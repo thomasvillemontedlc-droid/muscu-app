@@ -42,6 +42,7 @@ export function startSessionFromTemplate(sessions, template, exercises) {
     templateName: template.name,
     date: new Date().toISOString(),
     entries,
+    goal: null,
     phase: 'prep',
     startedAt: null,
     finishedAt: null,
@@ -150,6 +151,21 @@ export function removeSet(sessions, sessionId, exerciseId, setIndex) {
     ...entry,
     sets: entry.sets.filter((_, i) => i !== setIndex),
   }))
+}
+
+// Ajuste directement le nombre de séries d'un exercice à `count` (au lieu de
+// cliquer +Ajouter une série / ✕ un coup à la fois) : complète en dupliquant
+// la dernière série (comme addSet), ou retire depuis la fin. Toujours au
+// moins une série (count est forcé à 1 minimum par l'appelant/le champ UI).
+export function setSetCount(sessions, sessionId, exerciseId, count) {
+  return mapEntry(sessions, sessionId, exerciseId, (entry) => {
+    if (count === entry.sets.length) return entry
+    if (count < entry.sets.length) return { ...entry, sets: entry.sets.slice(0, count) }
+
+    const lastSet = entry.sets[entry.sets.length - 1] ?? { weight: 0, reps: 0 }
+    const added = Array.from({ length: count - entry.sets.length }, () => ({ ...lastSet }))
+    return { ...entry, sets: [...entry.sets, ...added] }
+  })
 }
 
 // Modifie une série ET toutes celles qui suivent dans le même exercice, qui

@@ -411,6 +411,17 @@ input[type='number']:focus {
   margin: 0 0 4px;
 }
 
+.charge-suggestion__input {
+  margin-bottom: 8px;
+  font-size: 1.2rem;
+}
+
+.charge-suggestion__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .rotation-proposal {
   margin-top: 12px;
 }
@@ -608,23 +619,38 @@ input[type='number']:focus {
   background: var(--color-surface);
 }
 
+.exercise-picker__suggestion {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.exercise-picker__suggestions li:last-child {
+  border-bottom: none;
+}
+
 .exercise-picker__suggestions button {
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 100%;
   min-height: var(--touch-min);
   padding: 0 14px;
   border: none;
-  border-bottom: 1px solid var(--color-border);
   background: transparent;
   color: var(--color-text);
   text-align: left;
   font-size: 1rem;
 }
 
-.exercise-picker__suggestions li:last-child button {
-  border-bottom: none;
+.exercise-picker__suggestion > button:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.exercise-picker__zoom {
+  flex: 0 0 auto;
+  justify-content: center;
+  border-left: 1px solid var(--color-border);
 }
 
 /* Zoom sur la figure "position de départ" en haut à gauche de
@@ -1016,6 +1042,18 @@ input.set-row__input {
   margin-bottom: 12px;
 }
 
+.prep-exercise__set-count {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.prep-exercise__set-count .stepper-field {
+  width: auto;
+}
+
 .prep-exercise__header {
   display: flex;
   align-items: center;
@@ -1075,6 +1113,12 @@ input.set-row__input {
   color: var(--color-muted);
   font-size: 0.9rem;
   margin-bottom: 4px;
+}
+
+.prep-field__hint {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  margin: -8px 0 12px;
 }
 
 .prep-field__select,
@@ -1447,6 +1491,16 @@ input.set-row__input {
 /* Volontairement grande et non recadrée (contrairement à
    .exercise-picker__thumb, qui zoome) : l'image complète doit rester
    visible, dans ses propres proportions (height: auto). */
+.rest-page__next-image-trigger {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
 .rest-page__next-image {
   display: block;
   width: 100%;
@@ -1760,6 +1814,20 @@ input.set-row__input {
   list-style: none;
   padding: 0;
   margin: 0;
+}
+
+.pick-exercise-list__set-count {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pick-exercise-list__set-count label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Volontairement discret : reste accessible (zone tactile correcte) sans

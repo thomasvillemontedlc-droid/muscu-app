@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ExerciseImage } from './ExerciseImage.jsx'
+import { ExerciseImageOverlay } from './ExerciseImageOverlay.jsx'
 
 // Pendant une série active, l'illustration reste masquée par défaut (pour
 // laisser la place au tableau comparatif et à la saisie) : un bouton "Voir
@@ -25,22 +26,7 @@ export function ExerciseImageViewer({ name }) {
         </button>
       )}
 
-      {open && (
-        <div className="exercise-image-viewer__overlay" onClick={() => setOpen(false)}>
-          <button
-            type="button"
-            className="exercise-image-viewer__close"
-            onClick={(e) => {
-              e.stopPropagation()
-              setOpen(false)
-            }}
-            aria-label="Fermer"
-          >
-            ✕
-          </button>
-          <ExerciseImage name={name} className="exercise-image-viewer__image" />
-        </div>
-      )}
+      {open && <ExerciseImageOverlay name={name} onClose={() => setOpen(false)} />}
     </>
   )
 }

@@ -2,7 +2,14 @@ import { useState } from 'react'
 import { getChargeSuggestion } from '../../domain/chargeSuggestion.js'
 import { getExercisesUsedInTemplate, getLastPerformance } from '../../domain/history.js'
 import { getExerciseUnit } from '../../domain/muscleGroups.js'
-import { addSet, markChargeSuggestionResolved, removeSet, updateSet, updateSingleSet } from '../../domain/sessions.js'
+import {
+  addSet,
+  markChargeSuggestionResolved,
+  removeSet,
+  setSetCount,
+  updateSet,
+  updateSingleSet,
+} from '../../domain/sessions.js'
 import {
   getOrCreateExercise,
   setExerciseBarWeight,
@@ -30,6 +37,7 @@ import { ExercisePicker } from '../../components/ExercisePicker.jsx'
 import { SetRow } from '../../components/SetRow.jsx'
 import { DurationField } from '../../components/DurationField.jsx'
 import { ExerciseImage } from '../../components/ExerciseImage.jsx'
+import { ExerciseImageOverlay } from '../../components/ExerciseImageOverlay.jsx'
 import { ExerciseImageViewer } from '../../components/ExerciseImageViewer.jsx'
 import { ExerciseProgressBar } from '../../components/ExerciseProgressBar.jsx'
 import { SetComparisonTable } from '../../components/SetComparisonTable.jsx'
@@ -44,6 +52,39 @@ import { TourStep } from '../../components/TourStep.jsx'
 // court pour ne pas ralentir l'enchaînement, assez long pour être perçu.
 const VALIDATE_FEEDBACK_MS = 450
 
+// Poids initialement proposé (dernier poids + un pas), ajustable avant de
+// valider : le StepperField fait à la fois +1 pas/+2 pas (boutons +/-, par
+// pas de `suggestion.step`) et la valeur libre (un tap sur le nombre bascule
+// en saisie). `key={entry.exerciseId}` côté appelant réinitialise ce
+// composant (donc `weight`) à chaque nouvel exercice plutôt que de garder un
+// state React partagé entre deux suggestions différentes.
+function ChargeSuggestionCard({ suggestion, onAccept, onDecline }) {
+  const [weight, setWeight] = useState(suggestion.newWeight)
+
+  return (
+    <div className="charge-suggestion">
+      <p className="charge-suggestion__text">
+        La dernière fois, tu as réussi toutes tes séries avec un ressenti{' '}
+        {suggestion.feelingValue === 'facile' ? 'facile' : 'bien comme ça'}. Passer à combien ?
+      </p>
+      <StepperField
+        className="charge-suggestion__input"
+        value={weight}
+        onChange={setWeight}
+        step={suggestion.step}
+        decimal
+        aria-label="Nouveau poids en kg"
+      />
+      <div className="charge-suggestion__actions">
+        <BigButton onClick={() => onAccept(weight)}>Valider {weight}kg</BigButton>
+        <BigButton variant="secondary" onClick={onDecline}>
+          Garder {suggestion.currentWeight}kg
+        </BigButton>
+      </div>
+    </div>
+  )
+}
+
 export function ExerciseView({ session, data, setData }) {
   const [validating, setValidating] = useState(false)
   // Modifier la séance pendant le repos (voir handleReorderEdit et
@@ -52,6 +93,7 @@ export function ExerciseView({ session, data, setData }) {
   // pareil pendant que ce bool est vrai, rien d'autre ne change tant
   // qu'on ne touche pas explicitement à la liste d'exercices.
   const [editingSession, setEditingSession] = useState(false)
+  const [restImageOpen, setRestImageOpen] = useState(false)
   const timer = useRestTimer(session)
   const entry = session.entries.find((e) => e.exerciseId === session.currentExerciseId)
   const set = entry.sets[session.currentSetIndex]
@@ -217,11 +259,13 @@ export function ExerciseView({ session, data, setData }) {
     setData({ ...data, sessions: removeSet(data.sessions, session.id, exerciseId, setIndex) })
   }
 
-  function handleAcceptChargeSuggestion() {
+  function handleSetCountChange(exerciseId, count) {
+    setData({ ...data, sessions: setSetCount(data.sessions, session.id, exerciseId, Math.max(1, count)) })
+  }
+
+  function handleAcceptChargeSuggestion(weight) {
     setData((current) => {
-      const sessions = updateSet(current.sessions, session.id, entry.exerciseId, 0, {
-        weight: chargeSuggestion.newWeight,
-      })
+      const sessions = updateSet(current.sessions, session.id, entry.exerciseId, 0, { weight })
       return { ...current, sessions: markChargeSuggestionResolved(sessions, session.id, entry.exerciseId) }
     })
   }
@@ -309,6 +353,18 @@ export function ExerciseView({ session, data, setData }) {
                   </button>
                 </div>
 
+                <label className="prep-exercise__set-count">
+                  <span>Nombre de séries</span>
+                  <StepperField
+                    value={sessionEntry.sets.length}
+                    onChange={(count) => handleSetCountChange(sessionEntry.exerciseId, count)}
+                    step={1}
+                    min={1}
+                    disabled={isCurrentExercise}
+                    aria-label="Nombre de séries"
+                  />
+                </label>
+
                 {sessionEntry.sets.map((set, setIndex) => (
                   <SetRow
                     key={setIndex}
@@ -358,10 +414,18 @@ export function ExerciseView({ session, data, setData }) {
         {navButtons}
         <ExerciseProgressBar session={session} />
         <div className="rest-page__next">
-          <ExerciseImage key={entry.exerciseName} name={entry.exerciseName} className="rest-page__next-image" />
+          <button
+            type="button"
+            className="rest-page__next-image-trigger"
+            onClick={() => setRestImageOpen(true)}
+            aria-label="Agrandir l'image de l'exercice"
+          >
+            <ExerciseImage key={entry.exerciseName} name={entry.exerciseName} className="rest-page__next-image" />
+          </button>
           <p className="rest-page__next-label">Prochain exercice</p>
           <h2 className="rest-page__next-name">{entry.exerciseName}</h2>
         </div>
+        {restImageOpen && <ExerciseImageOverlay name={entry.exerciseName} onClose={() => setRestImageOpen(false)} />}
         <RestBanner timer={timer} onAdjust={handleAdjustRest} />
         <TourStep
           id="rest-adjust"
@@ -400,19 +464,12 @@ export function ExerciseView({ session, data, setData }) {
       </p>
 
       {chargeSuggestion && (
-        <div className="charge-suggestion">
-          <p className="charge-suggestion__text">
-            La dernière fois, tu as réussi toutes tes séries avec un ressenti{' '}
-            {chargeSuggestion.feelingValue === 'facile' ? 'facile' : 'bien comme ça'}. Passer à{' '}
-            {chargeSuggestion.newWeight}kg ?
-          </p>
-          <div className="charge-suggestion__actions">
-            <BigButton onClick={handleAcceptChargeSuggestion}>Passer à {chargeSuggestion.newWeight}kg</BigButton>
-            <BigButton variant="secondary" onClick={handleDeclineChargeSuggestion}>
-              Garder {chargeSuggestion.currentWeight}kg
-            </BigButton>
-          </div>
-        </div>
+        <ChargeSuggestionCard
+          key={entry.exerciseId}
+          suggestion={chargeSuggestion}
+          onAccept={handleAcceptChargeSuggestion}
+          onDecline={handleDeclineChargeSuggestion}
+        />
       )}
 
       {!last && <p className="last-performance last-performance--empty">Première fois sur cet exercice</p>}

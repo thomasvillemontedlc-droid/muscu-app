@@ -7,16 +7,22 @@ import {
   finishSessionEarly,
   pickExercise,
 } from '../../domain/sessionRunner.js'
-import { setEntryFeeling } from '../../domain/sessions.js'
+import { setEntryFeeling, setSetCount } from '../../domain/sessions.js'
 import { useRestTimer } from '../../hooks/useRestTimer.js'
 import { RestBanner } from '../../components/RestBanner.jsx'
 import { ExercisePicker } from '../../components/ExercisePicker.jsx'
 import { FeelingPicker } from '../../components/FeelingPicker.jsx'
+import { StepperField } from '../../components/StepperField.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
 
 export function PickExerciseView({ session, data, setData }) {
   const timer = useRestTimer(session)
   const [showAddExercise, setShowAddExercise] = useState(false)
+  // Exercice tout juste ajouté depuis cet écran : affiche son nombre de
+  // séries (choisi ici plutôt que de garder la valeur silencieusement
+  // préremplie par addExerciseEntryToSession) jusqu'à ce qu'on tape "OK" ou
+  // qu'on quitte l'écran.
+  const [justAddedId, setJustAddedId] = useState(null)
   const otherSessions = data.sessions.filter((s) => s.id !== session.id)
   const suggestedIds = getExercisesUsedInTemplate(otherSessions, session.templateName)
 
@@ -43,6 +49,11 @@ export function PickExerciseView({ session, data, setData }) {
     const sessions = addExerciseEntryToSession(data.sessions, session.id, exercise)
     setData({ ...data, exercises, sessions })
     setShowAddExercise(false)
+    setJustAddedId(exercise.id)
+  }
+
+  function handleSetCountChange(exerciseId, count) {
+    setData({ ...data, sessions: setSetCount(data.sessions, session.id, exerciseId, Math.max(1, count)) })
   }
 
   return (
@@ -63,6 +74,23 @@ export function PickExerciseView({ session, data, setData }) {
               </BigButton>
               {done && (
                 <FeelingPicker feeling={entry.feeling} onChange={(feeling) => handleFeelingChange(entry.exerciseId, feeling)} />
+              )}
+              {entry.exerciseId === justAddedId && (
+                <div className="pick-exercise-list__set-count">
+                  <label>
+                    <span>Nombre de séries</span>
+                    <StepperField
+                      value={entry.sets.length}
+                      onChange={(count) => handleSetCountChange(entry.exerciseId, count)}
+                      step={1}
+                      min={1}
+                      aria-label="Nombre de séries"
+                    />
+                  </label>
+                  <button type="button" className="subtle-button" onClick={() => setJustAddedId(null)}>
+                    OK
+                  </button>
+                </div>
               )}
             </li>
           )

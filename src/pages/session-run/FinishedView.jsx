@@ -4,6 +4,7 @@ import { buildSessionSummary, getCompletionProgress, getSessionStats, getTrendFr
 import { getMuscleIntensities, getMuscleVolumes } from '../../domain/muscleHeatmap.js'
 import { getPrimaryMusclesWorked, getStretchSuggestions } from '../../domain/stretches.js'
 import { formatSet } from '../../lib/formatSet.js'
+import { formatDuration } from '../../lib/formatDuration.js'
 import { getFeelingLabel } from '../../components/FeelingPicker.jsx'
 import { TrendDot } from '../../components/TrendDot.jsx'
 import { BodyHeatmap, BodyHeatmapLegend } from '../../components/BodyHeatmap.jsx'
@@ -17,15 +18,6 @@ function formatRest(totalSeconds) {
   if (minutes === 0) return `${seconds}s`
   if (seconds === 0) return `${minutes}min`
   return `${minutes}min${String(seconds).padStart(2, '0')}`
-}
-
-function formatDuration(durationMs) {
-  if (durationMs == null) return null
-  const totalMinutes = Math.round(durationMs / 60000)
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-  if (hours === 0) return `${minutes}min`
-  return `${hours}h${String(minutes).padStart(2, '0')}`
 }
 
 export function FinishedView({ session, data }) {

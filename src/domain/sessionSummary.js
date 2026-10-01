@@ -1,6 +1,13 @@
 import { getLastPerformance } from './history.js'
 import { getExerciseUnit } from './muscleGroups.js'
 
+// Hypothèse grossière pour l'estimation de durée avant de lancer la séance
+// (voir getEstimatedSessionStats) : temps d'exécution d'une répétition
+// classique. Pour un exercice "au temps", set.reps est déjà une durée en
+// secondes (voir domain/muscleGroups.js#getExerciseUnit) - pas besoin de
+// cette hypothèse dans ce cas.
+const ESTIMATED_SECONDS_PER_REP = 3
+
 // Séance précédente avec le même nom de template, pour comparer la
 // progression (fonctionnalité "récap de fin de séance").
 export function getPreviousSessionByTemplate(sessions, currentSession) {
@@ -100,6 +107,31 @@ export function getSessionStats(session) {
     totalSets: allSets.length,
     totalReps: allSets.reduce((total, set) => total + set.reps, 0),
   }
+}
+
+// Estimation (pas un chrono réel) de la durée et du nombre de répétitions
+// d'une séance pas encore lancée (écran de préparation), à partir des
+// exercices/séries/répétitions choisis et du temps de repos réglé. Le repos
+// est compté après chaque série sauf la toute dernière de la séance (voir
+// domain/sessionRunner.js#validateCurrentSet, qui ne démarre jamais de repos
+// après la dernière série validée).
+export function getEstimatedSessionStats(session) {
+  let totalSets = 0
+  let totalReps = 0
+  let activeSeconds = 0
+
+  for (const entry of session.entries) {
+    const unit = getExerciseUnit(entry.exerciseName)
+    for (const set of entry.sets) {
+      totalSets += 1
+      totalReps += set.reps
+      activeSeconds += unit === 'time' ? set.reps : set.reps * ESTIMATED_SECONDS_PER_REP
+    }
+  }
+
+  const restSeconds = totalSets > 0 ? (totalSets - 1) * session.restSeconds : 0
+
+  return { totalSets, totalReps, durationMs: (activeSeconds + restSeconds) * 1000 }
 }
 
 // Un item par exercice effectivement complété dans la séance, avec la

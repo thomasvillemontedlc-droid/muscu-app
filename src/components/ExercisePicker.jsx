@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getExerciseMuscles, getMuscleLabel, MUSCLE_GROUPS } from '../domain/muscleGroups.js'
+import { ExerciseImageOverlay } from './ExerciseImageOverlay.jsx'
 import { ExerciseThumbnail } from './ExerciseThumbnail.jsx'
 import { BigButton } from './BigButton.jsx'
 
@@ -13,6 +14,7 @@ export function ExercisePicker({ exercises, suggestedIds = [], onAdd }) {
   const [value, setValue] = useState('')
   const [open, setOpen] = useState(false)
   const [muscleFilter, setMuscleFilter] = useState('')
+  const [zoomedName, setZoomedName] = useState(null)
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -87,7 +89,7 @@ export function ExercisePicker({ exercises, suggestedIds = [], onAdd }) {
         (filtered.length > 0 ? (
           <ul className="exercise-picker__suggestions">
             {filtered.map((exercise) => (
-              <li key={exercise.id}>
+              <li key={exercise.id} className="exercise-picker__suggestion">
                 {/* onMouseDown (pas onClick) pour s'exécuter avant le onBlur du champ */}
                 <button type="button" onMouseDown={() => handleSelect(exercise)}>
                   <ExerciseThumbnail
@@ -97,12 +99,28 @@ export function ExercisePicker({ exercises, suggestedIds = [], onAdd }) {
                   />
                   {exercise.name}
                 </button>
+                {/* Bouton distinct (stopPropagation + preventDefault) pour agrandir
+                    l'image sans déclencher l'ajout de l'exercice du bouton ci-dessus. */}
+                <button
+                  type="button"
+                  className="exercise-picker__zoom"
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setZoomedName(exercise.name)
+                  }}
+                  aria-label={`Agrandir l'image de ${exercise.name}`}
+                >
+                  🔍
+                </button>
               </li>
             ))}
           </ul>
         ) : (
           muscleFilter && <p className="exercise-picker__empty">Aucun exercice pour ce muscle.</p>
         ))}
+
+      {zoomedName && <ExerciseImageOverlay name={zoomedName} onClose={() => setZoomedName(null)} />}
     </div>
   )
 }

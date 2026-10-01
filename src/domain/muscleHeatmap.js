@@ -1,15 +1,21 @@
-import { getExerciseMuscles, MUSCLE_GROUPS } from './muscleGroups.js'
+import { getExerciseMuscles, getExerciseUnit, MUSCLE_GROUPS } from './muscleGroups.js'
 
 // Muscle secondaire compté à moitié : sollicité, mais moins que le muscle
 // principal de l'exercice.
 const SECONDARY_WEIGHT = 0.5
 
-function getSetsVolume(sets) {
-  return sets.reduce((total, set) => total + set.weight * set.reps, 0)
+// Même règle que getMetricVolume dans sessionSummary.js : pour un exercice
+// "au temps" (gainage, suspension, marches...), le poids n'a pas de sens -
+// on utilise la durée tenue (stockée dans "reps") comme volume, sinon ces
+// exercices ressortent toujours à 0 (poids non renseigné) et disparaissent
+// de la carte musculaire.
+function getSetsVolume(sets, unit) {
+  return sets.reduce((total, set) => total + (unit === 'time' ? set.reps : set.weight * set.reps), 0)
 }
 
 function addEntryVolume(volumes, entry) {
-  const volume = getSetsVolume(entry.sets)
+  const unit = getExerciseUnit(entry.exerciseName)
+  const volume = getSetsVolume(entry.sets, unit)
   if (volume === 0) return volumes
 
   const { primary, secondary } = getExerciseMuscles(entry.exerciseName)

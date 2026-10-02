@@ -68,6 +68,24 @@ export function setExerciseBarWeight(exercises, exerciseId, barWeight) {
   return exercises.map((e) => (e.id === exerciseId ? { ...e, barWeight } : e))
 }
 
+// Niveau de poulie (exercices à la poulie réglable en hauteur), mémorisé par
+// exercice comme barWeight/weightStep : une simple chaîne libre ("Haute",
+// "3", "cran 5"...), voir components/WeightField.jsx pour la saisie.
+export function setExercisePulleyLevel(exercises, exerciseId, pulleyLevel) {
+  return exercises.map((e) => (e.id === exerciseId ? { ...e, pulleyLevel } : e))
+}
+
+// Exercice fait un côté après l'autre (droit/gauche séparément), mémorisé
+// par exercice comme les autres réglages de saisie ci-dessus. Affecte la
+// FORME des séries de la séance (doublées en paires droit/gauche, voir
+// domain/sessions.js#setEntryUnilateral et la doc de domain/sessionRunner.js
+// sur ce champ) - distinct de weightInputMode 'perSide' ci-dessus, qui lui
+// ne change que la façon de saisir un seul poids pour un mouvement fait des
+// deux côtés EN MÊME TEMPS (barre, haltères, poulies vis-à-vis).
+export function setExerciseUnilateral(exercises, exerciseId, unilateral) {
+  return exercises.map((e) => (e.id === exerciseId ? { ...e, unilateral } : e))
+}
+
 // Pas d'incrément des boutons +/- de charge, mémorisé par exercice (voir
 // getEffectiveWeightStep ci-dessous pour la valeur par défaut tant que rien
 // n'est mémorisé ici).

@@ -23,6 +23,47 @@ function hasSharedBar(name) {
   return slugify(name ?? '').includes('barre')
 }
 
+// Exercice à la poulie réglable en hauteur (écarté/oiseau vis-à-vis, et tout
+// équivalent) : même détection par nom que ci-dessus, pas de liste figée par
+// exercice pour rester inclusif sur les variantes/futurs ajouts.
+function isPulleyExercise(name) {
+  return slugify(name ?? '').includes('poulie')
+}
+
+const PULLEY_LEVEL_PRESETS = ['Haute', 'Moyenne', 'Basse']
+
+// Niveau de poulie mémorisé par exercice (exercise.pulleyLevel, voir
+// domain/exercises.js#setExercisePulleyLevel) : une simple chaîne libre, 3
+// boutons rapides + un champ texte pour un cran numéroté, les deux écrivent
+// la même valeur (même principe que FeelingPicker : choix rapide + libre).
+function PulleyLevelField({ level, onChange }) {
+  return (
+    <div className="weight-field__pulley">
+      <span>Niveau de poulie</span>
+      <div className="weight-field__pulley-presets">
+        {PULLEY_LEVEL_PRESETS.map((preset) => (
+          <button
+            key={preset}
+            type="button"
+            className={`weight-field__pulley-preset${level === preset ? ' weight-field__pulley-preset--selected' : ''}`}
+            onClick={() => onChange(level === preset ? null : preset)}
+          >
+            {preset}
+          </button>
+        ))}
+      </div>
+      <input
+        type="text"
+        className="weight-field__pulley-input"
+        placeholder="Cran précis (optionnel)"
+        value={level ?? ''}
+        onChange={(e) => onChange(e.target.value || null)}
+        aria-label="Niveau de poulie précis"
+      />
+    </div>
+  )
+}
+
 function computePerSide(total, barWeight) {
   const perSide = (total - barWeight) / 2
   return perSide > 0 ? Math.round(perSide * 100) / 100 : 0
@@ -46,6 +87,7 @@ export function WeightField({
   onModeChange,
   onBarWeightChange,
   onStepChange,
+  onPulleyLevelChange,
   className,
   stepper = false,
   'aria-label': ariaLabel,
@@ -53,6 +95,10 @@ export function WeightField({
   const mode = exercise?.weightInputMode ?? 'total'
   const isDumbbell = isDumbbellExercise(exercise?.name)
   const hasBar = hasSharedBar(exercise?.name)
+  const isPulley = isPulleyExercise(exercise?.name)
+  const pulleyControl = isPulley && onPulleyLevelChange && (
+    <PulleyLevelField level={exercise?.pulleyLevel ?? null} onChange={onPulleyLevelChange} />
+  )
   // Pas de barre partagée aux haltères ni aux poulies vis-à-vis : chaque
   // saisie de "poids par côté" représente déjà le poids total de ce côté,
   // rien à additionner.
@@ -93,6 +139,7 @@ export function WeightField({
       <div className="weight-field">
         <ValueField className={className} value={value} onChange={onChange} aria-label={ariaLabel} {...valueFieldProps} />
         {stepControl}
+        {pulleyControl}
         <button type="button" className="weight-field__mode-toggle" onClick={() => onModeChange('perSide')}>
           Saisir par côté
         </button>
@@ -131,6 +178,7 @@ export function WeightField({
       </div>
       <p className="weight-field__total">Total : {computeTotal(barWeight, perSide)}kg</p>
       {stepControl}
+      {pulleyControl}
       <button type="button" className="weight-field__mode-toggle" onClick={() => onModeChange('total')}>
         Saisir le poids total
       </button>

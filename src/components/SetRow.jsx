@@ -11,20 +11,26 @@ export function SetRow({
   index,
   weight,
   reps,
+  side,
   exercise,
   onChangeWeight,
   onChangeReps,
   onChangeWeightMode,
   onChangeBarWeight,
+  onChangePulleyLevel,
   onRemove,
   removeDisabled = false,
 }) {
   const isTimeBased = getExerciseUnit(exercise?.name) === 'time'
+  // Numérotation par paire pour une série unilatérale (droit+gauche =
+  // UNE série aux yeux de l'utilisateur), voir domain/sessions.js et
+  // lib/formatSet.js#getSetPosition pour la même logique ailleurs.
+  const label = side ? `Série #${Math.floor(index / 2) + 1} (${side === 'droit' ? 'D' : 'G'})` : `Série #${index + 1}`
 
   return (
     <div className="set-row">
       <div className="set-row__header">
-        <span className="set-row__label">Série #{index + 1}</span>
+        <span className="set-row__label">{label}</span>
         <button
           type="button"
           className="set-row__remove"
@@ -69,6 +75,7 @@ export function SetRow({
             onChange={onChangeWeight}
             onModeChange={onChangeWeightMode}
             onBarWeightChange={onChangeBarWeight}
+            onPulleyLevelChange={onChangePulleyLevel}
             aria-label={`Poids série ${index + 1} (kg)`}
           />
         </label>

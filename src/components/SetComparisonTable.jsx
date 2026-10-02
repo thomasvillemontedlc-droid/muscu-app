@@ -1,4 +1,5 @@
 import { getExerciseUnit } from '../domain/muscleGroups.js'
+import { getSetPosition } from '../lib/formatSet.js'
 
 function formatSetValue(set, unit) {
   if (!set) return '—'
@@ -21,13 +22,19 @@ export function SetComparisonTable({ entry, last, currentSetIndex }) {
         </tr>
       </thead>
       <tbody>
-        {entry.sets.map((set, i) => (
-          <tr key={i} className={i === currentSetIndex ? 'set-comparison__row--current' : undefined}>
-            <td>{i + 1}</td>
-            <td>{formatSetValue(last?.sets[i], unit)}</td>
-            <td>{formatSetValue(set, unit)}</td>
-          </tr>
-        ))}
+        {entry.sets.map((set, i) => {
+          const pos = getSetPosition(entry.sets, i)
+          return (
+            <tr key={i} className={i === currentSetIndex ? 'set-comparison__row--current' : undefined}>
+              <td>
+                {pos.position}
+                {pos.sideLabel ? ` (${pos.sideLabel === 'Côté droit' ? 'D' : 'G'})` : ''}
+              </td>
+              <td>{formatSetValue(last?.sets[i], unit)}</td>
+              <td>{formatSetValue(set, unit)}</td>
+            </tr>
+          )
+        })}
       </tbody>
     </table>
   )

@@ -4,13 +4,14 @@ import { BigButton } from './BigButton.jsx'
 import { DurationField } from './DurationField.jsx'
 import { TourStep } from './TourStep.jsx'
 
-// Déroulé générique d'une petite liste de mouvements chronométrés, un par
-// un (échauffement avant séance, étirements en fin de séance) : liste
-// modifiable avant de lancer (durée, ajout, retrait), puis défilement
-// automatique d'un mouvement à l'autre une fois le temps écoulé — ou
-// manuel via "Passer ce mouvement" (goToNext), sans attendre le décompte
-// ni annuler le reste de la routine (skipLabel/onDone abandonnent
-// TOUTE la routine, c'est différent).
+// Déroulé générique d'une petite liste de mouvements (échauffement avant
+// séance, étirements en fin de séance) : liste modifiable avant de lancer
+// (durée, ajout, retrait, scinder un mouvement en droit/gauche), puis
+// avancement entièrement MANUEL d'un mouvement à l'autre - "Mouvement
+// suivant" (goToNext), décidé par l'utilisateur, jamais automatique au bout
+// du chrono (qui n'est qu'une référence affichée, voir le premier effet
+// ci-dessous). skipLabel/onDone abandonnent TOUTE la routine, c'est
+// différent de goToNext qui avance d'un cran.
 export function RoutineRunner({ title, hint, initialItems, suggestions = [], onDone, skipLabel = 'Passer', tip }) {
   const [items, setItems] = useState(initialItems)
   const [running, setRunning] = useState(false)
@@ -24,10 +25,13 @@ export function RoutineRunner({ title, hint, initialItems, suggestions = [], onD
     return () => clearTimeout(id)
   }, [running, remaining])
 
+  // Juste une vibration de repère quand le temps affiché est écoulé - plus
+  // d'avancement automatique (voir le commentaire au-dessus du composant).
+  // Ne se déclenche qu'une fois par mouvement (dépend de `remaining`, qui ne
+  // redescend pas sous 0 une fois arrivé là, voir l'effet précédent).
   useEffect(() => {
-    if (!running || remaining > 0) return
-    vibrateSuccess()
-    goToNext()
+    if (!running || remaining !== 0) return
+    if (items[index]?.durationSeconds > 0) vibrateSuccess()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running, remaining])
 
@@ -62,6 +66,40 @@ export function RoutineRunner({ title, hint, initialItems, suggestions = [], onD
     setItems((prev) => prev.map((item) => (item.id === id ? { ...item, durationSeconds } : item)))
   }
 
+  // Scinde un mouvement en deux entrées adjacentes droit/gauche (durée
+  // indépendamment ajustable ensuite), comme une série unilatérale - voir
+  // domain/exercises.js#setExerciseUnilateral pour le même principe côté
+  // séries d'exercice.
+  function handleSplitSide(id) {
+    setItems((prev) =>
+      prev.flatMap((item) =>
+        item.id === id
+          ? [
+              { ...item, id: crypto.randomUUID(), side: 'droit' },
+              { ...item, id: crypto.randomUUID(), side: 'gauche' },
+            ]
+          : [item],
+      ),
+    )
+  }
+
+  // Fusionne la paire droit/gauche en un seul mouvement, en gardant les
+  // valeurs du côté droit (celles du gauche sont perdues) - appelable depuis
+  // l'une ou l'autre moitié de la paire.
+  function handleMergeSide(id) {
+    setItems((prev) => {
+      const idx = prev.findIndex((item) => item.id === id)
+      if (idx === -1) return prev
+      const pairStart = prev[idx].side === 'gauche' ? idx - 1 : idx
+      if (pairStart < 0) return prev
+
+      const { side: _side, ...merged } = prev[pairStart]
+      const next = [...prev]
+      next.splice(pairStart, 2, merged)
+      return next
+    })
+  }
+
   function addItem(name) {
     if (!name) return
     setItems((prev) => [...prev, { id: crypto.randomUUID(), muscleLabel: null, name, durationSeconds: 30 }])
@@ -80,16 +118,31 @@ export function RoutineRunner({ title, hint, initialItems, suggestions = [], onD
 
   if (running) {
     const current = items[index]
+    // Une paire droit/gauche compte pour UN mouvement aux yeux de
+    // l'utilisateur (même principe que domain/sessions.js#setEntryUnilateral
+    // pour les séries) : le gauche qui suit immédiatement un droit ne
+    // ré-incrémente pas le numéro affiché.
+    let logicalNumber = 0
+    const logicalNumbers = items.map((item, i) => {
+      const isSecondOfPair = item.side === 'gauche' && items[i - 1]?.side === 'droit'
+      if (!isSecondOfPair) logicalNumber++
+      return logicalNumber
+    })
+    const sideLabel = current.side === 'droit' ? 'Côté droit' : current.side === 'gauche' ? 'Côté gauche' : null
+
     return (
       <div className="routine-runner">
         <h1>{title}</h1>
         <p className="routine-runner__progress">
-          {index + 1} / {items.length}
+          {logicalNumbers[index]} / {logicalNumber}
         </p>
         {current.muscleLabel && <p className="routine-runner__muscle">{current.muscleLabel}</p>}
-        <p className="routine-runner__name">{current.name}</p>
+        <p className="routine-runner__name">
+          {current.name}
+          {sideLabel && <span className="routine-runner__side"> · {sideLabel}</span>}
+        </p>
         <p className="routine-runner__timer">{current.durationSeconds > 0 ? `${remaining}s` : '—'}</p>
-        <BigButton onClick={goToNext}>Passer ce mouvement</BigButton>
+        <BigButton onClick={goToNext}>Mouvement suivant</BigButton>
         <button
           type="button"
           className="subtle-button"
@@ -118,7 +171,12 @@ export function RoutineRunner({ title, hint, initialItems, suggestions = [], onD
               <div className="routine-runner__item-header">
                 <div className="routine-runner__item-info">
                   {item.muscleLabel && <span className="routine-runner__item-muscle">{item.muscleLabel}</span>}
-                  <span className="routine-runner__item-name">{item.name}</span>
+                  <span className="routine-runner__item-name">
+                    {item.name}
+                    {item.side && (
+                      <span className="routine-runner__item-side">{item.side === 'droit' ? ' (D)' : ' (G)'}</span>
+                    )}
+                  </span>
                 </div>
                 <button
                   type="button"
@@ -135,6 +193,15 @@ export function RoutineRunner({ title, hint, initialItems, suggestions = [], onD
                 onChange={(value) => handleDurationChange(item.id, value)}
                 aria-label={`Durée ${item.name}`}
               />
+              {item.side ? (
+                <button type="button" className="routine-runner__item-side-toggle" onClick={() => handleMergeSide(item.id)}>
+                  Fusionner droit/gauche
+                </button>
+              ) : (
+                <button type="button" className="routine-runner__item-side-toggle" onClick={() => handleSplitSide(item.id)}>
+                  Par côté (droit/gauche)
+                </button>
+              )}
             </li>
           ))}
         </ul>

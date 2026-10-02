@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getOrCreateExercise } from '../../domain/exercises.js'
+import { getOrCreateExercise, setExerciseUnilateral } from '../../domain/exercises.js'
 import { getExercisesUsedInTemplate } from '../../domain/history.js'
 import {
   addExerciseEntryToSession,
@@ -7,7 +7,7 @@ import {
   finishSessionEarly,
   pickExercise,
 } from '../../domain/sessionRunner.js'
-import { setEntryFeeling, setSetCount } from '../../domain/sessions.js'
+import { setEntryFeeling, setEntryUnilateral, setSetCount } from '../../domain/sessions.js'
 import { useRestTimer } from '../../hooks/useRestTimer.js'
 import { RestBanner } from '../../components/RestBanner.jsx'
 import { ExercisePicker } from '../../components/ExercisePicker.jsx'
@@ -53,7 +53,19 @@ export function PickExerciseView({ session, data, setData }) {
   }
 
   function handleSetCountChange(exerciseId, count) {
-    setData({ ...data, sessions: setSetCount(data.sessions, session.id, exerciseId, Math.max(1, count)) })
+    const exercise = data.exercises.find((e) => e.id === exerciseId)
+    setData({
+      ...data,
+      sessions: setSetCount(data.sessions, session.id, exerciseId, Math.max(1, count), exercise?.unilateral),
+    })
+  }
+
+  function handleUnilateralChange(exerciseId, unilateral) {
+    setData((current) => ({
+      ...current,
+      exercises: setExerciseUnilateral(current.exercises, exerciseId, unilateral),
+      sessions: setEntryUnilateral(current.sessions, session.id, exerciseId, unilateral),
+    }))
   }
 
   return (
@@ -66,6 +78,7 @@ export function PickExerciseView({ session, data, setData }) {
       <ul className="pick-exercise-list">
         {session.entries.map((entry) => {
           const done = session.completedExerciseIds.includes(entry.exerciseId)
+          const entryExercise = data.exercises.find((e) => e.id === entry.exerciseId)
           return (
             <li key={entry.exerciseId}>
               <BigButton variant={done ? 'secondary' : 'primary'} onClick={() => handlePick(entry.exerciseId)}>
@@ -80,12 +93,20 @@ export function PickExerciseView({ session, data, setData }) {
                   <label>
                     <span>Nombre de séries</span>
                     <StepperField
-                      value={entry.sets.length}
+                      value={entryExercise?.unilateral ? entry.sets.length / 2 : entry.sets.length}
                       onChange={(count) => handleSetCountChange(entry.exerciseId, count)}
                       step={1}
                       min={1}
                       aria-label="Nombre de séries"
                     />
+                  </label>
+                  <label className="pick-exercise-list__unilateral">
+                    <input
+                      type="checkbox"
+                      checked={entryExercise?.unilateral ?? false}
+                      onChange={(e) => handleUnilateralChange(entry.exerciseId, e.target.checked)}
+                    />
+                    Unilatéral
                   </label>
                   <button type="button" className="subtle-button" onClick={() => setJustAddedId(null)}>
                     OK

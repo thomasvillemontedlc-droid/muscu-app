@@ -1,8 +1,14 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getOrCreateExercise, setExerciseBarWeight, setExerciseWeightMode } from '../../domain/exercises.js'
+import {
+  getOrCreateExercise,
+  setExerciseBarWeight,
+  setExercisePulleyLevel,
+  setExerciseUnilateral,
+  setExerciseWeightMode,
+} from '../../domain/exercises.js'
 import { getExercisesUsedInTemplate } from '../../domain/history.js'
-import { addSet, removeSet, setSetCount, updateSet } from '../../domain/sessions.js'
+import { addSet, removeSet, setEntryUnilateral, setSetCount, updateSet } from '../../domain/sessions.js'
 import { getEstimatedSessionStats } from '../../domain/sessionSummary.js'
 import {
   addExerciseEntryToSession,
@@ -52,8 +58,13 @@ export function PrepView({ session, data, setData }) {
 
   function handleAddSet(exerciseId) {
     const entry = session.entries.find((e) => e.exerciseId === exerciseId)
+    const exercise = data.exercises.find((e) => e.id === exerciseId)
     const lastSet = entry.sets[entry.sets.length - 1] ?? { weight: 0, reps: 0 }
-    setData({ ...data, sessions: addSet(data.sessions, session.id, exerciseId, lastSet) })
+    const { side: _side, ...lastSetWithoutSide } = lastSet
+    const newSets = exercise?.unilateral
+      ? [{ ...lastSetWithoutSide, side: 'droit' }, { ...lastSetWithoutSide, side: 'gauche' }]
+      : [lastSetWithoutSide]
+    setData({ ...data, sessions: addSet(data.sessions, session.id, exerciseId, newSets) })
   }
 
   function handleRemoveSet(exerciseId, setIndex) {
@@ -61,7 +72,26 @@ export function PrepView({ session, data, setData }) {
   }
 
   function handleSetCountChange(exerciseId, count) {
-    setData({ ...data, sessions: setSetCount(data.sessions, session.id, exerciseId, Math.max(1, count)) })
+    const exercise = data.exercises.find((e) => e.id === exerciseId)
+    setData({
+      ...data,
+      sessions: setSetCount(data.sessions, session.id, exerciseId, Math.max(1, count), exercise?.unilateral),
+    })
+  }
+
+  function handlePulleyLevelChange(exerciseId, pulleyLevel) {
+    setData((current) => ({ ...current, exercises: setExercisePulleyLevel(current.exercises, exerciseId, pulleyLevel) }))
+  }
+
+  // Voir ExerciseView.jsx#handleUnilateralChange : même logique, met à jour
+  // le réglage mémorisé ET double/fusionne aussitôt les séries de cette
+  // séance dans le même setData.
+  function handleUnilateralChange(exerciseId, unilateral) {
+    setData((current) => ({
+      ...current,
+      exercises: setExerciseUnilateral(current.exercises, exerciseId, unilateral),
+      sessions: setEntryUnilateral(current.sessions, session.id, exerciseId, unilateral),
+    }))
   }
 
   // Forme fonctionnelle : WeightField peut appeler onBarWeightChange puis
@@ -146,7 +176,9 @@ export function PrepView({ session, data, setData }) {
         items={session.entries}
         getKey={(entry) => entry.exerciseId}
         onReorder={handleReorder}
-        renderItem={(entry, index, dragHandleProps) => (
+        renderItem={(entry, index, dragHandleProps) => {
+          const entryExercise = data.exercises.find((e) => e.id === entry.exerciseId)
+          return (
           <div className="prep-exercise">
             <div className="prep-exercise__header">
               <button type="button" className="prep-exercise__handle" aria-label="Réordonner (appui long)" {...dragHandleProps}>
@@ -169,16 +201,26 @@ export function PrepView({ session, data, setData }) {
               </button>
             </div>
 
-            <label className="prep-exercise__set-count">
-              <span>Nombre de séries</span>
-              <StepperField
-                value={entry.sets.length}
-                onChange={(count) => handleSetCountChange(entry.exerciseId, count)}
-                step={1}
-                min={1}
-                aria-label="Nombre de séries"
-              />
-            </label>
+            <div className="prep-exercise__set-controls">
+              <label className="prep-exercise__set-count">
+                <span>Nombre de séries</span>
+                <StepperField
+                  value={entryExercise?.unilateral ? entry.sets.length / 2 : entry.sets.length}
+                  onChange={(count) => handleSetCountChange(entry.exerciseId, count)}
+                  step={1}
+                  min={1}
+                  aria-label="Nombre de séries"
+                />
+              </label>
+              <label className="prep-exercise__unilateral">
+                <input
+                  type="checkbox"
+                  checked={entryExercise?.unilateral ?? false}
+                  onChange={(e) => handleUnilateralChange(entry.exerciseId, e.target.checked)}
+                />
+                Unilatéral (droit/gauche)
+              </label>
+            </div>
 
             {entry.sets.map((set, setIndex) => (
               <SetRow
@@ -191,12 +233,15 @@ export function PrepView({ session, data, setData }) {
                 index={setIndex}
                 weight={set.weight}
                 reps={set.reps}
-                exercise={data.exercises.find((e) => e.id === entry.exerciseId)}
+                side={set.side}
+                exercise={entryExercise}
                 onChangeWeight={(weight) => handleUpdateSet(entry.exerciseId, setIndex, { weight })}
                 onChangeReps={(reps) => handleUpdateSet(entry.exerciseId, setIndex, { reps })}
                 onChangeWeightMode={(mode) => handleWeightModeChange(entry.exerciseId, mode)}
                 onChangeBarWeight={(barWeight) => handleBarWeightChange(entry.exerciseId, barWeight)}
+                onChangePulleyLevel={(level) => handlePulleyLevelChange(entry.exerciseId, level)}
                 onRemove={() => handleRemoveSet(entry.exerciseId, setIndex)}
+                removeDisabled={set.side != null}
               />
             ))}
 
@@ -204,7 +249,8 @@ export function PrepView({ session, data, setData }) {
               + Ajouter une série
             </button>
           </div>
-        )}
+          )
+        }}
       />
 
       <ExercisePicker exercises={data.exercises} suggestedIds={suggestedIds} onAdd={handleAddExercise} />

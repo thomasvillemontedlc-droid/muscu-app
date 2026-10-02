@@ -6,6 +6,7 @@ import {
   addSet,
   markChargeSuggestionResolved,
   removeSet,
+  setEntryUnilateral,
   setSetCount,
   updateSet,
   updateSingleSet,
@@ -13,6 +14,8 @@ import {
 import {
   getOrCreateExercise,
   setExerciseBarWeight,
+  setExercisePulleyLevel,
+  setExerciseUnilateral,
   setExerciseWeightMode,
   setExerciseWeightStep,
 } from '../../domain/exercises.js'
@@ -43,6 +46,7 @@ import { ExerciseProgressBar } from '../../components/ExerciseProgressBar.jsx'
 import { SetComparisonTable } from '../../components/SetComparisonTable.jsx'
 import { StepperField } from '../../components/StepperField.jsx'
 import { WeightField } from '../../components/WeightField.jsx'
+import { getSetPosition } from '../../lib/formatSet.js'
 import { Confetti } from '../../components/Confetti.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
 import { TourStep } from '../../components/TourStep.jsx'
@@ -110,6 +114,7 @@ export function ExerciseView({ session, data, setData }) {
     !isTimeBased && session.currentSetIndex === 0 && !entry.chargeSuggestionResolved
       ? getChargeSuggestion(otherSessions, entry.exerciseId, exercise)
       : null
+  const setPosition = getSetPosition(entry.sets, session.currentSetIndex)
 
   function handleRepsChange(reps) {
     setData({
@@ -149,6 +154,13 @@ export function ExerciseView({ session, data, setData }) {
     setData((current) => ({
       ...current,
       exercises: setExerciseWeightStep(current.exercises, entry.exerciseId, weightStep),
+    }))
+  }
+
+  function handlePulleyLevelChange(pulleyLevel) {
+    setData((current) => ({
+      ...current,
+      exercises: setExercisePulleyLevel(current.exercises, entry.exerciseId, pulleyLevel),
     }))
   }
 
@@ -244,10 +256,33 @@ export function ExerciseView({ session, data, setData }) {
     }))
   }
 
+  function handleEditPulleyLevelChange(exerciseId, pulleyLevel) {
+    setData((current) => ({
+      ...current,
+      exercises: setExercisePulleyLevel(current.exercises, exerciseId, pulleyLevel),
+    }))
+  }
+
+  // Bascule Unilatéral : met à jour le réglage mémorisé sur l'exercice ET
+  // double/fusionne aussitôt les séries de CETTE séance (voir
+  // domain/sessions.js#setEntryUnilateral) dans le même setData.
+  function handleUnilateralChange(exerciseId, unilateral) {
+    setData((current) => ({
+      ...current,
+      exercises: setExerciseUnilateral(current.exercises, exerciseId, unilateral),
+      sessions: setEntryUnilateral(current.sessions, session.id, exerciseId, unilateral),
+    }))
+  }
+
   function handleAddSetToEntry(exerciseId) {
     const targetEntry = session.entries.find((e) => e.exerciseId === exerciseId)
+    const targetExercise = data.exercises.find((e) => e.id === exerciseId)
     const lastSet = targetEntry.sets[targetEntry.sets.length - 1] ?? { weight: 0, reps: 0 }
-    setData({ ...data, sessions: addSet(data.sessions, session.id, exerciseId, lastSet) })
+    const { side: _side, ...lastSetWithoutSide } = lastSet
+    const newSets = targetExercise?.unilateral
+      ? [{ ...lastSetWithoutSide, side: 'droit' }, { ...lastSetWithoutSide, side: 'gauche' }]
+      : [lastSetWithoutSide]
+    setData({ ...data, sessions: addSet(data.sessions, session.id, exerciseId, newSets) })
   }
 
   // Retirer une série de l'exercice en cours décalerait les index des
@@ -260,7 +295,11 @@ export function ExerciseView({ session, data, setData }) {
   }
 
   function handleSetCountChange(exerciseId, count) {
-    setData({ ...data, sessions: setSetCount(data.sessions, session.id, exerciseId, Math.max(1, count)) })
+    const targetExercise = data.exercises.find((e) => e.id === exerciseId)
+    setData({
+      ...data,
+      sessions: setSetCount(data.sessions, session.id, exerciseId, Math.max(1, count), targetExercise?.unilateral),
+    })
   }
 
   function handleAcceptChargeSuggestion(weight) {
@@ -353,17 +392,28 @@ export function ExerciseView({ session, data, setData }) {
                   </button>
                 </div>
 
-                <label className="prep-exercise__set-count">
-                  <span>Nombre de séries</span>
-                  <StepperField
-                    value={sessionEntry.sets.length}
-                    onChange={(count) => handleSetCountChange(sessionEntry.exerciseId, count)}
-                    step={1}
-                    min={1}
-                    disabled={isCurrentExercise}
-                    aria-label="Nombre de séries"
-                  />
-                </label>
+                <div className="prep-exercise__set-controls">
+                  <label className="prep-exercise__set-count">
+                    <span>Nombre de séries</span>
+                    <StepperField
+                      value={entryExercise?.unilateral ? sessionEntry.sets.length / 2 : sessionEntry.sets.length}
+                      onChange={(count) => handleSetCountChange(sessionEntry.exerciseId, count)}
+                      step={1}
+                      min={1}
+                      disabled={isCurrentExercise}
+                      aria-label="Nombre de séries"
+                    />
+                  </label>
+                  <label className="prep-exercise__unilateral">
+                    <input
+                      type="checkbox"
+                      checked={entryExercise?.unilateral ?? false}
+                      disabled={isCurrentExercise}
+                      onChange={(e) => handleUnilateralChange(sessionEntry.exerciseId, e.target.checked)}
+                    />
+                    Unilatéral (droit/gauche)
+                  </label>
+                </div>
 
                 {sessionEntry.sets.map((set, setIndex) => (
                   <SetRow
@@ -371,13 +421,15 @@ export function ExerciseView({ session, data, setData }) {
                     index={setIndex}
                     weight={set.weight}
                     reps={set.reps}
+                    side={set.side}
                     exercise={entryExercise}
                     onChangeWeight={(weight) => handleEditSetWeightChange(sessionEntry.exerciseId, setIndex, weight)}
                     onChangeReps={(reps) => handleEditSetRepsChange(sessionEntry.exerciseId, setIndex, reps)}
                     onChangeWeightMode={(mode) => handleEditWeightModeChange(sessionEntry.exerciseId, mode)}
                     onChangeBarWeight={(barWeight) => handleEditBarWeightChange(sessionEntry.exerciseId, barWeight)}
+                    onChangePulleyLevel={(level) => handleEditPulleyLevelChange(sessionEntry.exerciseId, level)}
                     onRemove={() => handleRemoveSetFromEntry(sessionEntry.exerciseId, setIndex)}
-                    removeDisabled={isCurrentExercise}
+                    removeDisabled={isCurrentExercise || set.side != null}
                   />
                 ))}
 
@@ -433,7 +485,8 @@ export function ExerciseView({ session, data, setData }) {
           text="Ajuste le repos en direct avec +15s/-15s, ou un temps personnalisé juste en dessous. Une alarme sonne à la fin."
         />
         <p className="rest-page__set-detail">
-          Série {session.currentSetIndex + 1} / {entry.sets.length}
+          Série {setPosition.position} / {setPosition.total}
+          {setPosition.sideLabel ? ` · ${setPosition.sideLabel}` : ''}
         </p>
         <button type="button" className="rest-page__skip" onClick={handleSkipRest}>
           Passer le repos
@@ -460,7 +513,8 @@ export function ExerciseView({ session, data, setData }) {
 
       <h1>{entry.exerciseName}</h1>
       <p className="session-date">
-        Série {session.currentSetIndex + 1} / {entry.sets.length}
+        Série {setPosition.position} / {setPosition.total}
+        {setPosition.sideLabel ? ` · ${setPosition.sideLabel}` : ''}
       </p>
 
       {chargeSuggestion && (
@@ -527,6 +581,7 @@ export function ExerciseView({ session, data, setData }) {
             onModeChange={handleWeightModeChange}
             onBarWeightChange={handleBarWeightChange}
             onStepChange={handleStepChange}
+            onPulleyLevelChange={handlePulleyLevelChange}
             stepper
             aria-label="Poids en kg"
           />

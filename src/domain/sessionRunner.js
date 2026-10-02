@@ -1,6 +1,6 @@
 import { getLastPerformance } from './history.js'
 import { getExerciseUnit } from './muscleGroups.js'
-import { getSessionById, updateSession, withTarget } from './sessions.js'
+import { expandForSides, getSessionById, updateSession, withTarget } from './sessions.js'
 import { getGoalDefaultReps } from './trainingGoal.js'
 
 // Les poids/reps sont toujours écrits via domain/sessions.js#updateSet, en
@@ -32,11 +32,12 @@ export function addExerciseEntryToSession(sessions, sessionId, exercise) {
   const last = getLastPerformance(otherSessions, exercise.id)
   const goalReps = session.goal ? getGoalDefaultReps(session.goal) : null
   const fallbackReps = goalReps != null && getExerciseUnit(exercise.name) !== 'time' ? goalReps : 0
+  const fallbackSets = expandForSides([{ weight: 0, reps: fallbackReps }], exercise.unilateral)
 
   const entry = {
     exerciseId: exercise.id,
     exerciseName: exercise.name,
-    sets: last ? last.sets.map(withTarget) : [{ weight: 0, reps: fallbackReps, targetReps: fallbackReps }],
+    sets: last ? last.sets.map(withTarget) : fallbackSets.map(withTarget),
   }
 
   return updateSession(sessions, sessionId, { entries: [...session.entries, entry] })

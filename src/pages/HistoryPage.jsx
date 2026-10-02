@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { getSessionsGroupedByDate, getWeekActivity } from '../domain/history.js'
 import { deleteSession, getSessionStatus, setEntryFeeling, updateSingleSet } from '../domain/sessions.js'
-import { setExerciseBarWeight, setExerciseWeightMode } from '../domain/exercises.js'
+import { setExerciseBarWeight, setExercisePulleyLevel, setExerciseWeightMode } from '../domain/exercises.js'
 import { buildSessionSummary, getTrendFromDiff } from '../domain/sessionSummary.js'
 import { getMuscleIntensities, getMuscleVolumes, hasAnyIntensity } from '../domain/muscleHeatmap.js'
 import { formatSet } from '../lib/formatSet.js'
@@ -86,6 +86,10 @@ export function HistoryPage() {
     setData((current) => ({ ...current, exercises: setExerciseBarWeight(current.exercises, exerciseId, barWeight) }))
   }
 
+  function handleEditPulleyLevelChange(exerciseId, pulleyLevel) {
+    setData((current) => ({ ...current, exercises: setExercisePulleyLevel(current.exercises, exerciseId, pulleyLevel) }))
+  }
+
   function handleEditFeelingChange(sessionId, exerciseId, feeling) {
     setData((current) => ({ ...current, sessions: setEntryFeeling(current.sessions, sessionId, exerciseId, feeling) }))
   }
@@ -150,11 +154,13 @@ export function HistoryPage() {
                                 index={setIndex}
                                 weight={set.weight}
                                 reps={set.reps}
+                                side={set.side}
                                 exercise={entryExercise}
                                 onChangeWeight={(weight) => handleEditWeightChange(session.id, entry.exerciseId, setIndex, weight)}
                                 onChangeReps={(reps) => handleEditRepsChange(session.id, entry.exerciseId, setIndex, reps)}
                                 onChangeWeightMode={(mode) => handleEditWeightModeChange(entry.exerciseId, mode)}
                                 onChangeBarWeight={(barWeight) => handleEditBarWeightChange(entry.exerciseId, barWeight)}
+                                onChangePulleyLevel={(level) => handleEditPulleyLevelChange(entry.exerciseId, level)}
                                 removeDisabled
                               />
                             ))}

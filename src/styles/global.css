@@ -1042,6 +1042,10 @@ input.set-row__input {
   margin-bottom: 12px;
 }
 
+.prep-exercise__set-controls {
+  margin-bottom: 8px;
+}
+
 .prep-exercise__set-count {
   display: flex;
   align-items: center;
@@ -1052,6 +1056,16 @@ input.set-row__input {
 
 .prep-exercise__set-count .stepper-field {
   width: auto;
+}
+
+.prep-exercise__unilateral,
+.pick-exercise-list__unilateral {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  margin-bottom: 8px;
 }
 
 .prep-exercise__header {
@@ -1660,6 +1674,49 @@ input.set-row__input {
   margin-bottom: 2px;
 }
 
+.weight-field__pulley {
+  margin-top: 8px;
+}
+
+.weight-field__pulley > span {
+  display: block;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+.weight-field__pulley-presets {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.weight-field__pulley-preset {
+  flex: 1;
+  min-height: 40px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.85rem;
+}
+
+.weight-field__pulley-preset--selected {
+  border-color: var(--color-primary);
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.weight-field__pulley-input {
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: 0 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
 .session-summary {
   list-style: none;
   padding: 0;
@@ -1818,6 +1875,7 @@ input.set-row__input {
 
 .pick-exercise-list__set-count {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
@@ -2021,6 +2079,21 @@ input.routine-runner__item-duration {
   padding: 4px 8px;
 }
 
+.routine-runner__item-side {
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.routine-runner__item-side-toggle {
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  text-decoration: underline;
+  padding: 0;
+}
+
 .routine-runner__add {
   display: flex;
   gap: 8px;
@@ -2077,6 +2150,11 @@ input.routine-runner__item-duration {
 .routine-runner__name {
   font-size: 1.2rem;
   margin: 4px 0 16px;
+}
+
+.routine-runner__side {
+  color: var(--color-muted);
+  font-size: 1rem;
 }
 
 .routine-runner__timer {

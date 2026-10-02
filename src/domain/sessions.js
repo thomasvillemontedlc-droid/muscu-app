@@ -13,6 +13,19 @@ export function withTarget(set) {
   return { ...set, targetReps: set.reps }
 }
 
+// Double une liste de séries "par défaut" (vierges, jamais faites) en
+// paires droit/gauche consécutives pour un exercice unilatéral - voir
+// domain/exercises.js#setExerciseUnilateral. N'est JAMAIS appliqué à un
+// historique réel (last.sets) : s'il existait déjà, il est déjà
+// correctement pairé puisqu'il a été produit la même façon la fois d'avant.
+export function expandForSides(sets, unilateral) {
+  if (!unilateral) return sets
+  return sets.flatMap((set) => [
+    { ...set, side: 'droit' },
+    { ...set, side: 'gauche' },
+  ])
+}
+
 // Crée une nouvelle séance à partir d'un template, en pré-remplissant chaque
 // exercice avec les poids/reps de la dernière fois (moins de saisie =
 // mieux) ; à défaut (jamais fait), les séries/répétitions par défaut du
@@ -26,13 +39,12 @@ export function startSessionFromTemplate(sessions, template, exercises) {
     const exercise = getExerciseById(exercises, exerciseId)
     const last = getLastPerformance(sessions, exerciseId)
     const defaultSets = template.defaultSets?.[exerciseId]
+    const fallbackSets = expandForSides(defaultSets ?? [{ weight: 0, reps: 0 }], exercise?.unilateral)
 
     return {
       exerciseId,
       exerciseName: exercise?.name ?? 'Exercice supprimé',
-      sets: last
-        ? last.sets.map(withTarget)
-        : (defaultSets?.map(withTarget) ?? [{ weight: 0, reps: 0, targetReps: 0 }]),
+      sets: last ? last.sets.map(withTarget) : fallbackSets.map(withTarget),
     }
   })
 
@@ -139,10 +151,13 @@ export function deleteSession(sessions, sessionId) {
   return sessions.filter((s) => s.id !== sessionId)
 }
 
-export function addSet(sessions, sessionId, exerciseId, set = { weight: 0, reps: 0, targetReps: 0 }) {
+// `sets` accepte une ou plusieurs séries d'un coup (une paire droit/gauche
+// pour un exercice unilatéral, voir domain/exercises.js#setExerciseUnilateral),
+// toujours ajoutées ensemble en fin de liste.
+export function addSet(sessions, sessionId, exerciseId, sets = [{ weight: 0, reps: 0, targetReps: 0 }]) {
   return mapEntry(sessions, sessionId, exerciseId, (entry) => ({
     ...entry,
-    sets: [...entry.sets, { ...set }],
+    sets: [...entry.sets, ...sets.map((set) => ({ ...set }))],
   }))
 }
 
@@ -157,14 +172,51 @@ export function removeSet(sessions, sessionId, exerciseId, setIndex) {
 // cliquer +Ajouter une série / ✕ un coup à la fois) : complète en dupliquant
 // la dernière série (comme addSet), ou retire depuis la fin. Toujours au
 // moins une série (count est forcé à 1 minimum par l'appelant/le champ UI).
-export function setSetCount(sessions, sessionId, exerciseId, count) {
+// `count` est toujours NOMINAL (ce que l'utilisateur voit) : pour un
+// exercice unilatéral, `unilateral=true` fait compter/compléter par PAIRES
+// droit/gauche (count=3 -> 6 séries réellement stockées), jamais une série
+// orpheline d'un seul côté.
+export function setSetCount(sessions, sessionId, exerciseId, count, unilateral = false) {
   return mapEntry(sessions, sessionId, exerciseId, (entry) => {
-    if (count === entry.sets.length) return entry
-    if (count < entry.sets.length) return { ...entry, sets: entry.sets.slice(0, count) }
+    const targetLength = unilateral ? count * 2 : count
+    if (targetLength === entry.sets.length) return entry
+    if (targetLength < entry.sets.length) return { ...entry, sets: entry.sets.slice(0, targetLength) }
 
     const lastSet = entry.sets[entry.sets.length - 1] ?? { weight: 0, reps: 0 }
-    const added = Array.from({ length: count - entry.sets.length }, () => ({ ...lastSet }))
-    return { ...entry, sets: [...entry.sets, ...added] }
+    const { side: _lastSide, ...lastSetWithoutSide } = lastSet
+    const toAdd = targetLength - entry.sets.length
+
+    const added = unilateral
+      ? Array.from({ length: Math.ceil(toAdd / 2) }, () => [
+          { ...lastSetWithoutSide, side: 'droit' },
+          { ...lastSetWithoutSide, side: 'gauche' },
+        ]).flat()
+      : Array.from({ length: toAdd }, () => ({ ...lastSet }))
+
+    return { ...entry, sets: [...entry.sets, ...added].slice(0, targetLength) }
+  })
+}
+
+// Bascule l'exercice en unilatéral (double chaque série existante en paire
+// droit/gauche, clonée) ou l'en sort (fusionne chaque paire en gardant le
+// côté droit - le gauche est perdu, c'est la règle acceptée pour ce geste).
+// N'est effectif que si l'état actuel diffère (évite de re-doubler ou de
+// fusionner une entrée déjà dans le bon état).
+export function setEntryUnilateral(sessions, sessionId, exerciseId, unilateral) {
+  return mapEntry(sessions, sessionId, exerciseId, (entry) => {
+    const alreadyPaired = entry.sets.some((set) => set.side != null)
+    if (unilateral === alreadyPaired) return entry
+
+    if (unilateral) {
+      return { ...entry, sets: expandForSides(entry.sets, true) }
+    }
+
+    const merged = []
+    for (let i = 0; i < entry.sets.length; i += 2) {
+      const { side: _side, ...rest } = entry.sets[i]
+      merged.push(rest)
+    }
+    return { ...entry, sets: merged }
   })
 }
 

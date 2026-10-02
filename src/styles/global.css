@@ -354,6 +354,12 @@ input[type='number']:focus {
   margin-bottom: 16px;
 }
 
+.program-onboarding-alt {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--color-border);
+}
+
 .template-model-picker {
   margin-bottom: 4px;
 }

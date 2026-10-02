@@ -12,7 +12,9 @@ import { startSessionFromTemplate } from '../domain/sessions.js'
 import { getProgramMuscleCoverage } from '../domain/muscleCoverage.js'
 import { getMuscleLabel } from '../domain/muscleGroups.js'
 import { applyRotationProposal, proposeRotation } from '../domain/rotation.js'
+import { createTemplate } from '../domain/templates.js'
 import { createTemplateFromModel, FREQUENCY_STRUCTURE_KEYS, TEMPLATE_STRUCTURES } from '../domain/templateModels.js'
+import { markWeeklyProgramOnboardingComplete } from '../storage/onboarding.js'
 import { BigButton } from '../components/BigButton.jsx'
 import { TourStep } from '../components/TourStep.jsx'
 
@@ -29,6 +31,17 @@ export function ProgramPage() {
   const [frequency, setFrequency] = useState(null)
   const [structureKey, setStructureKey] = useState(null)
   const [checkedModelNames, setCheckedModelNames] = useState(new Set())
+  const [pickExistingId, setPickExistingId] = useState('')
+  const [newTemplateName, setNewTemplateName] = useState('')
+
+  // Verrouille définitivement le fait qu'un programme a déjà existé une
+  // fois (voir App.jsx et storage/onboarding.js) : contrairement à
+  // templateIds.length, ce drapeau ne redescend jamais, même si le
+  // programme est vidé par la suite - l'écran forcé du tout premier
+  // lancement ne doit plus jamais revenir après ça.
+  useEffect(() => {
+    if (program.templateIds.length > 0) markWeeklyProgramOnboardingComplete()
+  }, [program.templateIds.length])
 
   const structureOptions = frequency ? FREQUENCY_STRUCTURE_KEYS[frequency] : []
   const activeStructure = structureKey ? TEMPLATE_STRUCTURES.find((s) => s.key === structureKey) : null
@@ -124,6 +137,30 @@ export function ProgramPage() {
     setData({ ...data, templates, exercises, weeklyProgram: nextProgram })
     setFrequency(null)
     setStructureKey(null)
+  }
+
+  // "Choisir une autre séance" : ajoute directement une séance déjà
+  // existante au programme (n'importe laquelle, pas seulement celles de la
+  // structure proposée) - complète ou remplace, selon ce que l'utilisateur
+  // retire ou garde par ailleurs via les ✕ de la liste plus bas.
+  function handlePickExisting(e) {
+    e.preventDefault()
+    if (!pickExistingId) return
+    persistProgram(addTemplateToProgram(program, pickExistingId))
+    setPickExistingId('')
+  }
+
+  // "Créer une nouvelle séance" : crée une séance type vide puis l'ajoute
+  // tout de suite au programme, et file sur son édition pour y mettre des
+  // exercices - même geste que "Séance personnalisée" depuis Mes séances,
+  // juste enchaîné directement sur le programme.
+  function handleCreateAndAdd(e) {
+    e.preventDefault()
+    if (!newTemplateName.trim()) return
+    const { template, templates } = createTemplate(data.templates, newTemplateName)
+    setData({ ...data, templates, weeklyProgram: addTemplateToProgram(program, template.id) })
+    setNewTemplateName('')
+    navigate(`/templates/${template.id}`)
   }
 
   function handleMove(index, direction) {
@@ -251,6 +288,45 @@ export function ProgramPage() {
               </BigButton>
             </div>
           )}
+
+          {/* Toujours visible, que la structure proposée ait été choisie ou
+              non : pour compléter ou remplacer une séance de la proposition
+              par une séance déjà existante (pas seulement celles de la
+              structure) ou toute nouvelle, plutôt que de rester coincé sur
+              ce que l'app a deviné. */}
+          <div className="program-onboarding-alt">
+            <p className="progress-section__hint">Ou complète/remplace avec une séance à toi :</p>
+
+            {availableTemplates.length > 0 && (
+              <form className="template-create" onSubmit={handlePickExisting}>
+                <select
+                  className="prep-field__select"
+                  value={pickExistingId}
+                  onChange={(e) => setPickExistingId(e.target.value)}
+                  aria-label="Choisir une autre séance déjà existante"
+                >
+                  <option value="">Choisir une autre séance…</option>
+                  {availableTemplates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+                <BigButton type="submit">Ajouter</BigButton>
+              </form>
+            )}
+
+            <form className="template-create" onSubmit={handleCreateAndAdd}>
+              <input
+                type="text"
+                placeholder="Nom de la nouvelle séance"
+                value={newTemplateName}
+                onChange={(e) => setNewTemplateName(e.target.value)}
+                aria-label="Nom de la nouvelle séance à créer"
+              />
+              <BigButton type="submit">Créer une nouvelle séance</BigButton>
+            </form>
+          </div>
         </section>
       )}
 

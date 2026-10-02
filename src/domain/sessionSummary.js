@@ -134,6 +134,37 @@ export function getEstimatedSessionStats(session) {
   return { totalSets, totalReps, durationMs: (activeSeconds + restSeconds) * 1000 }
 }
 
+// Estimation du temps qu'il reste pour terminer le RESTE de la séance en
+// cours (écran d'exercice actif) : les séries restantes de l'exercice
+// courant (à partir de currentSetIndex inclus, la série en train d'être
+// faite compte encore comme "à faire") et toutes les séries des exercices
+// pas encore complétés, avec un repos entre chaque série restante (même
+// hypothèse 4s/rep et même règle de repos que getEstimatedSessionStats
+// ci-dessus). Volontairement PAS un chrono qui défile seul : recalculée à
+// chaque changement d'état de la séance (série validée, séries ajoutées/
+// retirées, repos modifié) plutôt que sur le temps réellement écoulé, qui ne
+// reflète pas ce qu'il reste à faire si on s'attarde sur une série.
+export function getRemainingSessionEstimate(session) {
+  let totalSets = 0
+  let activeSeconds = 0
+
+  for (const entry of session.entries) {
+    if (session.completedExerciseIds?.includes(entry.exerciseId)) continue
+
+    const unit = getExerciseUnit(entry.exerciseName)
+    const startIndex = entry.exerciseId === session.currentExerciseId ? session.currentSetIndex : 0
+
+    for (const set of entry.sets.slice(startIndex)) {
+      totalSets += 1
+      activeSeconds += unit === 'time' ? set.reps : set.reps * ESTIMATED_SECONDS_PER_REP
+    }
+  }
+
+  const restSeconds = totalSets > 0 ? (totalSets - 1) * session.restSeconds : 0
+
+  return (activeSeconds + restSeconds) * 1000
+}
+
 // Un item par exercice effectivement complété dans la séance, avec la
 // progression par rapport à la DERNIÈRE FOIS que CET EXERCICE a été fait
 // (tous templates confondus, via getLastPerformance) — pas seulement la

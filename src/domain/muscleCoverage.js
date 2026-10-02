@@ -1,5 +1,6 @@
 import { MUSCLE_GROUPS, getExerciseMuscles, getMuscleLabel } from './muscleGroups.js'
-import { getCumulativeMuscleVolumes } from './muscleHeatmap.js'
+import { getCumulativeMuscleVolumes, getMuscleIntensities } from './muscleHeatmap.js'
+import { getSessionStatus } from './sessions.js'
 
 // Muscles travaillés (volume > 0, principal ou secondaire à moitié — même
 // pondération que la carte de chaleur, voir muscleHeatmap.js) vs pas du
@@ -74,5 +75,56 @@ export function suggestSessionsForMissingMuscles(templates, exercises, missingMu
   return {
     suggestions,
     uncovered: [...remaining].map((id) => ({ id, label: getMuscleLabel(id) })),
+  }
+}
+
+// Fenêtre d'analyse du déséquilibre long terme ci-dessous : nombre de
+// séances entraînées (statut 'done' ou 'partial', jamais 'not-done' - une
+// séance jamais vraiment commencée ne dit rien sur ce qui a été travaillé)
+// prises en compte, et minimum requis avant de considérer qu'il y a assez de
+// recul pour conclure à quoi que ce soit.
+const LONG_TERM_WINDOW_SIZE = 20
+const MIN_SESSIONS_FOR_LONG_TERM_ANALYSIS = 15
+
+// Un muscle est jugé "à la base peu/pas sollicité" s'il reste à 15% ou moins
+// de l'intensité du muscle le plus travaillé sur la fenêtre (même échelle
+// 0..1 que la carte de chaleur, voir muscleHeatmap.js#getMuscleIntensities)
+// - un seuil bas exprès, qui ne remonte que les cas nets (quasi éteints sur
+// ta propre carte de chaleur pour cette période), pas un muscle simplement
+// un peu moins mis à contribution que les autres.
+const UNDERWORKED_INTENSITY_THRESHOLD = 0.15
+
+// Séances effectivement entraînées, les plus récentes en premier.
+function getTrainedSessions(sessions) {
+  return [...sessions]
+    .filter((s) => getSessionStatus(s) !== 'not-done')
+    .sort((a, b) => b.date.localeCompare(a.date))
+}
+
+// Muscles négligés sur le LONG terme (les 20 dernières séances entraînées,
+// pas seulement la période affichée dans Progression) : contrairement à
+// getMuscleCoverage ci-dessus (0 de volume = "pas du tout sollicité"), vise
+// les muscles qui reçoivent bien QUELQUE chose mais très peu comparé au
+// reste de ce qui est entraîné - un déséquilibre structurel du programme
+// plutôt qu'un simple trou de cette semaine. Ne retourne rien tant qu'il n'y
+// a pas assez de séances pour que ce soit significatif (voir
+// MIN_SESSIONS_FOR_LONG_TERM_ANALYSIS) ; ne propose jamais de réduire un
+// muscle déjà bien travaillé, seulement d'en ajouter pour ceux en-dessous du
+// seuil (voir suggestSessionsForMissingMuscles, réutilisé tel quel).
+export function getLongTermMuscleImbalance(sessions, templates, exercises) {
+  const trained = getTrainedSessions(sessions).slice(0, LONG_TERM_WINDOW_SIZE)
+  if (trained.length < MIN_SESSIONS_FOR_LONG_TERM_ANALYSIS) {
+    return { sessionCount: trained.length, underworked: [], suggestions: [], uncovered: [] }
+  }
+
+  const intensities = getMuscleIntensities(getCumulativeMuscleVolumes(trained))
+  const underworkedIds = MUSCLE_GROUPS.filter((id) => (intensities[id] ?? 0) <= UNDERWORKED_INTENSITY_THRESHOLD)
+  const { suggestions, uncovered } = suggestSessionsForMissingMuscles(templates, exercises, underworkedIds)
+
+  return {
+    sessionCount: trained.length,
+    underworked: underworkedIds.map((id) => ({ id, label: getMuscleLabel(id) })),
+    suggestions,
+    uncovered,
   }
 }

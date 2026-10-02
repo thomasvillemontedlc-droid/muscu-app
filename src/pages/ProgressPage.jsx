@@ -2,10 +2,15 @@ import { useState } from 'react'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { getPeriodStats, getSessionsInPeriod, getSessionsPerWeek } from '../domain/progress.js'
 import { getCumulativeMuscleVolumes, getMuscleIntensities } from '../domain/muscleHeatmap.js'
-import { getMuscleCoverage, suggestSessionsForMissingMuscles } from '../domain/muscleCoverage.js'
+import {
+  getLongTermMuscleImbalance,
+  getMuscleCoverage,
+  suggestSessionsForMissingMuscles,
+} from '../domain/muscleCoverage.js'
 import { getMuscleLabel } from '../domain/muscleGroups.js'
 import { getMostNeglectedMuscles } from '../domain/recovery.js'
 import { BodyHeatmap, BodyHeatmapLegend } from '../components/BodyHeatmap.jsx'
+import { MuscleGapSuggestions } from '../components/MuscleGapSuggestions.jsx'
 import { MuscleRecoveryRow } from '../components/MuscleRecoveryRow.jsx'
 import { WeeklyBarChart } from '../components/WeeklyBarChart.jsx'
 import { TourStep } from '../components/TourStep.jsx'
@@ -38,6 +43,7 @@ export function ProgressPage() {
 
   const intensities = getMuscleIntensities(getCumulativeMuscleVolumes(sessionsInPeriod))
   const neglected = getMostNeglectedMuscles(data.sessions)
+  const longTermImbalance = getLongTermMuscleImbalance(data.sessions, data.templates, data.exercises)
 
   return (
     <div className="page">
@@ -91,30 +97,26 @@ export function ProgressPage() {
               ))}
             </ul>
 
-            {suggestions.length > 0 && (
-              <div className="muscle-coverage-suggestions">
-                <p className="progress-section__hint">Séances existantes qui couvrent le mieux ces manques :</p>
-                <ul>
-                  {suggestions.map(({ template, covers }) => (
-                    <li key={template.id}>
-                      <span className="muscle-coverage-suggestions__name">{template.name}</span>
-                      <span className="muscle-coverage-suggestions__covers">
-                        {covers.map((c) => c.label).join(', ')}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {uncovered.length > 0 && (
-              <p className="progress-section__hint">
-                Aucune séance existante ne couvre : {uncovered.map((c) => c.label).join(', ')}.
-              </p>
-            )}
+            <MuscleGapSuggestions suggestions={suggestions} uncovered={uncovered} />
           </>
         )}
       </section>
+
+      {longTermImbalance.underworked.length > 0 && (
+        <section className="progress-section">
+          <h2>Déséquilibre sur le long terme</h2>
+          <p className="progress-section__hint">
+            Sur tes {longTermImbalance.sessionCount} dernières séances entraînées, ces muscles sont restés à 15% ou
+            moins du muscle le plus travaillé — à la base peu ou pas sollicités, pas juste cette semaine.
+          </p>
+          <ul className="muscle-coverage-list muscle-coverage-list--missing">
+            {longTermImbalance.underworked.map((m) => (
+              <li key={m.id}>{m.label}</li>
+            ))}
+          </ul>
+          <MuscleGapSuggestions suggestions={longTermImbalance.suggestions} uncovered={longTermImbalance.uncovered} />
+        </section>
+      )}
 
       <section id="tip-progress-heatmap" className="progress-section">
         <h2>Carte musculaire cumulée</h2>

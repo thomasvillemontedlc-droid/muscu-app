@@ -272,6 +272,30 @@ input[type='number']:focus {
   border-color: var(--color-danger);
 }
 
+/* Même emplacement que .mini-rest-timer ci-dessus (jamais affichés en même
+   temps : celui-ci seulement pendant un exercice actif, l'autre seulement
+   pendant l'édition de la séance) - estimation du temps restant pour finir
+   la séance, voir components/SessionTimeRemaining.jsx. Volontairement
+   discret (texte plus petit, pas en gras) : une estimation, pas un vrai
+   chrono à surveiller. */
+.session-time-remaining {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 12px);
+  right: 60px;
+  z-index: 10;
+  min-height: 40px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* Bouton de retour en haut de l'écran "Modifier ma séance" (voir
    ExerciseView.jsx) : reste collé en haut pendant qu'on fait défiler la
    liste d'exercices/séries, pour qu'il soit toujours atteignable sans tout
@@ -1487,6 +1511,17 @@ input.set-row__input {
   min-height: calc(100dvh - var(--touch-min) - 32px);
 }
 
+/* Occupe l'espace restant de .rest-page (même rôle que .rest-timer
+   directement avant l'introduction de ce wrapper) : en portrait, colonne où
+   seul le chrono grandit ; voir le media query paysage plus bas pour le
+   passage en ligne sur un téléphone à l'horizontale. */
+.rest-page__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 .rest-page .rest-timer {
   flex: 1;
   display: flex;
@@ -1577,6 +1612,51 @@ input.set-row__input {
   color: var(--color-muted);
   font-size: 0.85rem;
   text-decoration: underline;
+}
+
+/* Téléphone en paysage (hauteur de viewport réduite, pas une tablette qui a
+   largement la place en portrait comme en paysage) : l'empilement vertical
+   habituel (image du prochain exercice, puis chrono géant, puis réglages)
+   ne tient plus dans la hauteur disponible. Passe .rest-page__body en ligne
+   (image à côté du chrono plutôt qu'au-dessus) et réduit les éléments les
+   plus gourmands en hauteur, sans jamais réduire le chrono en dessous de ce
+   qu'il reste en largeur restreinte (voir rest-timer__clock ci-dessous) -
+   c'est lui qui doit rester le plus lisible. */
+@media (orientation: landscape) and (max-height: 550px) {
+  .rest-page {
+    min-height: 100dvh;
+    overflow-y: auto;
+  }
+
+  .rest-page__body {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+  }
+
+  .rest-page__next {
+    flex: 0 0 auto;
+    margin-top: 0;
+  }
+
+  .rest-page__next-image-trigger,
+  .rest-page__next-image {
+    max-width: 120px;
+  }
+
+  .rest-page__next-name {
+    font-size: 1.1rem;
+  }
+
+  .rest-page .rest-timer {
+    flex: 1;
+    padding: 0;
+  }
+
+  .rest-page .rest-timer__clock {
+    font-size: 3.2rem;
+  }
 }
 
 .exercise-progress {

@@ -36,6 +36,7 @@ import { vibrateSuccess } from '../../lib/haptics.js'
 import { useRestTimer } from '../../hooks/useRestTimer.js'
 import { RestBanner } from '../../components/RestBanner.jsx'
 import { MiniRestTimer } from '../../components/MiniRestTimer.jsx'
+import { SessionTimeRemaining } from '../../components/SessionTimeRemaining.jsx'
 import { DraggableList } from '../../components/DraggableList.jsx'
 import { ExercisePicker } from '../../components/ExercisePicker.jsx'
 import { SetRow } from '../../components/SetRow.jsx'
@@ -481,20 +482,27 @@ export function ExerciseView({ session, data, setData }) {
       <div className="page rest-page">
         {navButtons}
         <ExerciseProgressBar session={session} />
-        <div className="rest-page__next">
-          <button
-            type="button"
-            className="rest-page__next-image-trigger"
-            onClick={() => setRestImageOpen(true)}
-            aria-label="Agrandir l'image de l'exercice"
-          >
-            <ExerciseImage key={entry.exerciseName} name={entry.exerciseName} className="rest-page__next-image" />
-          </button>
-          <p className="rest-page__next-label">Prochain exercice</p>
-          <h2 className="rest-page__next-name">{entry.exerciseName}</h2>
+        {/* Wrapper dédié (voir .rest-page__body dans styles/global.css) : en
+            portrait, colonne qui occupe l'espace restant exactement comme
+            avant (le chrono y grandit toujours seul) ; en paysage, une media
+            query le passe en ligne (image à côté du chrono plutôt
+            qu'au-dessus) pour tenir dans la faible hauteur disponible. */}
+        <div className="rest-page__body">
+          <div className="rest-page__next">
+            <button
+              type="button"
+              className="rest-page__next-image-trigger"
+              onClick={() => setRestImageOpen(true)}
+              aria-label="Agrandir l'image de l'exercice"
+            >
+              <ExerciseImage key={entry.exerciseName} name={entry.exerciseName} className="rest-page__next-image" />
+            </button>
+            <p className="rest-page__next-label">Prochain exercice</p>
+            <h2 className="rest-page__next-name">{entry.exerciseName}</h2>
+          </div>
+          <RestBanner timer={timer} onAdjust={handleAdjustRest} />
         </div>
         {restImageOpen && <ExerciseImageOverlay name={entry.exerciseName} onClose={() => setRestImageOpen(false)} />}
-        <RestBanner timer={timer} onAdjust={handleAdjustRest} />
         <TourStep
           id="rest-adjust"
           selector=".rest-timer"
@@ -521,6 +529,7 @@ export function ExerciseView({ session, data, setData }) {
 
   return (
     <div className="page">
+      <SessionTimeRemaining session={session} />
       {navButtons}
       <TourStep
         id="exercise-flow"

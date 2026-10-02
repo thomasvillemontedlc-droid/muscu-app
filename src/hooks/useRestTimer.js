@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { playAlarmBeep } from '../lib/alarm.js'
+import { vibrateAlarm } from '../lib/haptics.js'
 import { releaseWakeLock, requestWakeLock } from '../lib/wakeLock.js'
 import { useNow } from './useNow.js'
 
@@ -17,7 +18,12 @@ export function useRestTimer(session) {
   const overshootMs = isOvershoot ? -remainingMs : 0
 
   useEffect(() => {
-    if (isOvershoot && overshootMs < 400) playAlarmBeep()
+    if (isOvershoot && overshootMs < 400) {
+      playAlarmBeep()
+      // Le son seul n'est pas fiable si le volume est bas ou coupé (voir
+      // lib/haptics.js#vibrateAlarm).
+      vibrateAlarm()
+    }
     // Ne doit se déclencher qu'au passage à zéro, pas à chaque tick tant que
     // isOvershoot reste vrai (dépendance volontairement limitée).
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -26,7 +32,23 @@ export function useRestTimer(session) {
   useEffect(() => {
     if (!active) return
     requestWakeLock()
-    return () => releaseWakeLock()
+
+    // Le navigateur relâche le Wake Lock de lui-même dès que l'onglet passe
+    // en arrière-plan (changement d'appli, interruption système...) : on le
+    // redemande automatiquement dès que l'app redevient visible, sans
+    // attendre une action de l'utilisateur. Ne peut rien, en revanche,
+    // contre un verrouillage MANUEL de l'écran par l'utilisateur (voir
+    // l'avertissement affiché sur l'écran de repos) - limite de l'API web,
+    // pas de cette implémentation.
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') requestWakeLock()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      releaseWakeLock()
+    }
   }, [active])
 
   return active ? { remainingMs, isOvershoot, overshootMs } : null

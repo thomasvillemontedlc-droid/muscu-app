@@ -484,6 +484,11 @@ export function ExerciseView({ session, data, setData }) {
           selector=".rest-timer"
           text="Ajuste le repos en direct avec +15s/-15s, ou un temps personnalisé juste en dessous. Une alarme sonne à la fin."
         />
+        <TourStep
+          id="rest-screen-lock-warning"
+          selector=".rest-timer"
+          text="Pour être sûr d'entendre l'alarme, évite de verrouiller l'écran manuellement pendant le repos : le son n'est pas garanti écran verrouillé."
+        />
         <p className="rest-page__set-detail">
           Série {setPosition.position} / {setPosition.total}
           {setPosition.sideLabel ? ` · ${setPosition.sideLabel}` : ''}

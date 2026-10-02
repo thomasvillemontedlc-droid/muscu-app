@@ -18,6 +18,7 @@ export const TOUR_STEPS = [
   { id: 'exercise-input' },
   { id: 'exercise-flow' },
   { id: 'rest-adjust' },
+  { id: 'rest-screen-lock-warning' },
   { id: 'stretches' },
   { id: 'progress-heatmap' },
   { id: 'history-status' },

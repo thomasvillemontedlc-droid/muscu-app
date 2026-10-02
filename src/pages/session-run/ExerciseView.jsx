@@ -14,6 +14,7 @@ import {
 import {
   getOrCreateExercise,
   setExerciseBarWeight,
+  setExerciseGripWidth,
   setExercisePulleyLevel,
   setExerciseUnilateral,
   setExerciseWeightMode,
@@ -164,6 +165,13 @@ export function ExerciseView({ session, data, setData }) {
     }))
   }
 
+  function handleGripWidthChange(gripWidth) {
+    setData((current) => ({
+      ...current,
+      exercises: setExerciseGripWidth(current.exercises, entry.exerciseId, gripWidth),
+    }))
+  }
+
   function handleValidate() {
     if (validating) return
     // Débloque l'audio pendant ce geste utilisateur, pour que l'alarme
@@ -260,6 +268,13 @@ export function ExerciseView({ session, data, setData }) {
     setData((current) => ({
       ...current,
       exercises: setExercisePulleyLevel(current.exercises, exerciseId, pulleyLevel),
+    }))
+  }
+
+  function handleEditGripWidthChange(exerciseId, gripWidth) {
+    setData((current) => ({
+      ...current,
+      exercises: setExerciseGripWidth(current.exercises, exerciseId, gripWidth),
     }))
   }
 
@@ -428,6 +443,7 @@ export function ExerciseView({ session, data, setData }) {
                     onChangeWeightMode={(mode) => handleEditWeightModeChange(sessionEntry.exerciseId, mode)}
                     onChangeBarWeight={(barWeight) => handleEditBarWeightChange(sessionEntry.exerciseId, barWeight)}
                     onChangePulleyLevel={(level) => handleEditPulleyLevelChange(sessionEntry.exerciseId, level)}
+                    onChangeGripWidth={(width) => handleEditGripWidthChange(sessionEntry.exerciseId, width)}
                     onRemove={() => handleRemoveSetFromEntry(sessionEntry.exerciseId, setIndex)}
                     removeDisabled={isCurrentExercise || set.side != null}
                   />
@@ -587,6 +603,7 @@ export function ExerciseView({ session, data, setData }) {
             onBarWeightChange={handleBarWeightChange}
             onStepChange={handleStepChange}
             onPulleyLevelChange={handlePulleyLevelChange}
+            onGripWidthChange={handleGripWidthChange}
             stepper
             aria-label="Poids en kg"
           />

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { getSessionsGroupedByDate, getWeekActivity } from '../domain/history.js'
 import { deleteSession, getSessionStatus, setEntryFeeling, updateSingleSet } from '../domain/sessions.js'
-import { setExerciseBarWeight, setExercisePulleyLevel, setExerciseWeightMode } from '../domain/exercises.js'
+import { setExerciseBarWeight, setExerciseGripWidth, setExercisePulleyLevel, setExerciseWeightMode } from '../domain/exercises.js'
 import { buildSessionSummary, getTrendFromDiff } from '../domain/sessionSummary.js'
 import { getMuscleIntensities, getMuscleVolumes, hasAnyIntensity } from '../domain/muscleHeatmap.js'
 import { formatSet } from '../lib/formatSet.js'
@@ -90,6 +90,10 @@ export function HistoryPage() {
     setData((current) => ({ ...current, exercises: setExercisePulleyLevel(current.exercises, exerciseId, pulleyLevel) }))
   }
 
+  function handleEditGripWidthChange(exerciseId, gripWidth) {
+    setData((current) => ({ ...current, exercises: setExerciseGripWidth(current.exercises, exerciseId, gripWidth) }))
+  }
+
   function handleEditFeelingChange(sessionId, exerciseId, feeling) {
     setData((current) => ({ ...current, sessions: setEntryFeeling(current.sessions, sessionId, exerciseId, feeling) }))
   }
@@ -161,6 +165,7 @@ export function HistoryPage() {
                                 onChangeWeightMode={(mode) => handleEditWeightModeChange(entry.exerciseId, mode)}
                                 onChangeBarWeight={(barWeight) => handleEditBarWeightChange(entry.exerciseId, barWeight)}
                                 onChangePulleyLevel={(level) => handleEditPulleyLevelChange(entry.exerciseId, level)}
+                                onChangeGripWidth={(width) => handleEditGripWidthChange(entry.exerciseId, width)}
                                 removeDisabled
                               />
                             ))}

@@ -1,7 +1,11 @@
 let sharedContext = null
 
+// Recrée le contexte s'il n'existe pas encore, ou s'il a fini par passer en
+// 'closed' (certains navigateurs mobiles ferment l'AudioContext après une
+// longue mise en arrière-plan plutôt que de juste le suspendre) - un
+// contexte fermé ne peut plus jamais être repris via resume().
 function getContext() {
-  if (!sharedContext) {
+  if (!sharedContext || sharedContext.state === 'closed') {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext
     sharedContext = new AudioContextClass()
   }
@@ -16,11 +20,27 @@ export function unlockAudio() {
   if (ctx.state === 'suspended') ctx.resume()
 }
 
+// Retente un réveil du contexte à chaque retour de l'app au premier plan
+// (voir hooks/useRestTimer.js) : les navigateurs mobiles suspendent
+// l'AudioContext quand l'app passe en arrière-plan et ne le reprennent pas
+// tout seuls au retour - sans cette tentative proactive, le prochain
+// playAlarmBeep() resterait silencieux pour de bon après un premier
+// aller-retour en arrière-plan.
+export function resumeAudioIfNeeded() {
+  if (sharedContext && sharedContext.state === 'suspended') sharedContext.resume()
+}
+
 // Trois bips générés (oscillateur), pas de fichier audio à embarquer :
-// fonctionne hors-ligne par construction.
-export function playAlarmBeep() {
+// fonctionne hors-ligne par construction. `await` la reprise du contexte
+// avant de programmer les bips (plutôt que de lancer resume() sans l'attendre)
+// : tant que le contexte n'est pas réellement 'running', ctx.currentTime ne
+// redémarre pas et des oscillateurs programmés dessus restent muets sans
+// erreur - c'est ce qui rendait l'alarme silencieuse après un retour en
+// arrière-plan (voir le commentaire de resumeAudioIfNeeded ci-dessus).
+export async function playAlarmBeep() {
   const ctx = getContext()
-  if (ctx.state === 'suspended') ctx.resume()
+  if (ctx.state === 'suspended') await ctx.resume()
+  if (ctx.state !== 'running') return
 
   const now = ctx.currentTime
   const beepDuration = 0.15

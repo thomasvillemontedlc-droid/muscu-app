@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   getOrCreateExercise,
   setExerciseBarWeight,
+  setExerciseGripWidth,
   setExercisePulleyLevel,
   setExerciseUnilateral,
   setExerciseWeightMode,
@@ -81,6 +82,10 @@ export function PrepView({ session, data, setData }) {
 
   function handlePulleyLevelChange(exerciseId, pulleyLevel) {
     setData((current) => ({ ...current, exercises: setExercisePulleyLevel(current.exercises, exerciseId, pulleyLevel) }))
+  }
+
+  function handleGripWidthChange(exerciseId, gripWidth) {
+    setData((current) => ({ ...current, exercises: setExerciseGripWidth(current.exercises, exerciseId, gripWidth) }))
   }
 
   // Voir ExerciseView.jsx#handleUnilateralChange : même logique, met à jour
@@ -240,6 +245,7 @@ export function PrepView({ session, data, setData }) {
                 onChangeWeightMode={(mode) => handleWeightModeChange(entry.exerciseId, mode)}
                 onChangeBarWeight={(barWeight) => handleBarWeightChange(entry.exerciseId, barWeight)}
                 onChangePulleyLevel={(level) => handlePulleyLevelChange(entry.exerciseId, level)}
+                onChangeGripWidth={(width) => handleGripWidthChange(entry.exerciseId, width)}
                 onRemove={() => handleRemoveSet(entry.exerciseId, setIndex)}
                 removeDisabled={set.side != null}
               />

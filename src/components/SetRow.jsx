@@ -18,6 +18,7 @@ export function SetRow({
   onChangeWeightMode,
   onChangeBarWeight,
   onChangePulleyLevel,
+  onChangeGripWidth,
   onRemove,
   removeDisabled = false,
 }) {
@@ -76,6 +77,7 @@ export function SetRow({
             onModeChange={onChangeWeightMode}
             onBarWeightChange={onChangeBarWeight}
             onPulleyLevelChange={onChangePulleyLevel}
+            onGripWidthChange={onChangeGripWidth}
             aria-label={`Poids série ${index + 1} (kg)`}
           />
         </label>

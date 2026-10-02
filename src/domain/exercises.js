@@ -75,6 +75,14 @@ export function setExercisePulleyLevel(exercises, exerciseId, pulleyLevel) {
   return exercises.map((e) => (e.id === exerciseId ? { ...e, pulleyLevel } : e))
 }
 
+// Largeur de prise (tirages horizontal/vertical et variantes), même
+// principe que pulleyLevel ci-dessus mais pour un réglage qui varie par
+// largeur de prise plutôt que par hauteur de poulie - voir
+// components/WeightField.jsx#isGripWidthExercise.
+export function setExerciseGripWidth(exercises, exerciseId, gripWidth) {
+  return exercises.map((e) => (e.id === exerciseId ? { ...e, gripWidth } : e))
+}
+
 // Exercice fait un côté après l'autre (droit/gauche séparément), mémorisé
 // par exercice comme les autres réglages de saisie ci-dessus. Affecte la
 // FORME des séries de la séance (doublées en paires droit/gauche, voir

@@ -6,7 +6,7 @@ import { getExerciseUnit } from './muscleGroups.js'
 // classique. Pour un exercice "au temps", set.reps est déjà une durée en
 // secondes (voir domain/muscleGroups.js#getExerciseUnit) - pas besoin de
 // cette hypothèse dans ce cas.
-const ESTIMATED_SECONDS_PER_REP = 3
+const ESTIMATED_SECONDS_PER_REP = 4
 
 // Séance précédente avec le même nom de template, pour comparer la
 // progression (fonctionnalité "récap de fin de séance").

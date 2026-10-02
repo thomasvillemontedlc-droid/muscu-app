@@ -121,7 +121,7 @@ export const EXERCISE_MUSCLES = {
   'curl-barre-ez': { name: 'Curl barre EZ', primary: ['biceps'], secondary: ['avant-bras'] },
   'curl-halteres-alternes': { name: 'Curl haltères alternés', primary: ['biceps'], secondary: ['avant-bras'] },
   'curl-halteres-simultanes': { name: 'Curl haltères simultanés', primary: ['biceps'], secondary: ['avant-bras'] },
-  'curl-marteau': { name: 'Curl marteau', primary: ['biceps', 'brachial'], secondary: ['avant-bras'] },
+  'curl-marteau': { name: 'Curl marteau haltères', primary: ['biceps', 'brachial'], secondary: ['avant-bras'] },
   'curl-incline-halteres': { name: 'Curl incliné haltères', primary: ['biceps'], secondary: ['avant-bras'] },
   'curl-pupitre-larry-scott': { name: 'Curl pupitre (Larry Scott)', primary: ['biceps'], secondary: ['avant-bras'] },
   'curl-a-la-poulie-basse': { name: 'Curl à la poulie basse', primary: ['biceps'], secondary: ['avant-bras'] },
@@ -268,6 +268,12 @@ const EXERCISE_ALIASES = {
   'elevations-laterales': 'elevations-laterales-halteres',
   'elevations-frontales': 'elevations-frontales-halteres',
   'curl-biceps': 'curl-barre-droite',
+  // Alias vers sa propre clé : son `name` canonique a changé ("Curl
+  // marteau" -> "Curl marteau haltères", pour que WeightField.jsx le
+  // reconnaisse comme exercice aux haltères) sans que la clé 'curl-marteau'
+  // ne bouge - sans cet alias, le nouveau nom slugifié ne correspondrait
+  // plus à aucune clé et perdrait sa résolution de muscles.
+  'curl-marteau-halteres': 'curl-marteau',
   'extension-triceps': 'extension-triceps-a-la-poulie-haute-barre',
   'extension-triceps-poulie': 'extension-triceps-a-la-poulie-haute-barre',
   gainage: 'gainage-planche',

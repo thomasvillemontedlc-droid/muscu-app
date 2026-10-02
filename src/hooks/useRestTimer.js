@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { playAlarmBeep } from '../lib/alarm.js'
+import { playAlarmBeep, resumeAudioIfNeeded } from '../lib/alarm.js'
+import { flashScreen } from '../lib/flash.js'
 import { vibrateAlarm } from '../lib/haptics.js'
 import { releaseWakeLock, requestWakeLock } from '../lib/wakeLock.js'
 import { useNow } from './useNow.js'
@@ -21,8 +22,9 @@ export function useRestTimer(session) {
     if (isOvershoot && overshootMs < 400) {
       playAlarmBeep()
       // Le son seul n'est pas fiable si le volume est bas ou coupé (voir
-      // lib/haptics.js#vibrateAlarm).
+      // lib/haptics.js#vibrateAlarm et lib/flash.js#flashScreen).
       vibrateAlarm()
+      flashScreen()
     }
     // Ne doit se déclencher qu'au passage à zéro, pas à chaque tick tant que
     // isOvershoot reste vrai (dépendance volontairement limitée).
@@ -41,7 +43,12 @@ export function useRestTimer(session) {
     // l'avertissement affiché sur l'écran de repos) - limite de l'API web,
     // pas de cette implémentation.
     function handleVisibilityChange() {
-      if (document.visibilityState === 'visible') requestWakeLock()
+      if (document.visibilityState !== 'visible') return
+      requestWakeLock()
+      // Voir lib/alarm.js#resumeAudioIfNeeded : même limite côté audio,
+      // le contexte se suspend tout seul en arrière-plan et ne reprend pas
+      // de lui-même au retour.
+      resumeAudioIfNeeded()
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
 

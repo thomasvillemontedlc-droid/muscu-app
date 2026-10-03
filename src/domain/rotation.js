@@ -48,10 +48,35 @@ function findVariantModels(currentExerciseNames) {
   })
 }
 
-// Premier modèle-variante trouvé (voir findVariantModels ci-dessus), ou
-// null s'il n'en existe aucun - utilisé par
-// domain/program.js#getAlternateProgramProposal pour composer le
-// programme 2 à partir du programme 1.
+// Paires de modèles qu'on veut proposer comme variantes l'une de l'autre
+// même si elles ne ciblent pas exactement les mêmes groupes musculaires
+// principaux - ex. Modèle Full Body A/B, pensés comme complémentaires
+// (squat vs soulevé de terre roumain en bas du corps) plutôt que comme deux
+// versions strictement équivalentes d'un même ciblage, donc invisibles à
+// findVariantModels. Repli explicite, pas une règle générale.
+const KNOWN_VARIANT_PAIRS = [['Modèle Full Body A', 'Modèle Full Body B']]
+
+function findKnownVariantName(modelName) {
+  for (const [a, b] of KNOWN_VARIANT_PAIRS) {
+    if (modelName === a) return b
+    if (modelName === b) return a
+  }
+  return null
+}
+
+// Premier modèle-variante trouvé (voir findVariantModels ci-dessus), ou -
+// à défaut, si la séance correspond exactement à l'un des modèles d'une
+// KNOWN_VARIANT_PAIRS - son binôme connu. null si aucun des deux ne
+// s'applique. Utilisé par domain/program.js#getAlternateProgramProposal
+// pour composer le programme 2 à partir du programme 1.
 export function getFirstVariantModel(currentExerciseNames) {
-  return findVariantModels(currentExerciseNames)[0] ?? null
+  const musclesMatch = findVariantModels(currentExerciseNames)[0]
+  if (musclesMatch) return musclesMatch
+
+  const currentModel = getAllModelsOnce().find((model) =>
+    sameExerciseSet(model.exercises.map((e) => e.name), currentExerciseNames),
+  )
+  if (!currentModel) return null
+  const pairName = findKnownVariantName(currentModel.name)
+  return getAllModelsOnce().find((m) => m.name === pairName) ?? null
 }

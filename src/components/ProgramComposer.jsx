@@ -145,7 +145,7 @@ export function ProgramComposer({ targetCount, proposedItems, programIndex, onCo
   return (
     <div className="program-composer">
       <p className="session-checklist__counter">
-        {chosenCount} / {targetCount} séance{targetCount > 1 ? 's' : ''} choisie{chosenCount > 1 ? 's' : ''}
+        {chosenCount} / {targetCount} séance{targetCount > 1 ? 's' : ''} choisie{targetCount > 1 ? 's' : ''}
       </p>
 
       <ul className="session-checklist">
@@ -242,7 +242,7 @@ export function ProgramComposer({ targetCount, proposedItems, programIndex, onCo
       </ul>
 
       <BigButton onClick={handleBuildProgram} disabled={chosenCount === 0}>
-        Ajouter ces {chosenCount} séance{chosenCount > 1 ? 's' : ''} au programme
+        Ajouter {chosenCount > 1 ? 'ces' : 'cette'} {chosenCount} séance{chosenCount > 1 ? 's' : ''} au programme
       </BigButton>
     </div>
   )

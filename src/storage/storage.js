@@ -72,5 +72,16 @@ function migrate(data) {
     delete migrated.weeklyProgram
   }
 
+  // v4 -> v5 : l'alternance devient optionnelle (alternation.enabled),
+  // désactivée par défaut même si un programme 2 existait déjà - rien
+  // d'automatique, l'utilisateur la réactive explicitement (voir
+  // pages/ProgramPage.jsx). startDate/periodWeeks ne sont pas touchés :
+  // ils sont ignorés tant qu'enabled reste false (voir
+  // domain/program.js#getActiveProgramIndex), et repris sans surprise si
+  // l'alternance est réactivée.
+  if (previousVersion < 5) {
+    migrated = { ...migrated, alternation: { ...migrated.alternation, enabled: false } }
+  }
+
   return migrated
 }

@@ -29,12 +29,13 @@ function getCompletedThisWeek(program, sessions) {
   ).length
 }
 
-// Index (0 ou 1) du programme actif selon l'alternance : 0 tant que le
-// programme 2 n'existe pas (rien à alterner) ou que l'alternance n'a jamais
-// démarré (startDate null). Une fois les deux posés, bascule tous les
-// `periodWeeks` à partir de startDate.
+// Index (0 ou 1) du programme actif selon l'alternance : 0 si l'alternance
+// est désactivée (voir alternation.enabled), si le programme 2 n'existe pas
+// (rien à alterner), ou si elle n'a jamais démarré (startDate null). Une
+// fois tout ça en place, bascule tous les `periodWeeks` à partir de
+// startDate.
 export function getActiveProgramIndex(alternation, programs, now = new Date()) {
-  if (!programs[1] || !alternation.startDate) return 0
+  if (!alternation.enabled || !programs[1] || !alternation.startDate) return 0
   const weeksElapsed = Math.floor((now - new Date(alternation.startDate)) / WEEK_MS)
   return Math.floor(weeksElapsed / alternation.periodWeeks) % 2
 }

@@ -20,7 +20,7 @@ import { NumberField } from '../components/NumberField.jsx'
 import { ProgramComposer } from '../components/ProgramComposer.jsx'
 import { TourStep } from '../components/TourStep.jsx'
 
-const FREQUENCY_OPTIONS = [2, 3, 4, 5, 6, 7]
+const FREQUENCY_OPTIONS = [1, 2, 3, 4, 5, 6, 7]
 const PERIOD_OPTIONS = [1, 2, 3, 4, 6, 8]
 
 export function ProgramPage() {
@@ -53,9 +53,12 @@ export function ProgramPage() {
     : []
 
   // Onglet actuellement affiché (toujours 0 tant que le programme 2
-  // n'existe pas) - distinct du programme ACTIF de l'alternance
-  // (activeProgramIndex ci-dessous), qu'on peut juste vouloir consulter.
-  const viewedProgramIndex = hasProgram2 ? selectedProgramIndex : 0
+  // n'existe pas OU que l'alternance est désactivée - le programme 2 reste
+  // alors consultable nulle part dans cet écran, pour ne jamais laisser
+  // affiché un compte à rebours qui ne se produira pas) - distinct du
+  // programme ACTIF de l'alternance (activeProgramIndex ci-dessous).
+  const showProgram2Tabs = hasProgram2 && data.alternation.enabled
+  const viewedProgramIndex = showProgram2Tabs ? selectedProgramIndex : 0
   const selectedProgram = programs[viewedProgramIndex]
   const selectedProgramTemplates = selectedProgram.templateIds
     .map((id) => data.templates.find((t) => t.id === id))
@@ -109,6 +112,21 @@ export function ProgramPage() {
   function handlePeriodChange(weeks) {
     const clamped = Math.min(52, Math.max(1, Math.round(weeks)))
     setData({ ...data, alternation: { ...data.alternation, periodWeeks: clamped } })
+  }
+
+  // (Ré)activer remet startDate à maintenant - une réactivation redémarre
+  // un cycle frais plutôt que de reprendre un compte à rebours figé depuis
+  // la dernière fois. Désactiver ne touche à rien d'autre : programs[1] et
+  // startDate restent tels quels, prêts à reprendre si on réactive.
+  function handleAlternationEnabledChange(enabled) {
+    setData({
+      ...data,
+      alternation: {
+        ...data.alternation,
+        enabled,
+        startDate: enabled ? new Date().toISOString() : data.alternation.startDate,
+      },
+    })
   }
 
   function handleDeleteProgram2() {
@@ -185,95 +203,123 @@ export function ProgramPage() {
       ) : (
         <>
           <section id="tip-program-alternation" className="progress-section program-alternation">
-            <h2>{hasProgram2 ? 'Alternance des programmes' : 'Ajoute un 2e programme'}</h2>
+            <h2>Programme 2 en alternance</h2>
+            <p className="progress-section__hint">
+              Optionnel. Tes deux programmes se relaient automatiquement pour varier les exercices.
+            </p>
 
-            <div className="program-cards">
-              <div className="program-card program-card--filled">
-                <span className="program-card__title">Programme 1</span>
-                <span className="program-card__detail">
-                  {program1.templateIds.length} séance{program1.templateIds.length > 1 ? 's' : ''}
-                </span>
-              </div>
+            <label className="toggle-switch-row">
+              <span>Alterner avec un 2e programme</span>
+              <span className="toggle-switch">
+                <input
+                  type="checkbox"
+                  className="toggle-switch__input"
+                  checked={data.alternation.enabled}
+                  onChange={(e) => handleAlternationEnabledChange(e.target.checked)}
+                />
+                <span className="toggle-switch__track" />
+              </span>
+            </label>
 
-              {hasProgram2 ? (
-                <div className="program-card program-card--filled">
-                  <span className="program-card__title">Programme 2</span>
-                  <span className="program-card__detail">
-                    {program2.templateIds.length} séance{program2.templateIds.length > 1 ? 's' : ''}
-                  </span>
+            {!data.alternation.enabled ? (
+              <p className="progress-section__hint">
+                Tu gardes le même programme chaque semaine. Tu pourras activer l'alternance plus tard.
+              </p>
+            ) : (
+              <>
+                <div className="program-cards">
+                  <div className="program-card program-card--filled">
+                    <span className="program-card__title">Programme 1</span>
+                    <span className="program-card__detail">
+                      {program1.templateIds.length} séance{program1.templateIds.length > 1 ? 's' : ''}
+                    </span>
+                  </div>
+
+                  {hasProgram2 ? (
+                    <div className="program-card program-card--filled">
+                      <span className="program-card__title">Programme 2</span>
+                      <span className="program-card__detail">
+                        {program2.templateIds.length} séance{program2.templateIds.length > 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="program-card program-card--add"
+                      onClick={() => setComposingProgram2(true)}
+                    >
+                      <span className="program-card__title">+ Programme 2</span>
+                      <span className="program-card__detail">À composer</span>
+                    </button>
+                  )}
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  className="program-card program-card--add"
-                  onClick={() => setComposingProgram2(true)}
-                >
-                  <span className="program-card__title">+ Programme 2</span>
-                  <span className="program-card__detail">À composer</span>
-                </button>
-              )}
-            </div>
 
-            {composingProgram2 && !hasProgram2 && (
-              <ProgramComposer
-                key="program2"
-                targetCount={program1.templateIds.length}
-                proposedItems={getAlternateProgramProposal(program1, data.templates, data.exercises)}
-                programIndex={1}
-                onComplete={() => setComposingProgram2(false)}
-              />
+                {composingProgram2 && !hasProgram2 && (
+                  <ProgramComposer
+                    key="program2"
+                    targetCount={program1.templateIds.length}
+                    proposedItems={getAlternateProgramProposal(program1, data.templates, data.exercises)}
+                    programIndex={1}
+                    onComplete={() => setComposingProgram2(false)}
+                  />
+                )}
+
+                <div className="alternation-period">
+                  <p className="progress-section__hint">Changer de programme toutes les :</p>
+                  <div className="alternation-period__options">
+                    {PERIOD_OPTIONS.map((weeks) => (
+                      <button
+                        key={weeks}
+                        type="button"
+                        className={`alternation-period__option${
+                          !periodCustomOpen && data.alternation.periodWeeks === weeks
+                            ? ' alternation-period__option--active'
+                            : ''
+                        }`}
+                        onClick={() => {
+                          setPeriodCustomOpen(false)
+                          handlePeriodChange(weeks)
+                        }}
+                      >
+                        {weeks} sem.
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className={`alternation-period__option${
+                        periodCustomOpen || isCustomPeriod ? ' alternation-period__option--active' : ''
+                      }`}
+                      onClick={() => setPeriodCustomOpen(true)}
+                    >
+                      Autre
+                    </button>
+                  </div>
+
+                  {(periodCustomOpen || isCustomPeriod) && (
+                    <label className="alternation-period__custom">
+                      <NumberField
+                        value={data.alternation.periodWeeks}
+                        onChange={handlePeriodChange}
+                        aria-label="Nombre de semaines personnalisé"
+                      />
+                      <span>semaines</span>
+                    </label>
+                  )}
+                </div>
+
+                <div className="alternation-timeline">
+                  {alternationPreview.map((programNumber, index) => (
+                    <span
+                      key={index}
+                      className={`alternation-timeline__week alternation-timeline__week--program${programNumber}`}
+                      title={`Semaine ${index + 1} : Programme ${programNumber}`}
+                    >
+                      {programNumber}
+                    </span>
+                  ))}
+                </div>
+              </>
             )}
-
-            <div className="alternation-period">
-              <p className="progress-section__hint">Changer de programme toutes les :</p>
-              <div className="alternation-period__options">
-                {PERIOD_OPTIONS.map((weeks) => (
-                  <button
-                    key={weeks}
-                    type="button"
-                    className={`alternation-period__option${
-                      !periodCustomOpen && data.alternation.periodWeeks === weeks
-                        ? ' alternation-period__option--active'
-                        : ''
-                    }`}
-                    onClick={() => {
-                      setPeriodCustomOpen(false)
-                      handlePeriodChange(weeks)
-                    }}
-                  >
-                    {weeks} sem.
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  className={`alternation-period__option${
-                    periodCustomOpen || isCustomPeriod ? ' alternation-period__option--active' : ''
-                  }`}
-                  onClick={() => setPeriodCustomOpen(true)}
-                >
-                  Autre
-                </button>
-              </div>
-
-              {(periodCustomOpen || isCustomPeriod) && (
-                <label className="alternation-period__custom">
-                  <NumberField value={data.alternation.periodWeeks} onChange={handlePeriodChange} aria-label="Nombre de semaines personnalisé" />
-                  <span>semaines</span>
-                </label>
-              )}
-            </div>
-
-            <div className="alternation-timeline">
-              {alternationPreview.map((programNumber, index) => (
-                <span
-                  key={index}
-                  className={`alternation-timeline__week alternation-timeline__week--program${programNumber}`}
-                  title={`Semaine ${index + 1} : Programme ${programNumber}`}
-                >
-                  {programNumber}
-                </span>
-              ))}
-            </div>
           </section>
 
           <TourStep
@@ -285,7 +331,7 @@ export function ProgramPage() {
           <section className="progress-section">
             <h2>Séances du programme</h2>
 
-            {hasProgram2 && (
+            {showProgram2Tabs && (
               <>
                 <div className="program-tabs">
                   <button

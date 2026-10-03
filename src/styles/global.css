@@ -1121,15 +1121,18 @@ input.set-row__input {
   padding: 0 14px 14px;
 }
 
+/* 7 colonnes égales (1 à 7 séances/semaine) : gap réduit pour que les 7
+   boutons tiennent sur une ligne même à 360px de large. */
 .frequency-picker {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
   margin-bottom: 12px;
 }
 
 .frequency-picker__option {
-  flex: 1;
   min-height: var(--touch-min);
+  padding: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
@@ -1156,6 +1159,67 @@ input.set-row__input {
 
 .program-composer {
   margin-top: 12px;
+}
+
+/* Interrupteur "Alterner avec un 2e programme" (ProgramPage.jsx) : piste +
+   pastille en CSS pur, l'état visuel suit directement la case à cocher
+   masquée via le sélecteur ~ (pas de JS dédié). */
+.toggle-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  font-weight: 600;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.toggle-switch__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.toggle-switch__track {
+  position: absolute;
+  inset: 0;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  transition: background-color 0.15s;
+}
+
+.toggle-switch__track::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-text);
+  transition: transform 0.15s;
+}
+
+.toggle-switch__input:checked ~ .toggle-switch__track {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.toggle-switch__input:checked ~ .toggle-switch__track::before {
+  transform: translateX(20px);
+  background: var(--color-bg);
 }
 
 /* Deux cartes côte à côte (Programme 1 / Programme 2), voir ProgramPage.jsx

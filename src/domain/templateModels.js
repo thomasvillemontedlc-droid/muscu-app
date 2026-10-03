@@ -372,6 +372,11 @@ export const TEMPLATE_STRUCTURES = [
 // B], toutes deux déjà pensées pour cette fréquence — pas de modèles dédiés
 // en plus, juste ce choix, et donc pas de lettre de structure à part).
 export const FREQUENCY_STRUCTURE_KEYS = {
+  // Réutilise la Structure C (Full Body) : à 1 séance/semaine, seul son
+  // premier modèle (Modèle Full Body A) est proposé/coché, comme pour
+  // n'importe quelle fréquence où la structure a plus de modèles que N
+  // (voir ProgramPage.jsx/ProgramComposer.jsx, qui tronquent à `targetCount`).
+  1: ['fullbody'],
   2: ['fullbody'],
   3: ['real'],
   4: ['upperlower'],

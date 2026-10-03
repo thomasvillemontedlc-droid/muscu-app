@@ -1154,6 +1154,156 @@ input.set-row__input {
   margin: 0;
 }
 
+.program-composer {
+  margin-top: 12px;
+}
+
+/* Deux cartes côte à côte (Programme 1 / Programme 2), voir ProgramPage.jsx
+   - même styles pour les deux qu'elles soient "remplies" (séance(s) déjà
+   là) ou l'invite "+ Programme 2" (bordure en pointillés, pas encore
+   composé). */
+.program-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.program-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  min-height: 72px;
+  text-align: left;
+}
+
+.program-card--filled {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.program-card--add {
+  background: transparent;
+  border: 1px dashed var(--color-border);
+  color: var(--color-text);
+}
+
+.program-card__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.program-card__detail {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.alternation-period {
+  margin: 16px 0;
+}
+
+.alternation-period__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.alternation-period__option {
+  flex: 1 0 auto;
+  min-height: var(--touch-min);
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.alternation-period__option--active {
+  border-color: var(--color-accent-text);
+  color: var(--color-accent-text);
+}
+
+.alternation-period__custom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Frise de 12 semaines (ProgramPage.jsx) : un carré par semaine, coloré
+   selon le programme actif ce jour-là (aperçu du rythme choisi, pas une
+   date réelle). */
+.alternation-timeline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.alternation-timeline__week {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc((100% - 44px) / 12);
+  min-width: 20px;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-bg);
+}
+
+.alternation-timeline__week--program1 {
+  background: var(--color-primary);
+}
+
+.alternation-timeline__week--program2 {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+
+.program-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.program-tabs__tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--touch-min);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.program-tabs__tab--active {
+  border-color: var(--color-accent-text);
+  color: var(--color-text);
+}
+
+.program-tabs__badge {
+  background: var(--color-primary);
+  color: var(--color-bg);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 /* Lancement guidé d'une séance (préparation, exercice actif, repos, choix) */
 .prep-exercise-list {
   list-style: none;

@@ -24,7 +24,7 @@ function App() {
   // storage/onboarding.js) prime sur templateIds.length dès qu'il est posé
   // - sinon vider le programme plus tard redéclencherait ce forçage.
   const needsProgramOnboarding =
-    data.weeklyProgram.templateIds.length === 0 && !hasCompletedWeeklyProgramOnboarding()
+    data.programs[0].templateIds.length === 0 && !hasCompletedWeeklyProgramOnboarding()
 
   return (
     <AppDataContext.Provider value={{ data, setData }}>

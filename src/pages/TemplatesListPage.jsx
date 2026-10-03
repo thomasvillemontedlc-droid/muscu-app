@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { createTemplate, deleteTemplate, sortTemplatesForToday } from '../domain/templates.js'
 import { createTemplateFromModel, TEMPLATE_STRUCTURES } from '../domain/templateModels.js'
-import { getNextProgramTemplateId, getNextTemplateOverrideId } from '../domain/program.js'
+import { getActiveProgramIndex, getNextProgramTemplateId, getNextTemplateOverrideId } from '../domain/program.js'
 import { getInProgressSession, startSessionFromTemplate } from '../domain/sessions.js'
 import { BigButton } from '../components/BigButton.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
@@ -24,7 +24,7 @@ export function TemplatesListPage() {
   // même question ("quoi faire aujourd'hui"), le programme explicite prime
   // simplement sur l'habitude déduite.
   const sortedTemplates = sortTemplatesForToday(data.templates, data.sessions)
-  const nextProgramTemplateId = getNextProgramTemplateId(data.weeklyProgram, data.sessions)
+  const nextProgramTemplateId = getNextProgramTemplateId(data.alternation, data.programs, data.sessions)
   const nextProgramTemplate = nextProgramTemplateId
     ? data.templates.find((t) => t.id === nextProgramTemplateId)
     : null
@@ -34,10 +34,16 @@ export function TemplatesListPage() {
   const overrideTemplate = overrideTemplateId ? data.templates.find((t) => t.id === overrideTemplateId) : null
   const featuredTemplate = overrideTemplate ?? nextProgramTemplate ?? sortedTemplates[0]
   const isFeaturedFromProgram = featuredTemplate != null && featuredTemplate === nextProgramTemplate
+  // L'alternance n'est "active" qu'une fois les deux programmes composés -
+  // avant ça, pas besoin de préciser lequel (il n'y en a qu'un).
+  const hasAlternation = data.programs[1] != null
+  const activeProgramIndex = hasAlternation ? getActiveProgramIndex(data.alternation, data.programs) : null
   const featuredLabel = overrideTemplate
     ? 'Prochaine séance choisie'
     : isFeaturedFromProgram
-      ? 'Prochaine séance du programme'
+      ? hasAlternation
+        ? `Prochaine séance · Programme ${activeProgramIndex + 1}`
+        : 'Prochaine séance du programme'
       : "Suggéré pour aujourd'hui"
 
   function handleCreate(e) {

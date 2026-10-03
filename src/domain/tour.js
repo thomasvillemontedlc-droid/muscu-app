@@ -2,8 +2,8 @@ import { isStepDismissed } from '../storage/tour.js'
 
 // Parcours guidé dans l'ordre réel d'utilisation (créer une séance, en
 // créer une deuxième, lancer une séance, la terminer, consulter
-// Progression puis Historique, mettre en place un programme et sa
-// rotation, exporter) : une seule étape "courante" à la fois, chacune ne
+// Progression puis Historique, mettre en place un programme et son
+// alternance, exporter) : une seule étape "courante" à la fois, chacune ne
 // s'affiche que si toutes celles d'avant sont accomplies. `isDataComplete`
 // est optionnel — quand présent, l'étape se termine automatiquement dès
 // que l'action décrite a réellement eu lieu (ex. une deuxième séance type
@@ -26,8 +26,8 @@ export const TOUR_STEPS = [
   // disparaît une fois le programme construit, par un autre biais que
   // l'assistant lui-même (ajout manuel) : sans ce repli, l'étape resterait
   // bloquée pour de bon si son propre écran n'est jamais revu.
-  { id: 'program-frequency', isDataComplete: (data) => data.weeklyProgram.templateIds.length > 0 },
-  { id: 'program-rotation' },
+  { id: 'program-frequency', isDataComplete: (data) => data.programs[0].templateIds.length > 0 },
+  { id: 'program-alternation' },
   { id: 'settings-export' },
 ]
 

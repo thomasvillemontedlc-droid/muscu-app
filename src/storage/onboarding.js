@@ -1,9 +1,9 @@
 const WEEKLY_PROGRAM_DONE_KEY = 'muscu-app-weekly-program-onboarding-done'
 
 // Une fois vrai, reste vrai pour toujours (voir App.jsx) : même si le
-// programme est entièrement vidé plus tard, l'écran de choix de fréquence
+// programme 1 est entièrement vidé plus tard, l'écran de choix de fréquence
 // au tout premier lancement ne doit plus jamais s'imposer. La seule
-// présence ACTUELLE de séances dans data.weeklyProgram.templateIds ne
+// présence ACTUELLE de séances dans data.programs[0].templateIds ne
 // suffirait pas à garantir ça (elle peut redescendre à 0), d'où ce drapeau
 // à part, comme storage/tour.js pour les étapes du parcours guidé ignorées.
 export function hasCompletedWeeklyProgramOnboarding() {

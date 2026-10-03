@@ -1,4 +1,7 @@
+import { getFirstVariantModel } from './rotation.js'
 import { getSessionStatus } from './sessions.js'
+
+const WEEK_MS = 7 * 24 * 3600 * 1000
 
 // Lundi (00:00 local) de la semaine contenant cette date. Même calcul que
 // domain/progress.js#getWeekStart (non exporté là-bas) : deux domaines
@@ -26,27 +29,47 @@ function getCompletedThisWeek(program, sessions) {
   ).length
 }
 
+// Index (0 ou 1) du programme actif selon l'alternance : 0 tant que le
+// programme 2 n'existe pas (rien à alterner) ou que l'alternance n'a jamais
+// démarré (startDate null). Une fois les deux posés, bascule tous les
+// `periodWeeks` à partir de startDate.
+export function getActiveProgramIndex(alternation, programs, now = new Date()) {
+  if (!programs[1] || !alternation.startDate) return 0
+  const weeksElapsed = Math.floor((now - new Date(alternation.startDate)) / WEEK_MS)
+  return Math.floor(weeksElapsed / alternation.periodWeeks) % 2
+}
+
+// Semaines restantes avant la prochaine bascule (toujours periodWeeks tant
+// que l'alternance n'a pas démarré : le compte repart de zéro dès que
+// startDate est posée, au moment où le programme 2 reçoit sa première
+// séance - voir components/ProgramComposer.jsx).
+export function getWeeksUntilSwitch(alternation, now = new Date()) {
+  if (!alternation.startDate) return alternation.periodWeeks
+  const weeksElapsed = Math.floor((now - new Date(alternation.startDate)) / WEEK_MS)
+  const intoCurrentPeriod = weeksElapsed % alternation.periodWeeks
+  return alternation.periodWeeks - intoCurrentPeriod
+}
+
+// Aperçu de l'alternance sur 12 semaines à partir d'une période donnée (1
+// ou 2 selon le programme), indépendant de toute date réelle - pour montrer
+// le RYTHME avant même que le programme 2 n'existe (voir ProgramPage.jsx).
+export function getAlternationPreview(periodWeeks, weekCount = 12) {
+  return Array.from({ length: weekCount }, (_, i) => (Math.floor(i / periodWeeks) % 2) + 1)
+}
+
 // Prochain template à proposer : celui à la position (nb déjà fait cette
-// semaine) dans l'ordre du programme, qui reboucle au-delà de sa longueur
-// (programme "tournant" - voir la demande). null si le programme est vide.
-export function getNextProgramTemplateId(program, sessions) {
+// semaine) dans l'ordre du programme ACTIF (voir getActiveProgramIndex),
+// qui reboucle au-delà de sa longueur. null si ce programme est vide.
+export function getNextProgramTemplateId(alternation, programs, sessions, now = new Date()) {
+  const program = programs[getActiveProgramIndex(alternation, programs, now)]
   if (!program || program.templateIds.length === 0) return null
   const completed = getCompletedThisWeek(program, sessions)
   return program.templateIds[completed % program.templateIds.length]
 }
 
-// Ajoute un template au programme ; démarre le bloc de rotation à cet
-// instant si c'est le tout premier (un programme vide n'a pas de bloc en
-// cours). Les ajouts suivants ne touchent pas blockStartDate : étoffer le
-// programme ne doit pas repousser une rotation déjà en cours de route.
 export function addTemplateToProgram(program, templateId) {
   if (program.templateIds.includes(templateId)) return program
-  const templateIds = [...program.templateIds, templateId]
-  return {
-    ...program,
-    templateIds,
-    blockStartDate: program.blockStartDate ?? new Date().toISOString(),
-  }
+  return { ...program, templateIds: [...program.templateIds, templateId] }
 }
 
 export function removeTemplateFromProgram(program, templateId) {
@@ -60,20 +83,29 @@ export function moveTemplateInProgram(program, fromIndex, toIndex) {
   return { ...program, templateIds }
 }
 
-// Semaines écoulées depuis le début du bloc en cours (0 si jamais démarré).
-export function getWeeksSinceBlockStart(program, now = new Date()) {
-  if (!program?.blockStartDate) return 0
-  const ms = now - new Date(program.blockStartDate)
-  return Math.floor(ms / (7 * 24 * 3600 * 1000))
-}
+// Propose, pour chaque séance du programme 1, de quoi composer le
+// programme 2 (voir components/ProgramComposer.jsx) : la première variante
+// trouvée par le ciblage musculaire de domain/rotation.js (même principe
+// que l'ancienne rotation - Push A <-> Push B...), sinon la séance
+// elle-même telle quelle (pas de variante disponible, pas de doublon
+// inventé). `source` suit le format attendu par ProgramComposer : {kind:
+// 'model', model} crée une nouvelle séance depuis un modèle prédéfini,
+// {kind: 'existing', templateId} réutilise une séance déjà existante.
+export function getAlternateProgramProposal(program1, templates, exercises) {
+  return program1.templateIds
+    .map((templateId) => templates.find((t) => t.id === templateId))
+    .filter(Boolean)
+    .map((template) => {
+      const currentNames = template.exerciseIds
+        .map((id) => exercises.find((e) => e.id === id)?.name)
+        .filter(Boolean)
+      const variant = getFirstVariantModel(currentNames)
 
-// true si le bloc en cours a atteint la durée de rotation réglée (Réglages
-// > Programme, domain/settings via data.settings.rotationWeeks). Ne
-// déclenche rien tout seul : sert juste à afficher la proposition, qui
-// reste soumise à validation (voir domain/rotation.js).
-export function isRotationDue(program, rotationWeeks, now = new Date()) {
-  if (!program || program.templateIds.length === 0) return false
-  return getWeeksSinceBlockStart(program, now) >= rotationWeeks
+      if (variant) {
+        return { key: template.id, label: variant.name, source: { kind: 'model', model: variant } }
+      }
+      return { key: template.id, label: template.name, source: { kind: 'existing', templateId: template.id } }
+    })
 }
 
 // "Prochaine séance" choisie à la main (ex. depuis les suggestions de

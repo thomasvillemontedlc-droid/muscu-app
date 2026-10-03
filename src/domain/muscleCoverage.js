@@ -26,6 +26,25 @@ export function getTemplateMuscles(template, exercises) {
   return muscles
 }
 
+// Séances types dont au moins un exercice a ce muscle en PRINCIPAL, pour la
+// fiche muscle (Progression, voir components/MuscleInfoSheet.jsx) : les 4
+// qui en touchent le plus d'exercices d'abord, avec la liste de ces
+// exercices sous chaque séance (affichée par l'appelant).
+export function getTemplatesForMuscle(muscleId, templates, exercises) {
+  const matches = templates
+    .map((template) => {
+      const exerciseNames = template.exerciseIds
+        .map((id) => exercises.find((e) => e.id === id))
+        .filter((exercise) => exercise && getExerciseMuscles(exercise.name).primary.includes(muscleId))
+        .map((exercise) => exercise.name)
+      return { template, exerciseNames }
+    })
+    .filter((entry) => entry.exerciseNames.length > 0)
+    .sort((a, b) => b.exerciseNames.length - a.exerciseNames.length)
+
+  return matches.slice(0, 4)
+}
+
 // Muscles PRINCIPAUX couverts par un programme hebdomadaire (union sur
 // tous ses templates), vs ceux qu'aucune de ses séances ne travaille
 // jamais — vérification structurelle du programme lui-même (domain/program.js),

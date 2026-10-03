@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { getInProgressSession, startSessionFromTemplate } from '../domain/sessions.js'
 import { getNextTemplateOverrideId, setNextTemplate } from '../domain/program.js'
+import { TemplateActionCard } from './TemplateActionCard.jsx'
 
 // Partie commune à "Muscles non sollicités" et "Déséquilibre sur le long
 // terme" (ProgressPage.jsx) : étant donné des muscles à combler, les
@@ -36,53 +37,21 @@ export function MuscleGapSuggestions({ suggestions, uncovered }) {
         <div className="muscle-coverage-suggestions">
           <p className="muscle-coverage-suggestions__title">Séances existantes qui couvrent le mieux ces manques :</p>
           <ul>
-            {suggestions.map(({ template, covers }) => {
-              const isOpen = openId === template.id
-              const isNext = nextTemplateId === template.id
-              const isEmpty = template.exerciseIds.length === 0
-              return (
-                <li key={template.id} className={`gap-suggestion${isOpen ? ' gap-suggestion--open' : ''}`}>
-                  <button
-                    type="button"
-                    className="gap-suggestion__head"
-                    aria-expanded={isOpen}
-                    onClick={() => setOpenId(isOpen ? null : template.id)}
-                  >
-                    <span className="muscle-coverage-suggestions__name">{template.name}</span>
-                    <span className="muscle-coverage-suggestions__covers">{covers.map((c) => c.label).join(', ')}</span>
-                    {isNext && <span className="gap-suggestion__badge">Prochaine séance</span>}
-                  </button>
-
-                  {isOpen && (
-                    <div className="gap-suggestion__actions">
-                      <button
-                        type="button"
-                        className="gap-suggestion__action gap-suggestion__action--primary"
-                        onClick={() => handleStart(template)}
-                        disabled={isEmpty || inProgressSession != null}
-                      >
-                        Lancer
-                      </button>
-                      <button
-                        type="button"
-                        className="gap-suggestion__action"
-                        onClick={() => handleSetNext(template)}
-                        disabled={isNext}
-                      >
-                        {isNext ? '✓ Prochaine séance' : 'Prochaine séance'}
-                      </button>
-                      {inProgressSession && (
-                        <p className="gap-suggestion__note">
-                          Une séance est déjà en cours ({inProgressSession.templateName}) : termine-la avant d'en lancer
-                          une autre.
-                        </p>
-                      )}
-                      {isEmpty && <p className="gap-suggestion__note">Cette séance ne contient aucun exercice.</p>}
-                    </div>
-                  )}
-                </li>
-              )
-            })}
+            {suggestions.map(({ template, covers }) => (
+              <TemplateActionCard
+                key={template.id}
+                template={template}
+                headerExtra={
+                  <span className="muscle-coverage-suggestions__covers">{covers.map((c) => c.label).join(', ')}</span>
+                }
+                isOpen={openId === template.id}
+                onToggle={() => setOpenId(openId === template.id ? null : template.id)}
+                isNext={nextTemplateId === template.id}
+                inProgressSession={inProgressSession}
+                onStart={() => handleStart(template)}
+                onSetNext={() => handleSetNext(template)}
+              />
+            ))}
           </ul>
         </div>
       )}

@@ -48,11 +48,6 @@ export function ProgressPage() {
   const neglected = getMostNeglectedMuscles(data.sessions)
   const longTermImbalance = getLongTermMuscleImbalance(data.sessions, data.templates, data.exercises)
 
-  // Exercices réellement utilisés dans les séances types : mis en avant dans
-  // la fiche muscle (le catalogue complet est semé chez tout le monde).
-  const templateExerciseIds = new Set(data.templates.flatMap((t) => t.exerciseIds))
-  const templateExercises = data.exercises.filter((e) => templateExerciseIds.has(e.id))
-
   return (
     <div className="page">
       <h1>Progression</h1>
@@ -139,12 +134,7 @@ export function ProgressPage() {
         <BodyHeatmapLegend intensities={intensities} />
       </section>
 
-      <MuscleInfoSheet
-        muscleIds={selectedMuscleIds}
-        recovery={neglected}
-        exercises={templateExercises}
-        onClose={closeMuscleSheet}
-      />
+      <MuscleInfoSheet muscleIds={selectedMuscleIds} recovery={neglected} onClose={closeMuscleSheet} />
 
       <TourStep
         id="progress-heatmap"

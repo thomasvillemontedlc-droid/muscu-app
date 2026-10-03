@@ -1,5 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { getExercisesForMuscle } from '../domain/muscleGroups.js'
+import { getTemplatesForMuscle } from '../domain/muscleCoverage.js'
+import { getInProgressSession, startSessionFromTemplate } from '../domain/sessions.js'
+import { getNextTemplateOverrideId, setNextTemplate } from '../domain/program.js'
+import { TemplateActionCard } from './TemplateActionCard.jsx'
 
 const STATUS_LABELS = {
   recovering: 'En récupération',
@@ -17,12 +23,16 @@ function formatLastWorked(daysSince) {
 
 // Fiche ouverte en touchant une zone de la carte musculaire (Progression) :
 // pour chaque groupe rattaché à la zone (un seul en général, trois pour les
-// abdos, biceps + brachial pour le bras), son état de récupération (voir
-// domain/recovery.js) et des exercices du catalogue pour le travailler.
-// `recovery` = sortie de getMuscleRecovery / getMostNeglectedMuscles ;
-// `exercises` = exercices utilisés dans les séances types de l'utilisateur
-// (mis en avant : il sait déjà les faire).
-export function MuscleInfoSheet({ muscleIds, recovery, exercises, onClose }) {
+// abdos, biceps + brachial pour le bras) - son état de récupération (voir
+// domain/recovery.js), les séances types qui le travaillent déjà (cartes
+// Lancer/Prochaine séance, voir components/TemplateActionCard.jsx, partagé
+// avec MuscleGapSuggestions.jsx) et des exercices du catalogue pour le
+// travailler. `recovery` = sortie de getMuscleRecovery / getMostNeglectedMuscles.
+export function MuscleInfoSheet({ muscleIds, recovery, onClose }) {
+  const { data, setData } = useAppDataContext()
+  const navigate = useNavigate()
+  const [openTemplateId, setOpenTemplateId] = useState(null)
+
   useEffect(() => {
     if (!muscleIds) return
     function handleKeyDown(e) {
@@ -35,6 +45,24 @@ export function MuscleInfoSheet({ muscleIds, recovery, exercises, onClose }) {
   if (!muscleIds) return null
 
   const items = muscleIds.map((id) => recovery.find((r) => r.muscleId === id)).filter(Boolean)
+  const inProgressSession = getInProgressSession(data.sessions)
+  const nextTemplateId = getNextTemplateOverrideId(data.nextTemplate, data.sessions, data.templates)
+
+  // Exercices déjà dans une séance type : mis en avant dans "Exercices pour
+  // le travailler" (voir domain/muscleGroups.js#getExercisesForMuscle), le
+  // catalogue complet étant semé chez tout le monde.
+  const templateExerciseIds = new Set(data.templates.flatMap((t) => t.exerciseIds))
+  const templateExercises = data.exercises.filter((e) => templateExerciseIds.has(e.id))
+
+  function handleStart(template) {
+    const { session, sessions } = startSessionFromTemplate(data.sessions, template, data.exercises)
+    setData({ ...data, sessions })
+    navigate(`/sessions/${session.id}`)
+  }
+
+  function handleSetNext(template) {
+    setData({ ...data, nextTemplate: setNextTemplate(template.id) })
+  }
 
   return (
     <div className="muscle-sheet-overlay" onClick={onClose}>
@@ -50,7 +78,8 @@ export function MuscleInfoSheet({ muscleIds, recovery, exercises, onClose }) {
         </button>
 
         {items.map((item) => {
-          const suggested = getExercisesForMuscle(item.muscleId, exercises)
+          const suggestedExercises = getExercisesForMuscle(item.muscleId, templateExercises)
+          const matchingTemplates = getTemplatesForMuscle(item.muscleId, data.templates, data.exercises)
           const lastWorked = formatLastWorked(item.daysSince)
           return (
             <section key={item.muscleId} className="muscle-sheet__muscle">
@@ -60,12 +89,38 @@ export function MuscleInfoSheet({ muscleIds, recovery, exercises, onClose }) {
               </span>
               {lastWorked && <p className="muscle-sheet__detail">{lastWorked}</p>}
 
+              <p className="muscle-sheet__subtitle">Séances qui le travaillent</p>
+              {matchingTemplates.length === 0 ? (
+                <p className="muscle-sheet__detail">
+                  Aucune de tes séances ne le travaille en principal. Ajoute un des exercices ci-dessous à une
+                  séance.
+                </p>
+              ) : (
+                <ul>
+                  {matchingTemplates.map(({ template, exerciseNames }) => (
+                    <TemplateActionCard
+                      key={template.id}
+                      template={template}
+                      headerExtra={
+                        <span className="muscle-coverage-suggestions__covers">{exerciseNames.join(', ')}</span>
+                      }
+                      isOpen={openTemplateId === template.id}
+                      onToggle={() => setOpenTemplateId(openTemplateId === template.id ? null : template.id)}
+                      isNext={nextTemplateId === template.id}
+                      inProgressSession={inProgressSession}
+                      onStart={() => handleStart(template)}
+                      onSetNext={() => handleSetNext(template)}
+                    />
+                  ))}
+                </ul>
+              )}
+
               <p className="muscle-sheet__subtitle">Exercices pour le travailler</p>
-              {suggested.length === 0 ? (
+              {suggestedExercises.length === 0 ? (
                 <p className="muscle-sheet__detail">Aucun exercice du catalogue ne cible ce muscle.</p>
               ) : (
                 <ul className="muscle-sheet__exercises">
-                  {suggested.map((exercise) => (
+                  {suggestedExercises.map((exercise) => (
                     <li key={exercise.name}>
                       <span>
                         {exercise.name}

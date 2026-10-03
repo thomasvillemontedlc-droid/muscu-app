@@ -33,6 +33,13 @@ export function ProgramPage() {
   const [checkedModelNames, setCheckedModelNames] = useState(new Set())
   const [pickExistingId, setPickExistingId] = useState('')
   const [newTemplateName, setNewTemplateName] = useState('')
+  // Dernière ligne de la checklist de modèles, "Séance libre" : ne compte
+  // pas dans maxSelectable (s'ajoute en plus des séances proposées).
+  // freeSessionChoice vaut '' (rien), l'id d'une séance déjà existante, ou
+  // '__new__' (nouvelle séance, nom dans freeSessionName).
+  const [freeSessionOpen, setFreeSessionOpen] = useState(false)
+  const [freeSessionChoice, setFreeSessionChoice] = useState('')
+  const [freeSessionName, setFreeSessionName] = useState('')
 
   // Verrouille définitivement le fait qu'un programme a déjà existé une
   // fois (voir App.jsx et storage/onboarding.js) : contrairement à
@@ -59,6 +66,19 @@ export function ProgramPage() {
     setCheckedModelNames(new Set(defaultModels.map((m) => m.name)))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [structureKey])
+
+  // Vrai dès qu'une vraie séance est choisie (existante) ou qu'un nom a été
+  // tapé (nouvelle) - c'est ce qui coche la ligne "Séance libre", pas un
+  // clic direct sur sa case.
+  const freeSessionHasChoice =
+    freeSessionChoice !== '' && (freeSessionChoice !== '__new__' || freeSessionName.trim() !== '')
+  const freeSessionLabel = freeSessionHasChoice
+    ? `Séance libre : ${
+        freeSessionChoice === '__new__'
+          ? freeSessionName.trim()
+          : (data.templates.find((t) => t.id === freeSessionChoice)?.name ?? '')
+      }`
+    : 'Séance libre'
 
   const availableTemplates = data.templates.filter((t) => !program.templateIds.includes(t.id))
   const programTemplates = program.templateIds
@@ -121,7 +141,7 @@ export function ProgramPage() {
   function handleBuildProgramFromModels() {
     if (!activeStructure) return
     const modelsToAdd = activeStructure.models.filter((m) => checkedModelNames.has(m.name))
-    if (modelsToAdd.length === 0) return
+    if (modelsToAdd.length === 0 && !freeSessionHasChoice) return
 
     let templates = data.templates
     let exercises = data.exercises
@@ -134,9 +154,51 @@ export function ProgramPage() {
       nextProgram = addTemplateToProgram(nextProgram, result.template.id)
     }
 
+    // Séance libre : s'ajoute en plus des modèles cochés, après eux. Une
+    // nouvelle séance libre est créée vide (comme handleCreateAndAdd), sans
+    // naviguer vers son édition - on reste sur cet écran tant qu'on construit
+    // le programme.
+    if (freeSessionHasChoice) {
+      if (freeSessionChoice === '__new__') {
+        const result = createTemplate(templates, freeSessionName)
+        templates = result.templates
+        nextProgram = addTemplateToProgram(nextProgram, result.template.id)
+      } else {
+        nextProgram = addTemplateToProgram(nextProgram, freeSessionChoice)
+      }
+    }
+
     setData({ ...data, templates, exercises, weeklyProgram: nextProgram })
     setFrequency(null)
     setStructureKey(null)
+    setFreeSessionOpen(false)
+    setFreeSessionChoice('')
+    setFreeSessionName('')
+  }
+
+  // "Séance libre" : toucher la ligne ouvre/ferme le panneau de choix. Le
+  // clic sur la case (stoppé en propagation, voir le onClick dédié dans le
+  // JSX) a son propre sens : décocher (un choix existe déjà) vide le choix,
+  // cocher directement (rien n'est choisi) ouvre juste le panneau comme un
+  // clic sur la ligne - la case ne se coche jamais elle-même, seul un choix
+  // réel dans le panneau le fait (voir freeSessionHasChoice).
+  function handleFreeSessionRowToggle() {
+    setFreeSessionOpen((open) => !open)
+  }
+
+  function handleFreeSessionCheckboxChange() {
+    if (freeSessionHasChoice) {
+      setFreeSessionChoice('')
+      setFreeSessionName('')
+      setFreeSessionOpen(false)
+    } else {
+      setFreeSessionOpen((open) => !open)
+    }
+  }
+
+  function handleFreeSessionSelectChange(e) {
+    setFreeSessionChoice(e.target.value)
+    if (e.target.value !== '__new__') setFreeSessionName('')
   }
 
   // "Choisir une autre séance" : ajoute directement une séance déjà
@@ -282,51 +344,98 @@ export function ProgramPage() {
                     </li>
                   )
                 })}
+
+                <li>
+                  <div className="session-checklist__row" onClick={handleFreeSessionRowToggle}>
+                    <input
+                      type="checkbox"
+                      checked={freeSessionHasChoice}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={handleFreeSessionCheckboxChange}
+                    />
+                    <span>{freeSessionLabel}</span>
+                    <span className="session-checklist__optional">Optionnel</span>
+                  </div>
+
+                  {freeSessionOpen && (
+                    <div className="free-session-panel" onClick={(e) => e.stopPropagation()}>
+                      <select
+                        className="prep-field__select"
+                        value={freeSessionChoice}
+                        onChange={handleFreeSessionSelectChange}
+                        aria-label="Choisir la séance libre"
+                      >
+                        <option value="">Choisir une séance…</option>
+                        {availableTemplates.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name}
+                          </option>
+                        ))}
+                        <option value="__new__">+ Créer une nouvelle séance</option>
+                      </select>
+
+                      {freeSessionChoice === '__new__' && (
+                        <input
+                          type="text"
+                          className="free-session-panel__input"
+                          placeholder="Nom de la séance"
+                          value={freeSessionName}
+                          onChange={(e) => setFreeSessionName(e.target.value)}
+                          aria-label="Nom de la nouvelle séance libre"
+                        />
+                      )}
+                    </div>
+                  )}
+                </li>
               </ul>
-              <BigButton onClick={handleBuildProgramFromModels} disabled={checkedModelNames.size === 0}>
-                Ajouter ces séances au programme
+              <BigButton
+                onClick={handleBuildProgramFromModels}
+                disabled={checkedModelNames.size === 0 && !freeSessionHasChoice}
+              >
+                Ajouter ces {checkedModelNames.size + (freeSessionHasChoice ? 1 : 0)} séance
+                {checkedModelNames.size + (freeSessionHasChoice ? 1 : 0) > 1 ? 's' : ''} au programme
               </BigButton>
             </div>
           )}
 
-          {/* Toujours visible, que la structure proposée ait été choisie ou
-              non : pour compléter ou remplacer une séance de la proposition
-              par une séance déjà existante (pas seulement celles de la
-              structure) ou toute nouvelle, plutôt que de rester coincé sur
-              ce que l'app a deviné. */}
-          <div className="program-onboarding-alt">
-            <p className="progress-section__hint">Ou complète/remplace avec une séance à toi :</p>
+          {/* Seulement tant qu'aucune structure n'est choisie : une fois une
+              structure active, la ligne "Séance libre" de la checklist
+              remplit le même rôle (compléter/remplacer une proposition). */}
+          {!activeStructure && (
+            <div className="program-onboarding-alt">
+              <p className="progress-section__hint">Ou complète/remplace avec une séance à toi :</p>
 
-            {availableTemplates.length > 0 && (
-              <form className="template-create" onSubmit={handlePickExisting}>
-                <select
-                  className="prep-field__select"
-                  value={pickExistingId}
-                  onChange={(e) => setPickExistingId(e.target.value)}
-                  aria-label="Choisir une autre séance déjà existante"
-                >
-                  <option value="">Choisir une autre séance…</option>
-                  {availableTemplates.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-                <BigButton type="submit">Ajouter</BigButton>
+              {availableTemplates.length > 0 && (
+                <form className="template-create" onSubmit={handlePickExisting}>
+                  <select
+                    className="prep-field__select"
+                    value={pickExistingId}
+                    onChange={(e) => setPickExistingId(e.target.value)}
+                    aria-label="Choisir une autre séance déjà existante"
+                  >
+                    <option value="">Choisir une autre séance…</option>
+                    {availableTemplates.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                  <BigButton type="submit">Ajouter</BigButton>
+                </form>
+              )}
+
+              <form className="template-create" onSubmit={handleCreateAndAdd}>
+                <input
+                  type="text"
+                  placeholder="Nom de la nouvelle séance"
+                  value={newTemplateName}
+                  onChange={(e) => setNewTemplateName(e.target.value)}
+                  aria-label="Nom de la nouvelle séance à créer"
+                />
+                <BigButton type="submit">Créer une nouvelle séance</BigButton>
               </form>
-            )}
-
-            <form className="template-create" onSubmit={handleCreateAndAdd}>
-              <input
-                type="text"
-                placeholder="Nom de la nouvelle séance"
-                value={newTemplateName}
-                onChange={(e) => setNewTemplateName(e.target.value)}
-                aria-label="Nom de la nouvelle séance à créer"
-              />
-              <BigButton type="submit">Créer une nouvelle séance</BigButton>
-            </form>
-          </div>
+            </div>
+          )}
         </section>
       )}
 

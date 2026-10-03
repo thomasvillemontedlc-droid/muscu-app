@@ -1041,8 +1041,6 @@ input.set-row__input {
   list-style: none;
   padding: 0;
   margin: 0 0 12px;
-  max-height: calc(4 * var(--touch-min));
-  overflow-y: auto;
   border-radius: var(--radius);
   border: 1px solid var(--color-border);
   background: var(--color-bg);
@@ -1071,6 +1069,24 @@ input.set-row__input {
   padding: 14px;
   color: var(--color-muted);
   font-size: 0.9rem;
+}
+
+.session-checklist__row {
+  cursor: pointer;
+}
+
+.session-checklist__optional {
+  margin-left: auto;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.free-session-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 14px 14px;
 }
 
 .frequency-picker {

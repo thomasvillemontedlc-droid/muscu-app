@@ -16,7 +16,12 @@ const MUSCLE_TO_LIBRARY = {
   triceps: ['triceps'],
   'avant-bras': ['forearm'],
   brachial: ['biceps'],
-  abdominaux: ['abs'],
+  // Les trois zones d'abdos partagent la même zone du schéma (la librairie
+  // n'a qu'un "abs") : la zone s'allume au niveau de la plus sollicitée, et
+  // la fiche muscle détaille les trois.
+  'abdos-haut': ['abs'],
+  'abdos-bas': ['abs'],
+  'abdos-profonds': ['abs'],
   obliques: ['obliques'],
   lombaires: ['lower-back'],
   quadriceps: ['quadriceps'],
@@ -30,21 +35,43 @@ const MUSCLE_TO_LIBRARY = {
 // La librairie n'accepte qu'un niveau discret (index dans highlightedColors),
 // pas une intensité continue : on découpe 0..1 en 5 paliers.
 const LEVELS = 5
-const HIGHLIGHTED_COLORS = ['#14532d', '#166534', '#16a34a', '#22c55e', '#4ade80']
-const BODY_COLOR = '#334155'
+const HIGHLIGHTED_COLORS = ['#3f5212', '#5b7a12', '#7fae16', '#a6e22a', '#c6ff3d']
+const BODY_COLOR = '#3a3f4a'
 
 function toFrequency(intensity) {
   return Math.max(1, Math.min(LEVELS, Math.ceil(intensity * LEVELS)))
 }
 
-// Un "exercice" par muscle sollicité (jamais deux entrées visant le même nom
-// de muscle côté librairie, qui additionnerait les fréquences) : garantit un
-// niveau exact plutôt qu'un cumul imprévisible.
+// Muscles de la librairie -> nos groupes (sens inverse de
+// MUSCLE_TO_LIBRARY) : sert à la fiche muscle quand on touche une zone du
+// schéma. Les soléaires (vue de dos) sont rattachés aux mollets.
+const LIBRARY_TO_MUSCLES = (() => {
+  const map = { 'left-soleus': ['mollets'], 'right-soleus': ['mollets'] }
+  for (const id of MUSCLE_GROUPS) {
+    for (const libraryMuscle of MUSCLE_TO_LIBRARY[id]) {
+      map[libraryMuscle] = [...(map[libraryMuscle] ?? []), id]
+    }
+  }
+  return map
+})()
+
+// Un seul "exercice" par muscle de la librairie, au niveau du plus
+// sollicité de nos groupes qui y sont rattachés (biceps + brachial, les
+// trois zones d'abdos) : la librairie additionnerait sinon les fréquences
+// de deux entrées visant la même zone.
 function buildLibraryData(intensities) {
-  return MUSCLE_GROUPS.filter((id) => (intensities[id] ?? 0) > 0).map((id) => ({
-    name: getMuscleLabel(id),
-    muscles: MUSCLE_TO_LIBRARY[id],
-    frequency: toFrequency(intensities[id]),
+  const byLibraryMuscle = {}
+  for (const id of MUSCLE_GROUPS) {
+    const value = intensities[id] ?? 0
+    if (value <= 0) continue
+    for (const libraryMuscle of MUSCLE_TO_LIBRARY[id]) {
+      byLibraryMuscle[libraryMuscle] = Math.max(byLibraryMuscle[libraryMuscle] ?? 0, value)
+    }
+  }
+  return Object.entries(byLibraryMuscle).map(([libraryMuscle, value]) => ({
+    name: libraryMuscle,
+    muscles: [libraryMuscle],
+    frequency: toFrequency(value),
   }))
 }
 
@@ -52,18 +79,26 @@ const SVG_STYLE = { width: '100%', height: 'auto' }
 
 // Deux vues (face, dos) : chaque groupe musculaire s'allume avec une
 // intensité proportionnelle à `intensities[muscleId]` (0..1, voir
-// domain/muscleHeatmap.js).
-export function BodyHeatmap({ intensities, className }) {
+// domain/muscleHeatmap.js). Si `onMuscleSelect` est fourni, toucher une
+// zone renvoie nos groupes musculaires correspondants (ex. la zone abdos
+// -> les trois zones d'abdos).
+export function BodyHeatmap({ intensities, className, onMuscleSelect }) {
   const data = buildLibraryData(intensities)
+  const handleClick = onMuscleSelect
+    ? ({ muscle }) => {
+        const muscleIds = LIBRARY_TO_MUSCLES[muscle]
+        if (muscleIds) onMuscleSelect(muscleIds)
+      }
+    : undefined
 
   return (
-    <div className={`body-heatmap${className ? ` ${className}` : ''}`}>
+    <div className={`body-heatmap${onMuscleSelect ? ' body-heatmap--interactive' : ''}${className ? ` ${className}` : ''}`}>
       <div className="body-heatmap__view">
-        <Model type="anterior" data={data} bodyColor={BODY_COLOR} highlightedColors={HIGHLIGHTED_COLORS} svgStyle={SVG_STYLE} />
+        <Model type="anterior" data={data} bodyColor={BODY_COLOR} highlightedColors={HIGHLIGHTED_COLORS} svgStyle={SVG_STYLE} onClick={handleClick} />
         <span className="body-heatmap__label">Face</span>
       </div>
       <div className="body-heatmap__view">
-        <Model type="posterior" data={data} bodyColor={BODY_COLOR} highlightedColors={HIGHLIGHTED_COLORS} svgStyle={SVG_STYLE} />
+        <Model type="posterior" data={data} bodyColor={BODY_COLOR} highlightedColors={HIGHLIGHTED_COLORS} svgStyle={SVG_STYLE} onClick={handleClick} />
         <span className="body-heatmap__label">Dos</span>
       </div>
     </div>

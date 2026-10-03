@@ -36,7 +36,15 @@ const STRETCHES = {
     { name: 'Bras tendu, paume vers le bas, doigts tirés vers soi', holdSeconds: 18 },
   ],
   brachial: [{ name: 'Bras tendu, paume vers le bas, poignet fléchi vers le sol', holdSeconds: 20 }],
-  abdominaux: [
+  'abdos-haut': [
+    { name: 'Allongé sur le ventre, buste relevé en appui sur les avant-bras (cobra)', holdSeconds: 25 },
+    { name: 'Debout, mains dans le bas du dos, légère extension arrière', holdSeconds: 18 },
+  ],
+  'abdos-bas': [
+    { name: 'Allongé sur le ventre, buste relevé en appui sur les avant-bras (cobra)', holdSeconds: 25 },
+    { name: 'Debout, mains dans le bas du dos, légère extension arrière', holdSeconds: 18 },
+  ],
+  'abdos-profonds': [
     { name: 'Allongé sur le ventre, buste relevé en appui sur les avant-bras (cobra)', holdSeconds: 25 },
     { name: 'Debout, mains dans le bas du dos, légère extension arrière', holdSeconds: 18 },
   ],
@@ -91,10 +99,16 @@ export function getPrimaryMusclesWorked(session) {
 // STRETCHES), avec le libellé du muscle. `id` est unique par étirement
 // (pas par muscle, plusieurs étirements peuvent partager le même muscle) —
 // c'est la clé React et l'identifiant RoutineRunner.
+// Un même étirement peut servir à plusieurs zones (les trois zones
+// d'abdos partagent les leurs) : il n'est proposé qu'une fois.
 export function getStretchSuggestions(muscleIds) {
+  const seen = new Set()
   return muscleIds.flatMap((muscleId) => {
-    const stretches = STRETCHES[muscleId]
-    if (!stretches) return []
+    const stretches = (STRETCHES[muscleId] ?? []).filter((stretch) => {
+      if (seen.has(stretch.name)) return false
+      seen.add(stretch.name)
+      return true
+    })
     const muscleLabel = getMuscleLabel(muscleId)
     return stretches.map((stretch, index) => ({
       id: `${muscleId}-${index}`,

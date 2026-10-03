@@ -1,29 +1,47 @@
 :root {
-  --color-bg: #0f172a;
-  --color-surface: #1e293b;
-  --color-surface-2: #334155;
-  --color-text: #f1f5f9;
-  --color-muted: #94a3b8;
-  --color-border: #334155;
-  --color-primary: #22c55e;
-  --color-primary-text: #052e12;
-  --color-danger: #ef4444;
+  --color-bg: #0a0a0b;
+  --color-surface: #151518;
+  --color-surface-2: #1f1f24;
+  --color-text: #f4f4f5;
+  --color-muted: #8b8b94;
+  --color-border: #26262c;
+  --color-primary: #c6ff3d;
+  --color-primary-text: #0a0a0b;
+  --color-danger: #ff5a4e;
+  /* Accent utilisé en TEXTE ou en bordure : le lime est lisible sur fond
+     sombre, pas sur fond clair (voir thème clair, vert olive). */
+  --color-accent-text: #c6ff3d;
+  --color-glow: rgba(198, 255, 61, 0.45);
+  --color-feature-bg: #1a1d12;
+  --color-feature-border: rgba(198, 255, 61, 0.35);
+  --color-warning: #f59f00;
+  --color-nav-bg: rgba(10, 10, 11, 0.85);
+
+  --font-display: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --touch-min: 52px;
-  --radius: 12px;
+  --radius: 16px;
 }
 
-/* Thème clair explicite (Réglages > Apparence). */
+/* Thème clair explicite (Réglages > Apparence) : blanc cassé chaud, même
+   accent lime sur les boutons, vert olive pour l'accent en texte. */
 :root[data-theme='light'] {
-  --color-bg: #dcdde1;
-  --color-surface: #f7f8fa;
-  --color-surface-2: #e8e9ec;
-  --color-text: #0f172a;
-  --color-muted: #5a6270;
-  --color-border: #c5c7cc;
-  --color-primary: #16a34a;
-  --color-primary-text: #ffffff;
-  --color-danger: #dc2626;
+  --color-bg: #f6f4ef;
+  --color-surface: #ffffff;
+  --color-surface-2: #eeebe3;
+  --color-text: #141414;
+  --color-muted: #6f6c66;
+  --color-border: #e6e2d8;
+  --color-primary: #c6ff3d;
+  --color-primary-text: #0a0a0b;
+  --color-danger: #d92d20;
+  --color-accent-text: #4f7a00;
+  --color-glow: rgba(120, 170, 0, 0.3);
+  --color-feature-bg: #f3fbe0;
+  --color-feature-border: rgba(110, 160, 0, 0.35);
+  --color-warning: #c77700;
+  --color-nav-bg: rgba(246, 244, 239, 0.88);
 }
 
 /* Thème "suivre le système" (aucun data-theme posé, voir hooks/useTheme.js)
@@ -31,15 +49,21 @@
    que si l'OS préfère un thème clair. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
-    --color-bg: #dcdde1;
-    --color-surface: #f7f8fa;
-    --color-surface-2: #e8e9ec;
-    --color-text: #0f172a;
-    --color-muted: #5a6270;
-    --color-border: #c5c7cc;
-    --color-primary: #16a34a;
-    --color-primary-text: #ffffff;
-    --color-danger: #dc2626;
+    --color-bg: #f6f4ef;
+    --color-surface: #ffffff;
+    --color-surface-2: #eeebe3;
+    --color-text: #141414;
+    --color-muted: #6f6c66;
+    --color-border: #e6e2d8;
+    --color-primary: #c6ff3d;
+    --color-primary-text: #0a0a0b;
+    --color-danger: #d92d20;
+    --color-accent-text: #4f7a00;
+    --color-glow: rgba(120, 170, 0, 0.3);
+    --color-feature-bg: #f3fbe0;
+    --color-feature-border: rgba(110, 160, 0, 0.35);
+    --color-warning: #c77700;
+    --color-nav-bg: rgba(246, 244, 239, 0.88);
   }
 }
 
@@ -57,7 +81,7 @@ body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: var(--font-body);
   font-size: 17px;
   -webkit-tap-highlight-color: transparent;
 }
@@ -132,7 +156,7 @@ input[type='number'] {
 
 input[type='text']:focus,
 input[type='number']:focus {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--color-accent-text);
   outline-offset: 1px;
 }
 
@@ -224,7 +248,7 @@ input[type='number']:focus {
 }
 
 .bottom-nav__link.active {
-  color: var(--color-primary);
+  color: var(--color-accent-text);
   font-weight: 600;
 }
 
@@ -421,7 +445,7 @@ input[type='number']:focus {
    deux à la fois, voir TemplatesListPage.jsx. */
 .featured-session {
   background: var(--color-surface);
-  border: 1px solid var(--color-primary);
+  border: 1px solid var(--color-accent-text);
   border-radius: var(--radius);
   padding: 12px;
   margin-bottom: 16px;
@@ -455,7 +479,7 @@ input[type='number']:focus {
 
 .charge-suggestion {
   background: var(--color-surface);
-  border: 1px solid var(--color-primary);
+  border: 1px solid var(--color-accent-text);
   border-radius: var(--radius);
   padding: 12px;
   margin-bottom: 12px;
@@ -883,7 +907,7 @@ input.set-row__input {
 
 .week-tracker__circle--done {
   background: var(--color-primary);
-  border-color: var(--color-primary);
+  border-color: var(--color-accent-text);
 }
 
 .week-tracker__circle--partial {
@@ -937,7 +961,7 @@ input.set-row__input {
 }
 
 .history-session__status--done {
-  color: var(--color-primary);
+  color: var(--color-accent-text);
 }
 
 .history-session__status--partial {
@@ -1067,8 +1091,8 @@ input.set-row__input {
 }
 
 .frequency-picker__option--active {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  border-color: var(--color-accent-text);
+  color: var(--color-accent-text);
 }
 
 .structure-picker {
@@ -1420,7 +1444,7 @@ input.set-row__input {
 }
 
 .duration-field__toggle--active {
-  color: var(--color-primary);
+  color: var(--color-accent-text);
   font-weight: 600;
 }
 
@@ -1814,7 +1838,7 @@ input.set-row__input {
 }
 
 .weight-field__preset-button--selected {
-  border-color: var(--color-primary);
+  border-color: var(--color-accent-text);
   background: rgba(34, 197, 94, 0.15);
 }
 
@@ -1861,7 +1885,7 @@ input.set-row__input {
 }
 
 .volume-diff--up {
-  color: var(--color-primary);
+  color: var(--color-accent-text);
 }
 
 .volume-diff--neutral {
@@ -1873,7 +1897,7 @@ input.set-row__input {
 }
 
 .session-summary__completion {
-  color: var(--color-primary);
+  color: var(--color-accent-text);
   font-weight: 600;
   background: var(--color-surface);
   border-radius: var(--radius);
@@ -1932,7 +1956,7 @@ input.set-row__input {
 }
 
 .session-summary__item--best {
-  border: 2px solid var(--color-primary);
+  border: 2px solid var(--color-accent-text);
 }
 
 .session-summary__feeling {
@@ -1962,7 +1986,7 @@ input.set-row__input {
 }
 
 .feeling-picker__option--selected {
-  border-color: var(--color-primary);
+  border-color: var(--color-accent-text);
   background: rgba(34, 197, 94, 0.15);
 }
 
@@ -1975,7 +1999,7 @@ input.set-row__input {
   margin-left: auto;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-accent-text);
   white-space: nowrap;
 }
 
@@ -2429,7 +2453,7 @@ input.routine-runner__item-duration {
 
 .muscle-recovery-row__status--recovered {
   background: rgba(34, 197, 94, 0.15);
-  color: var(--color-primary);
+  color: var(--color-accent-text);
 }
 
 .muscle-recovery-row__status--neglected {
@@ -2557,7 +2581,7 @@ input.routine-runner__item-duration {
 
 .tip-highlight {
   position: fixed;
-  border: 2px solid var(--color-primary);
+  border: 2px solid var(--color-accent-text);
   border-radius: 12px;
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 25%, transparent);
   pointer-events: none;
@@ -2596,9 +2620,436 @@ input.routine-runner__item-duration {
   margin-left: auto;
   border: none;
   background: transparent;
-  color: var(--color-primary);
+  color: var(--color-accent-text);
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
   padding: 4px 6px;
+}
+
+/* ==========================================================================
+   Refonte visuelle : typographie, cartes, stats, suggestions, fiche muscle.
+   Placé en fin de fichier pour primer sur les règles de base ci-dessus à
+   spécificité égale. Polices chargées dans index.html (Google Fonts), avec
+   repli système si hors ligne.
+   ========================================================================== */
+
+body {
+  transition: background-color 0.25s, color 0.25s;
+}
+
+.page h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2.4rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 8px 0 18px;
+}
+
+.page h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.big-button {
+  border-radius: 14px;
+  transition: transform 0.1s;
+}
+
+.big-button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.big-button--primary {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  box-shadow: 0 8px 30px -8px var(--color-glow);
+}
+
+.big-button--secondary {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.featured-session {
+  background: linear-gradient(160deg, var(--color-feature-bg) 0%, var(--color-surface) 65%);
+  border: 1px solid var(--color-feature-border);
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.featured-session__label {
+  color: var(--color-accent-text);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.featured-session__name {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  margin: 6px 0 8px;
+}
+
+/* Liens de l'accueil présentés comme des cartes cliquables (les autres
+   .back-link, ex. "← Mes séances", gardent leur style discret). */
+.home-link,
+.template-create-toggle > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0 18px;
+  margin: 10px 0;
+  color: var(--color-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bottom-nav {
+  background: var(--color-nav-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Stats de Progression en tuiles : gros chiffre + petit libellé. */
+.session-stats--tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.session-stats--tiles li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid var(--color-border);
+  padding: 14px 16px;
+}
+
+.session-stats__value {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-text);
+}
+
+.session-stats__label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+}
+
+.muscle-coverage-list--missing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.muscle-coverage-list--missing li {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.85rem;
+  color: var(--color-text);
+}
+
+/* Suggestions de séances (MuscleGapSuggestions.jsx) : cartes à toucher qui
+   dévoilent "Lancer" / "Prochaine séance". */
+.muscle-coverage-suggestions__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 22px 0 12px;
+}
+
+.muscle-coverage-suggestions ul {
+  display: grid;
+  gap: 10px;
+}
+
+.muscle-coverage-suggestions li.gap-suggestion {
+  display: block;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.gap-suggestion--open {
+  border-color: var(--color-feature-border) !important;
+}
+
+.gap-suggestion__head {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  padding: 16px 44px 16px 18px;
+  background: none;
+  border: none;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.gap-suggestion__head::after {
+  content: '→';
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.3rem;
+  color: var(--color-accent-text);
+  transition: transform 0.2s;
+}
+
+.gap-suggestion--open .gap-suggestion__head::after {
+  transform: translateY(-50%) rotate(90deg);
+}
+
+.muscle-coverage-suggestions__name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.35rem;
+  text-transform: uppercase;
+}
+
+.gap-suggestion__badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent-text);
+}
+
+.gap-suggestion__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+
+.gap-suggestion__action {
+  min-height: 46px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gap-suggestion__action--primary {
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  border: none;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.gap-suggestion__action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.gap-suggestion__note {
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+/* Récupération : statuts cohérents avec la fiche muscle. */
+.muscle-recovery-row__status--recovered {
+  background: var(--color-feature-bg);
+  color: var(--color-accent-text);
+}
+
+.muscle-recovery-row__status--neglected {
+  background: color-mix(in srgb, var(--color-warning) 14%, transparent);
+  color: var(--color-warning);
+}
+
+.muscle-recovery-row__status--never {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-danger);
+}
+
+.body-heatmap__view {
+  border: 1px solid var(--color-border);
+}
+
+.body-heatmap--interactive polygon {
+  cursor: pointer;
+}
+
+/* Fiche muscle (MuscleInfoSheet.jsx) : panneau en bas d'écran, au-dessus
+   de la navigation, fermé par la croix, Échap ou un tap à côté. */
+.muscle-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  animation: muscle-sheet-fade 0.15s ease-out;
+}
+
+.muscle-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: 75dvh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 22px 22px 0 0;
+  padding: 20px 18px calc(24px + env(safe-area-inset-bottom));
+  animation: muscle-sheet-up 0.2s ease-out;
+}
+
+@keyframes muscle-sheet-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes muscle-sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+.muscle-sheet__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-surface-2);
+  color: var(--color-muted);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.muscle-sheet__muscle + .muscle-sheet__muscle {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border);
+}
+
+.muscle-sheet__title {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  margin: 0 48px 10px 0;
+}
+
+.muscle-sheet__status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.muscle-sheet__status--recovered {
+  background: var(--color-feature-bg);
+  color: var(--color-accent-text);
+}
+
+.muscle-sheet__status--recovering {
+  background: var(--color-surface-2);
+  color: var(--color-muted);
+}
+
+.muscle-sheet__status--neglected {
+  background: color-mix(in srgb, var(--color-warning) 14%, transparent);
+  color: var(--color-warning);
+}
+
+.muscle-sheet__status--never {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-danger);
+}
+
+.muscle-sheet__detail {
+  margin: 8px 0 0;
+  font-size: 0.88rem;
+  color: var(--color-muted);
+}
+
+.muscle-sheet__subtitle {
+  margin: 14px 0 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-muted);
+}
+
+.muscle-sheet__exercises {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.muscle-sheet__exercises li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--color-bg);
+  font-size: 0.92rem;
+}
+
+.muscle-sheet__exercises small {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-accent-text);
+}
+
+.muscle-sheet__secondary {
+  font-size: 0.78rem;
+  color: var(--color-muted);
 }

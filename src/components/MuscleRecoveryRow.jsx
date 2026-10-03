@@ -19,7 +19,8 @@ export function MuscleRecoveryRow({ item }) {
   return (
     <li className="muscle-recovery-row">
       <span className="muscle-recovery-row__label">{item.label}</span>
-      <span className="muscle-recovery-row__days">{formatDaysSince(item.daysSince)}</span>
+      {/* "Jamais sollicité" est déjà dit par le statut : pas de doublon. */}
+      {item.daysSince != null && <span className="muscle-recovery-row__days">{formatDaysSince(item.daysSince)}</span>}
       <span className={`muscle-recovery-row__status muscle-recovery-row__status--${item.status}`}>
         {STATUS_LABELS[item.status]}
       </span>

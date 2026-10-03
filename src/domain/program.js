@@ -75,3 +75,21 @@ export function isRotationDue(program, rotationWeeks, now = new Date()) {
   if (!program || program.templateIds.length === 0) return false
   return getWeeksSinceBlockStart(program, now) >= rotationWeeks
 }
+
+// "Prochaine séance" choisie à la main (ex. depuis les suggestions de
+// Progression) : prime sur le programme hebdomadaire et sur l'habitude du
+// jour, jusqu'à ce qu'une séance de ce template soit lancée après le choix.
+// Pas de nettoyage à faire au lancement : le choix s'éteint tout seul dès
+// qu'une séance plus récente existe pour ce template.
+export function setNextTemplate(templateId, now = new Date()) {
+  return { templateId, setAt: now.toISOString() }
+}
+
+export function getNextTemplateOverrideId(nextTemplate, sessions, templates) {
+  if (!nextTemplate?.templateId) return null
+  if (!templates.some((t) => t.id === nextTemplate.templateId)) return null
+  const alreadyStarted = sessions.some(
+    (s) => s.templateId === nextTemplate.templateId && s.date >= nextTemplate.setAt,
+  )
+  return alreadyStarted ? null : nextTemplate.templateId
+}

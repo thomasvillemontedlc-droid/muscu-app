@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { createTemplate, deleteTemplate, sortTemplatesForToday } from '../domain/templates.js'
 import { createTemplateFromModel, TEMPLATE_STRUCTURES } from '../domain/templateModels.js'
-import { getNextProgramTemplateId } from '../domain/program.js'
+import { getNextProgramTemplateId, getNextTemplateOverrideId } from '../domain/program.js'
 import { getInProgressSession, startSessionFromTemplate } from '../domain/sessions.js'
 import { BigButton } from '../components/BigButton.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
@@ -28,8 +28,17 @@ export function TemplatesListPage() {
   const nextProgramTemplate = nextProgramTemplateId
     ? data.templates.find((t) => t.id === nextProgramTemplateId)
     : null
-  const featuredTemplate = nextProgramTemplate ?? sortedTemplates[0]
+  // Un choix manuel ("Prochaine séance" depuis Progression) passe avant le
+  // programme et l'habitude, le temps qu'il soit lancé.
+  const overrideTemplateId = getNextTemplateOverrideId(data.nextTemplate, data.sessions, data.templates)
+  const overrideTemplate = overrideTemplateId ? data.templates.find((t) => t.id === overrideTemplateId) : null
+  const featuredTemplate = overrideTemplate ?? nextProgramTemplate ?? sortedTemplates[0]
   const isFeaturedFromProgram = featuredTemplate != null && featuredTemplate === nextProgramTemplate
+  const featuredLabel = overrideTemplate
+    ? 'Prochaine séance choisie'
+    : isFeaturedFromProgram
+      ? 'Prochaine séance du programme'
+      : "Suggéré pour aujourd'hui"
 
   function handleCreate(e) {
     e.preventDefault()
@@ -77,7 +86,7 @@ export function TemplatesListPage() {
         featuredTemplate && (
           <section className="featured-session">
             <p className="featured-session__label">
-              {isFeaturedFromProgram ? 'Prochaine séance du programme' : "Suggéré pour aujourd'hui"}
+              {featuredLabel}
             </p>
             <p className="featured-session__name">{featuredTemplate.name}</p>
             <ul className="featured-session__exercises">
@@ -96,7 +105,7 @@ export function TemplatesListPage() {
         )
       )}
 
-      <Link to="/program" className="back-link">
+      <Link to="/program" className="back-link home-link">
         Programme hebdomadaire →
       </Link>
 

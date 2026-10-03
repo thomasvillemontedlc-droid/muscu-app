@@ -7,8 +7,14 @@ import { slugify } from '../lib/slugify.js'
 // base d'exercices fournie (exercices-musculation.md) qui les distingue.
 // Deux muscles très ponctuels de cette base (fléchisseurs de hanche,
 // tibial antérieur - une seule mention chacun) sont repliés respectivement
-// sur abdominaux et mollets plutôt que d'ajouter deux groupes de plus pour
+// sur abdos bas et mollets plutôt que d'ajouter deux groupes de plus pour
 // un seul exercice chacun.
+// Les abdominaux sont découpés en trois zones d'accent : le grand droit
+// est un seul muscle (on ne l'isole pas), mais crunchs et relevés de jambes
+// ne le sollicitent pas de la même façon, et le gainage vise surtout le
+// transverse (sangle profonde). Haut = crunchs, bas = relevés de jambes,
+// profonds = gainage/anti-extension, et tout le travail de stabilisation
+// des exercices polyarticulaires (squat, développé militaire...).
 export const MUSCLE_GROUPS = [
   'pectoraux',
   'dorsaux',
@@ -18,7 +24,9 @@ export const MUSCLE_GROUPS = [
   'triceps',
   'avant-bras',
   'brachial',
-  'abdominaux',
+  'abdos-haut',
+  'abdos-bas',
+  'abdos-profonds',
   'obliques',
   'lombaires',
   'quadriceps',
@@ -38,7 +46,9 @@ const MUSCLE_LABELS = {
   triceps: 'Triceps',
   'avant-bras': 'Avant-bras',
   brachial: 'Brachial',
-  abdominaux: 'Abdominaux',
+  'abdos-haut': 'Abdos haut',
+  'abdos-bas': 'Abdos bas',
+  'abdos-profonds': 'Abdos profonds',
   obliques: 'Obliques',
   lombaires: 'Lombaires',
   quadriceps: 'Quadriceps',
@@ -72,7 +82,7 @@ export const EXERCISE_MUSCLES = {
   'ecarte-incline-halteres': { name: 'Écarté incliné haltères', primary: ['pectoraux'], secondary: ['deltoides'] },
   'ecarte-a-la-poulie-vis-a-vis': { name: 'Écarté à la poulie vis-à-vis', primary: ['pectoraux'], secondary: ['deltoides'] },
   'pec-deck-butterfly': { name: 'Pec deck (butterfly)', primary: ['pectoraux'], secondary: ['deltoides'] },
-  pompes: { name: 'Pompes', primary: ['pectoraux'], secondary: ['triceps', 'deltoides', 'abdominaux'] },
+  pompes: { name: 'Pompes', primary: ['pectoraux'], secondary: ['triceps', 'deltoides', 'abdos-profonds'] },
   'pompes-declinees': { name: 'Pompes déclinées', primary: ['pectoraux'], secondary: ['triceps', 'deltoides'] },
   'pompes-diamant': { name: 'Pompes diamant', primary: ['triceps'], secondary: ['pectoraux', 'deltoides'] },
   'dips-sur-barres-paralleles-buste-penche': { name: 'Dips sur barres parallèles (buste penché)', primary: ['pectoraux'], secondary: ['triceps', 'deltoides'] },
@@ -91,7 +101,7 @@ export const EXERCISE_MUSCLES = {
   'rowing-haltere-unilateral': { name: 'Rowing haltère unilatéral', primary: ['dorsaux'], secondary: ['trapezes', 'biceps'] },
   'rowing-t-bar': { name: 'Rowing T-bar', primary: ['dorsaux'], secondary: ['trapezes', 'biceps'] },
   'rowing-a-la-machine-assis': { name: 'Rowing à la machine assis', primary: ['dorsaux'], secondary: ['trapezes', 'biceps'] },
-  'pull-over-a-la-poulie-haute-bras-tendus': { name: 'Pull-over à la poulie haute (bras tendus)', primary: ['dorsaux'], secondary: ['triceps', 'abdominaux'] },
+  'pull-over-a-la-poulie-haute-bras-tendus': { name: 'Pull-over à la poulie haute (bras tendus)', primary: ['dorsaux'], secondary: ['triceps', 'abdos-profonds'] },
   'face-pull': { name: 'Face pull', primary: ['trapezes'], secondary: ['deltoides', 'dorsaux'] },
 
   // Trapèzes
@@ -100,7 +110,7 @@ export const EXERCISE_MUSCLES = {
   'shrugs-a-la-barre-guidee': { name: 'Shrugs à la barre guidée', primary: ['trapezes'], secondary: ['avant-bras'] },
   'tirage-menton-rowing-vertical': { name: 'Tirage menton (rowing vertical)', primary: ['trapezes'], secondary: ['deltoides', 'biceps'] },
   'face-pull-a-la-corde': { name: 'Face pull à la corde', primary: ['trapezes'], secondary: ['deltoides'] },
-  'farmers-walk': { name: "Farmer's walk", primary: ['trapezes', 'avant-bras'], secondary: ['abdominaux', 'quadriceps'] },
+  'farmers-walk': { name: "Farmer's walk", primary: ['trapezes', 'avant-bras'], secondary: ['abdos-profonds', 'quadriceps'] },
 
   // Deltoïdes
   'developpe-militaire-barre-debout': { name: 'Développé militaire barre debout', primary: ['deltoides'], secondary: ['triceps', 'trapezes'] },
@@ -148,19 +158,19 @@ export const EXERCISE_MUSCLES = {
   'suspension-a-la-barre-dead-hang': { name: 'Suspension à la barre (dead hang)', primary: ['avant-bras'], secondary: ['dorsaux'] },
 
   // Abdominaux
-  'crunch-au-sol': { name: 'Crunch au sol', primary: ['abdominaux'], secondary: [] },
-  'crunch-a-la-poulie-haute': { name: 'Crunch à la poulie haute', primary: ['abdominaux'], secondary: [] },
-  'crunch-a-la-machine': { name: 'Crunch à la machine', primary: ['abdominaux'], secondary: [] },
-  'releve-de-jambes-suspendu': { name: 'Relevé de jambes suspendu', primary: ['abdominaux'], secondary: [] },
-  'releve-de-genoux-suspendu': { name: 'Relevé de genoux suspendu', primary: ['abdominaux'], secondary: [] },
-  'releve-de-jambes-au-sol': { name: 'Relevé de jambes au sol', primary: ['abdominaux'], secondary: [] },
-  'gainage-planche': { name: 'Gainage planche', primary: ['abdominaux'], secondary: ['lombaires', 'deltoides'] },
-  'gainage-lateral': { name: 'Gainage latéral', primary: ['obliques'], secondary: ['abdominaux'] },
-  'russian-twist': { name: 'Russian twist', primary: ['obliques'], secondary: ['abdominaux'] },
-  'rotations-a-la-poulie-wood-chop': { name: 'Rotations à la poulie (wood chop)', primary: ['obliques'], secondary: ['abdominaux'] },
-  'roulette-abdominale-ab-wheel': { name: 'Roulette abdominale (ab wheel)', primary: ['abdominaux'], secondary: ['lombaires', 'dorsaux'] },
-  'mountain-climbers': { name: 'Mountain climbers', primary: ['abdominaux'], secondary: ['deltoides', 'quadriceps'] },
-  'sit-up': { name: 'Sit-up', primary: ['abdominaux'], secondary: [] },
+  'crunch-au-sol': { name: 'Crunch au sol', primary: ['abdos-haut'], secondary: [] },
+  'crunch-a-la-poulie-haute': { name: 'Crunch à la poulie haute', primary: ['abdos-haut'], secondary: [] },
+  'crunch-a-la-machine': { name: 'Crunch à la machine', primary: ['abdos-haut'], secondary: [] },
+  'releve-de-jambes-suspendu': { name: 'Relevé de jambes suspendu', primary: ['abdos-bas'], secondary: [] },
+  'releve-de-genoux-suspendu': { name: 'Relevé de genoux suspendu', primary: ['abdos-bas'], secondary: [] },
+  'releve-de-jambes-au-sol': { name: 'Relevé de jambes au sol', primary: ['abdos-bas'], secondary: [] },
+  'gainage-planche': { name: 'Gainage planche', primary: ['abdos-profonds'], secondary: ['lombaires', 'deltoides'] },
+  'gainage-lateral': { name: 'Gainage latéral', primary: ['obliques'], secondary: ['abdos-profonds'] },
+  'russian-twist': { name: 'Russian twist', primary: ['obliques'], secondary: ['abdos-profonds'] },
+  'rotations-a-la-poulie-wood-chop': { name: 'Rotations à la poulie (wood chop)', primary: ['obliques'], secondary: ['abdos-profonds'] },
+  'roulette-abdominale-ab-wheel': { name: 'Roulette abdominale (ab wheel)', primary: ['abdos-profonds'], secondary: ['abdos-haut', 'lombaires', 'dorsaux'] },
+  'mountain-climbers': { name: 'Mountain climbers', primary: ['abdos-profonds'], secondary: ['abdos-bas', 'deltoides', 'quadriceps'] },
+  'sit-up': { name: 'Sit-up', primary: ['abdos-haut'], secondary: ['abdos-bas'] },
 
   // Lombaires
   'extension-lombaire-au-banc': { name: 'Extension lombaire au banc', primary: ['lombaires'], secondary: ['fessiers', 'ischio-jambiers'] },
@@ -172,9 +182,9 @@ export const EXERCISE_MUSCLES = {
 
   // Quadriceps
   'squat-barre-nuque': { name: 'Squat barre (nuque)', primary: ['quadriceps'], secondary: ['fessiers', 'lombaires', 'ischio-jambiers'] },
-  'front-squat': { name: 'Front squat', primary: ['quadriceps'], secondary: ['fessiers', 'abdominaux'] },
+  'front-squat': { name: 'Front squat', primary: ['quadriceps'], secondary: ['fessiers', 'abdos-profonds'] },
   'squat-a-la-barre-guidee-smith-machine': { name: 'Squat à la barre guidée (Smith machine)', primary: ['quadriceps'], secondary: ['fessiers'] },
-  'goblet-squat': { name: 'Goblet squat', primary: ['quadriceps'], secondary: ['fessiers', 'abdominaux'] },
+  'goblet-squat': { name: 'Goblet squat', primary: ['quadriceps'], secondary: ['fessiers', 'abdos-profonds'] },
   'presse-a-cuisses': { name: 'Presse à cuisses', primary: ['quadriceps'], secondary: ['fessiers', 'ischio-jambiers'] },
   'hack-squat': { name: 'Hack squat', primary: ['quadriceps'], secondary: ['fessiers'] },
   'leg-extension': { name: 'Leg extension', primary: ['quadriceps'], secondary: [] },
@@ -223,15 +233,15 @@ export const EXERCISE_MUSCLES = {
     primary: ['dorsaux', 'lombaires', 'fessiers', 'ischio-jambiers'],
     secondary: ['trapezes', 'quadriceps', 'avant-bras'],
   },
-  'squat-barre': { name: 'Squat barre', primary: ['quadriceps', 'fessiers'], secondary: ['lombaires', 'ischio-jambiers', 'abdominaux'] },
+  'squat-barre': { name: 'Squat barre', primary: ['quadriceps', 'fessiers'], secondary: ['lombaires', 'ischio-jambiers', 'abdos-profonds'] },
   'developpe-couche': { name: 'Développé couché', primary: ['pectoraux'], secondary: ['triceps', 'deltoides'] },
   tractions: { name: 'Tractions', primary: ['dorsaux'], secondary: ['biceps', 'trapezes', 'avant-bras'] },
-  'developpe-militaire': { name: 'Développé militaire', primary: ['deltoides'], secondary: ['triceps', 'trapezes', 'abdominaux'] },
+  'developpe-militaire': { name: 'Développé militaire', primary: ['deltoides'], secondary: ['triceps', 'trapezes', 'abdos-profonds'] },
   dips: { name: 'Dips', primary: ['pectoraux', 'triceps'], secondary: ['deltoides'] },
   'clean-and-press': { name: 'Clean and press', primary: ['deltoides', 'quadriceps', 'fessiers'], secondary: ['trapezes', 'lombaires', 'triceps'] },
   thruster: { name: 'Thruster', primary: ['quadriceps', 'deltoides'], secondary: ['fessiers', 'triceps'] },
-  burpees: { name: 'Burpees', primary: ['quadriceps', 'pectoraux'], secondary: ['abdominaux', 'deltoides', 'triceps'] },
-  'kettlebell-swing': { name: 'Kettlebell swing', primary: ['fessiers', 'ischio-jambiers'], secondary: ['lombaires', 'deltoides', 'abdominaux'] },
+  burpees: { name: 'Burpees', primary: ['quadriceps', 'pectoraux'], secondary: ['abdos-profonds', 'deltoides', 'triceps'] },
+  'kettlebell-swing': { name: 'Kettlebell swing', primary: ['fessiers', 'ischio-jambiers'], secondary: ['lombaires', 'deltoides', 'abdos-profonds'] },
 
   // Cardio (pas de groupe musculaire de musculation ciblé : primary/secondary
   // vides plutôt qu'un 18e groupe rien que pour lui, voir MUSCLE_GROUPS).
@@ -342,4 +352,24 @@ export function getSeedExercises() {
 // même sous un autre nom.
 export function resolveExerciseCanonicalKey(exerciseName) {
   return resolveExerciseKey(exerciseName)
+}
+
+// Exercices du catalogue qui travaillent un muscle donné, pour la fiche
+// muscle de la carte (Progression) : ceux où il est muscle PRINCIPAL
+// d'abord, puis ceux où il n'est que secondaire. À rang égal, les exercices
+// déjà utilisés dans les séances de l'utilisateur passent devant (il les
+// connaît et a déjà son matériel). Renvoie {name, isPrimary, isInLibrary}.
+export function getExercisesForMuscle(muscleId, userExercises = [], limit = 4) {
+  const userKeys = new Set(userExercises.map((e) => resolveExerciseKey(e.name)).filter(Boolean))
+  const rank = (entries) =>
+    entries.sort(([keyA], [keyB]) => Number(userKeys.has(keyB)) - Number(userKeys.has(keyA)))
+  const all = Object.entries(EXERCISE_MUSCLES)
+  const primary = rank(all.filter(([, e]) => e.primary.includes(muscleId)))
+  const secondary = rank(all.filter(([, e]) => !e.primary.includes(muscleId) && e.secondary.includes(muscleId)))
+
+  return [...primary, ...secondary].slice(0, limit).map(([key, e]) => ({
+    name: e.name,
+    isPrimary: e.primary.includes(muscleId),
+    isInLibrary: userKeys.has(key),
+  }))
 }

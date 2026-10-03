@@ -11,6 +11,10 @@ export function createEmptyData() {
     // du bloc d'exercices en cours, pour savoir quand proposer la rotation
     // (domain/rotation.js) ; null tant qu'aucun template n'y a été ajouté.
     weeklyProgram: { templateIds: [], blockStartDate: null },
+    // Séance choisie à la main comme "prochaine séance" (domain/program.js
+    // #getNextTemplateOverrideId) : {templateId, setAt} ou null. Optionnel,
+    // absent des données plus anciennes (traité comme null).
+    nextTemplate: null,
     settings: {
       // Nombre de semaines avant de proposer une rotation des exercices du
       // programme (voir Réglages > Programme). Paramétrable : 2, 3, 4 ou 6.

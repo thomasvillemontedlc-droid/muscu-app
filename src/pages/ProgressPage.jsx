@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { getPeriodStats, getSessionsInPeriod, getSessionsPerWeek } from '../domain/progress.js'
 import { getCumulativeMuscleVolumes, getMuscleIntensities } from '../domain/muscleHeatmap.js'
@@ -11,6 +11,7 @@ import { getMuscleLabel } from '../domain/muscleGroups.js'
 import { getMostNeglectedMuscles } from '../domain/recovery.js'
 import { BodyHeatmap, BodyHeatmapLegend } from '../components/BodyHeatmap.jsx'
 import { MuscleGapSuggestions } from '../components/MuscleGapSuggestions.jsx'
+import { MuscleInfoSheet } from '../components/MuscleInfoSheet.jsx'
 import { MuscleRecoveryRow } from '../components/MuscleRecoveryRow.jsx'
 import { WeeklyBarChart } from '../components/WeeklyBarChart.jsx'
 import { TourStep } from '../components/TourStep.jsx'
@@ -33,6 +34,8 @@ function formatTotalDuration(ms) {
 export function ProgressPage() {
   const { data } = useAppDataContext()
   const [period, setPeriod] = useState('week')
+  const [selectedMuscleIds, setSelectedMuscleIds] = useState(null)
+  const closeMuscleSheet = useCallback(() => setSelectedMuscleIds(null), [])
 
   const sessionsInPeriod = getSessionsInPeriod(data.sessions, period)
   const stats = getPeriodStats(sessionsInPeriod)
@@ -44,6 +47,11 @@ export function ProgressPage() {
   const intensities = getMuscleIntensities(getCumulativeMuscleVolumes(sessionsInPeriod))
   const neglected = getMostNeglectedMuscles(data.sessions)
   const longTermImbalance = getLongTermMuscleImbalance(data.sessions, data.templates, data.exercises)
+
+  // Exercices réellement utilisés dans les séances types : mis en avant dans
+  // la fiche muscle (le catalogue complet est semé chez tout le monde).
+  const templateExerciseIds = new Set(data.templates.flatMap((t) => t.exerciseIds))
+  const templateExercises = data.exercises.filter((e) => templateExerciseIds.has(e.id))
 
   return (
     <div className="page">
@@ -60,11 +68,17 @@ export function ProgressPage() {
         </select>
       </label>
 
-      <ul className="session-stats">
+      <ul className="session-stats session-stats--tiles">
         <li>
-          {stats.count} séance{stats.count > 1 ? 's' : ''} terminée{stats.count > 1 ? 's' : ''}
+          <strong className="session-stats__value">{stats.count}</strong>
+          <span className="session-stats__label">
+            séance{stats.count > 1 ? 's' : ''} terminée{stats.count > 1 ? 's' : ''}
+          </span>
         </li>
-        <li>{formatTotalDuration(stats.totalDurationMs)} au total</li>
+        <li>
+          <strong className="session-stats__value">{formatTotalDuration(stats.totalDurationMs)}</strong>
+          <span className="session-stats__label">au total</span>
+        </li>
       </ul>
 
       <section className="progress-section">
@@ -120,9 +134,17 @@ export function ProgressPage() {
 
       <section id="tip-progress-heatmap" className="progress-section">
         <h2>Carte musculaire cumulée</h2>
-        <BodyHeatmap intensities={intensities} />
+        <p className="progress-section__hint">Touche un muscle pour voir son état et des exercices pour le travailler.</p>
+        <BodyHeatmap intensities={intensities} onMuscleSelect={setSelectedMuscleIds} />
         <BodyHeatmapLegend intensities={intensities} />
       </section>
+
+      <MuscleInfoSheet
+        muscleIds={selectedMuscleIds}
+        recovery={neglected}
+        exercises={templateExercises}
+        onClose={closeMuscleSheet}
+      />
 
       <TourStep
         id="progress-heatmap"

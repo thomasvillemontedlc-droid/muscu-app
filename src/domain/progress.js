@@ -80,3 +80,25 @@ export function getSessionsPerWeek(sessions, periodKey) {
   return buildWeeklySeries(periodKey, counts).map(({ weekStart, value }) => ({ weekStart, count: value ?? 0 }))
 }
 
+// Jours (lundi à dimanche) de la semaine en cours, une entrée par jour même
+// à 0 séance - pour la vue "Cette semaine" du graphique de progression, où
+// une seule barre hebdomadaire serait peu lisible : on détaille par jour
+// plutôt que par semaine.
+export function getSessionsPerDay(sessions, now = new Date()) {
+  const weekStart = getWeekStart(now)
+  const scoped = sessions.filter((s) => getSessionStatus(s) !== 'not-done')
+
+  const counts = new Map()
+  for (const session of scoped) {
+    const date = new Date(session.date)
+    date.setHours(0, 0, 0, 0)
+    counts.set(date.getTime(), (counts.get(date.getTime()) ?? 0) + 1)
+  }
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const dayStart = new Date(weekStart)
+    dayStart.setDate(dayStart.getDate() + i)
+    return { dayStart, count: counts.get(dayStart.getTime()) ?? 0 }
+  })
+}
+

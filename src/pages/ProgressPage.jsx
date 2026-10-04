@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
-import { getPeriodStats, getSessionsInPeriod, getSessionsPerWeek } from '../domain/progress.js'
+import { getPeriodStats, getSessionsInPeriod, getSessionsPerDay, getSessionsPerWeek } from '../domain/progress.js'
 import { getCumulativeMuscleVolumes, getMuscleIntensities } from '../domain/muscleHeatmap.js'
 import {
   getLongTermMuscleImbalance,
@@ -23,6 +23,15 @@ const PERIOD_OPTIONS = [
   { value: 'all', label: 'Tout' },
 ]
 
+function formatDayLabel(dayStart) {
+  const label = dayStart.toLocaleDateString('fr-FR', { weekday: 'short' })
+  return label.charAt(0).toUpperCase() + label.slice(1).replace('.', '')
+}
+
+function formatWeekLabel(weekStart) {
+  return weekStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
+
 function formatTotalDuration(ms) {
   const totalMinutes = Math.round(ms / 60000)
   const hours = Math.floor(totalMinutes / 60)
@@ -39,7 +48,22 @@ export function ProgressPage() {
 
   const sessionsInPeriod = getSessionsInPeriod(data.sessions, period)
   const stats = getPeriodStats(sessionsInPeriod)
-  const weeks = getSessionsPerWeek(data.sessions, period)
+
+  // "Cette semaine" : une barre par jour, plus lisible qu'une barre unique
+  // pour une seule semaine. Les autres périodes gardent une barre par
+  // semaine (voir domain/progress.js).
+  const bars =
+    period === 'week'
+      ? getSessionsPerDay(data.sessions).map((d) => ({
+          key: d.dayStart.getTime(),
+          count: d.count,
+          label: formatDayLabel(d.dayStart),
+        }))
+      : getSessionsPerWeek(data.sessions, period).map((w) => ({
+          key: w.weekStart.getTime(),
+          count: w.count,
+          label: formatWeekLabel(w.weekStart),
+        }))
 
   const coverage = getMuscleCoverage(sessionsInPeriod)
   const { suggestions, uncovered } = suggestSessionsForMissingMuscles(data.templates, data.exercises, coverage.missing)
@@ -77,8 +101,8 @@ export function ProgressPage() {
       </ul>
 
       <section className="progress-section">
-        <h2>Séances par semaine</h2>
-        <WeeklyBarChart weeks={weeks} />
+        <h2>{period === 'week' ? 'Séances par jour' : 'Séances par semaine'}</h2>
+        <WeeklyBarChart bars={bars} />
       </section>
 
       <section className="progress-section">

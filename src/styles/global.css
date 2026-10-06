@@ -1426,7 +1426,6 @@ input.set-row__input {
   font-weight: 600;
 }
 
-.prep-exercise__handle,
 .prep-exercise__remove {
   min-width: 44px;
   min-height: 44px;
@@ -1436,14 +1435,6 @@ input.set-row__input {
   color: var(--color-text);
   font-size: 1.2rem;
   flex-shrink: 0;
-}
-
-.prep-exercise__handle {
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
 }
 
 /* Réordonnance en cours : au-dessus des autres lignes, légèrement mise en
@@ -3703,7 +3694,7 @@ body {
   text-align: center;
 }
 
-/* Mouvement d'échauffement/étirement : temps dépassé (-1s, -2s...) tant
+/* Mouvement d'échauffement/étirement : temps dépassé (+1s, +2s...) tant
    qu'on ne passe pas au suivant (voir RoutineRunner.jsx). */
 .routine-runner__timer--overtime {
   color: var(--color-warning);
@@ -3720,4 +3711,103 @@ body {
   color: var(--color-muted);
   font-size: 0.85rem;
   text-align: center;
+}
+
+/* Déplacement par appui long sur le titre (DraggableList.jsx) : pendant le
+   geste, chaque exercice n'affiche que son titre, sur une hauteur fixe
+   (emplacements réguliers pour le décalage des autres). */
+.draggable-list__item--dragging {
+  border-radius: var(--radius);
+}
+
+.prep-exercise--collapsed,
+.exercise-list__item--collapsed {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 56px;
+  padding: 0 14px;
+  overflow: hidden;
+}
+
+.prep-exercise--collapsed .prep-exercise__name,
+.exercise-list__item--collapsed .exercise-list__name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Le titre sert de zone d'appui long : hauteur tactile correcte. */
+.prep-exercise__header .prep-exercise__name,
+.exercise-list__name {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/* Écran de préparation compact (séance déjà faite) : exercices repliés en
+   une ligne nom + résumé, un toucher déplie. */
+.prep-exercise--folded {
+  padding: 6px 12px;
+}
+
+.prep-exercise--folded .prep-exercise__header {
+  margin-bottom: 0;
+}
+
+.prep-exercise__toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  min-height: 48px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.prep-exercise__toggle .prep-exercise__name {
+  min-height: 0;
+}
+
+.prep-exercise__summary {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+/* Carte de lancement en haut de l'écran de préparation (séance déjà faite). */
+.prep-quickstart {
+  margin-bottom: 16px;
+}
+
+.prep-quickstart__stats {
+  font-weight: 600;
+}
+
+.prep-quickstart .prep-field {
+  margin-bottom: 4px;
+}
+
+.prep-more-options {
+  margin: 16px 0;
+}
+
+.prep-more-options > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--color-muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.prep-more-options[open] > summary {
+  margin-bottom: 8px;
 }

@@ -8,6 +8,7 @@ import {
   updateTemplate,
 } from '../domain/templates.js'
 import { getExerciseById, getOrCreateExercise } from '../domain/exercises.js'
+import { DraggableList } from '../components/DraggableList.jsx'
 import { ExercisePicker } from '../components/ExercisePicker.jsx'
 import { BigButton } from '../components/BigButton.jsx'
 
@@ -41,10 +42,9 @@ export function TemplateEditPage() {
     setData({ ...data, templates: removeExerciseFromTemplate(data.templates, templateId, exerciseId) })
   }
 
-  function handleMove(index, direction) {
-    const targetIndex = index + direction
-    if (targetIndex < 0 || targetIndex >= template.exerciseIds.length) return
-    setData({ ...data, templates: moveExerciseInTemplate(data.templates, templateId, index, targetIndex) })
+  // Appui long sur le nom d'un exercice puis glisser, voir DraggableList.
+  function handleReorder(fromIndex, toIndex) {
+    setData({ ...data, templates: moveExerciseInTemplate(data.templates, templateId, fromIndex, toIndex) })
   }
 
   return (
@@ -61,27 +61,29 @@ export function TemplateEditPage() {
         aria-label="Nom de la séance"
       />
 
-      <ol className="exercise-list">
-        {template.exerciseIds.map((exerciseId, index) => {
+      <DraggableList
+        className="exercise-list"
+        items={template.exerciseIds}
+        getKey={(exerciseId) => exerciseId}
+        onReorder={handleReorder}
+        renderItem={(exerciseId, index, { titleProps, isCollapsed }) => {
           const exercise = getExerciseById(data.exercises, exerciseId)
           return (
-            <li key={exerciseId} className="exercise-list__item">
-              <span className="exercise-list__name">{exercise?.name ?? 'Exercice supprimé'}</span>
-              <div className="exercise-list__actions">
-                <button type="button" onClick={() => handleMove(index, -1)} aria-label="Monter">
-                  ↑
-                </button>
-                <button type="button" onClick={() => handleMove(index, 1)} aria-label="Descendre">
-                  ↓
-                </button>
-                <button type="button" onClick={() => handleRemoveExercise(exerciseId)} aria-label="Retirer">
-                  ✕
-                </button>
-              </div>
-            </li>
+            <div className={`exercise-list__item${isCollapsed ? ' exercise-list__item--collapsed' : ''}`}>
+              <span className="exercise-list__name" {...titleProps}>
+                {exercise?.name ?? 'Exercice supprimé'}
+              </span>
+              {!isCollapsed && (
+                <div className="exercise-list__actions">
+                  <button type="button" onClick={() => handleRemoveExercise(exerciseId)} aria-label="Retirer">
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
           )
-        })}
-      </ol>
+        }}
+      />
 
       <ExercisePicker exercises={data.exercises} onAdd={handleAddExercise} />
 

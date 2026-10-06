@@ -253,12 +253,6 @@ export function ExerciseView({ session, data, setData }) {
     setData({ ...data, sessions: reorderSessionEntries(data.sessions, session.id, fromIndex, toIndex) })
   }
 
-  function handleMoveEntry(index, direction) {
-    const targetIndex = index + direction
-    if (targetIndex < 0 || targetIndex >= session.entries.length) return
-    handleReorderEntries(index, targetIndex)
-  }
-
   // L'exercice en cours (celui dont on attend la prochaine série) ne peut
   // pas être retiré ici : le retirer laisserait currentExerciseId pointer
   // sur rien, et il n'y a pas d'écran vers lequel retomber proprement dans
@@ -430,22 +424,26 @@ export function ExerciseView({ session, data, setData }) {
           items={session.entries}
           getKey={(sessionEntry) => sessionEntry.exerciseId}
           onReorder={handleReorderEntries}
-          renderItem={(sessionEntry, index, dragHandleProps) => {
+          renderItem={(sessionEntry, index, { titleProps, isCollapsed }) => {
             const isCurrentExercise = sessionEntry.exerciseId === session.currentExerciseId
             const entryExercise = data.exercises.find((e) => e.id === sessionEntry.exerciseId)
+            // Déplacement en cours (appui long sur un titre, voir
+            // DraggableList) : titres seuls.
+            if (isCollapsed) {
+              return (
+                <div className="prep-exercise prep-exercise--collapsed">
+                  <span className="prep-exercise__name" {...titleProps}>
+                    {sessionEntry.exerciseName}
+                  </span>
+                </div>
+              )
+            }
             return (
               <div className="prep-exercise">
                 <div className="prep-exercise__header">
-                  <button type="button" className="prep-exercise__handle" aria-label="Réordonner (appui long)" {...dragHandleProps}>
-                    ⠿
-                  </button>
-                  <span className="prep-exercise__name">{sessionEntry.exerciseName}</span>
-                  <button type="button" className="prep-exercise__remove" onClick={() => handleMoveEntry(index, -1)} aria-label="Monter">
-                    ↑
-                  </button>
-                  <button type="button" className="prep-exercise__remove" onClick={() => handleMoveEntry(index, 1)} aria-label="Descendre">
-                    ↓
-                  </button>
+                  <span className="prep-exercise__name" {...titleProps}>
+                    {sessionEntry.exerciseName}
+                  </span>
                   <button
                     type="button"
                     className="prep-exercise__remove"

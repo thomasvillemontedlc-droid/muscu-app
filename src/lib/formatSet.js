@@ -62,6 +62,31 @@ export function formatPerformanceSummary(sets, exerciseName) {
   return series.map((set) => formatSet({ ...set, side: undefined }, exerciseName)).join(', ')
 }
 
+// Résumé d'un exercice prévu, pour sa ligne repliée (écran de
+// préparation) : "4 × 10 · 60 kg", "4 × 10 · 55-60 kg" si les charges
+// varient, "4 × 8-10 · 60 kg" si les répétitions varient, "3 × 40 s" pour
+// un exercice au temps. Séries de travail seulement ; une paire
+// droit/gauche compte pour une série.
+export function formatPlannedSetsSummary(sets, exerciseName) {
+  const work = getWorkSets(sets)
+  if (work.length === 0) return 'Aucune série'
+  const paired = work.every((set) => set.side != null)
+  const series = paired ? work.filter((set) => set.side === 'droit') : work
+  const range = (values, format) => {
+    const min = Math.min(...values)
+    const max = Math.max(...values)
+    return min === max ? format(min) : `${format(min)}-${format(max)}`
+  }
+  const isTime = getExerciseUnit(exerciseName) === 'time'
+  const reps = range(
+    series.map((set) => set.reps),
+    formatDecimal,
+  )
+  const weights = series.map((set) => set.weight)
+  const weightPart = Math.max(...weights) > 0 ? ` · ${range(weights, formatDecimal)} kg` : ''
+  return `${series.length} × ${reps}${isTime ? ' s' : ''}${weightPart}`
+}
+
 // Libellé court d'une série dans une liste éditable (voir
 // components/SetRow.jsx) : "Échauffement" ou "Série #n", + (D)/(G).
 export function getSetLabel(sets, index) {

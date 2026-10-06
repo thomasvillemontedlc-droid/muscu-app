@@ -10,9 +10,17 @@ import {
   setExerciseWeightMode,
 } from '../../domain/exercises.js'
 import { getExercisesUsedInTemplate } from '../../domain/history.js'
-import { addSet, getDisplayedSetCount, removeSet, setEntryUnilateral, setSetCount, updateSet } from '../../domain/sessions.js'
+import {
+  addSet,
+  getDisplayedSetCount,
+  getSessionStatus,
+  removeSet,
+  setEntryUnilateral,
+  setSetCount,
+  updateSet,
+} from '../../domain/sessions.js'
 import { isWarmupSet } from '../../domain/setKinds.js'
-import { getSetLabel } from '../../lib/formatSet.js'
+import { formatPlannedSetsSummary, getSetLabel } from '../../lib/formatSet.js'
 import { formatDecimal } from '../../lib/formatNumber.js'
 import { getEstimatedSessionStats } from '../../domain/sessionSummary.js'
 import {
@@ -40,15 +48,18 @@ export function PrepView({ session, data, setData }) {
   const suggestedIds = getExercisesUsedInTemplate(otherSessions, session.templateName)
   const estimate = getEstimatedSessionStats(session)
   const estimatedDuration = formatDuration(estimate.durationMs)
+  // Séance déjà faite au moins une fois (terminée ou partielle) : écran
+  // compact - lancement en haut, exercices repliés en une ligne résumée,
+  // options secondaires dans "Plus d'options". Jamais faite : affichage
+  // détaillé (tout déplié, lancement en bas), pour tout régler la 1re fois.
+  const alreadyDone = otherSessions.some(
+    (s) => s.templateId === session.templateId && getSessionStatus(s) !== 'not-done',
+  )
+  // Mode compact : un seul exercice déplié à la fois (null = tous repliés).
+  const [expandedId, setExpandedId] = useState(null)
 
   function handleReorder(fromIndex, toIndex) {
     setData({ ...data, sessions: reorderSessionEntries(data.sessions, session.id, fromIndex, toIndex) })
-  }
-
-  function handleMove(index, direction) {
-    const targetIndex = index + direction
-    if (targetIndex < 0 || targetIndex >= session.entries.length) return
-    handleReorder(index, targetIndex)
   }
 
   function handleRemoveExercise(exerciseId) {
@@ -178,6 +189,65 @@ export function PrepView({ session, data, setData }) {
     )
   }
 
+  // Champs partagés entre l'affichage détaillé (bloc de lancement en bas)
+  // et le mode compact (carte de lancement en haut / "Plus d'options").
+  const restField = (
+    <div className="prep-field">
+      <span>Temps de repos</span>
+      <div className="rest-duration-fields">
+        <label className="rest-duration-fields__field">
+          <NumberField
+            value={Math.floor(session.restSeconds / 60)}
+            onChange={handleRestMinutesChange}
+            aria-label="Minutes de repos"
+          />
+          <span>min</span>
+        </label>
+        <label className="rest-duration-fields__field">
+          <NumberField
+            value={session.restSeconds % 60}
+            onChange={handleRestSecondsChange}
+            aria-label="Secondes de repos"
+          />
+          <span>s</span>
+        </label>
+      </div>
+    </div>
+  )
+
+  const startingField = session.entries.length > 0 && (
+    <label className="prep-field">
+      <span>Commencer par</span>
+      <select className="prep-field__select" value={session.entries[0].exerciseId} onChange={handleStartingExerciseChange}>
+        {session.entries.map((entry) => (
+          <option key={entry.exerciseId} value={entry.exerciseId}>
+            {entry.exerciseName}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+
+  const goalField = (
+    <>
+      <label className="prep-field">
+        <span>Objectif de la séance</span>
+        <select className="prep-field__select" value={session.goal ?? ''} onChange={handleGoalChange}>
+          <option value="">Aucun (garde les valeurs habituelles)</option>
+          {TRAINING_GOALS.map((goal) => (
+            <option key={goal.value} value={goal.value}>
+              {goal.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="prep-field__hint">
+        Ajuste seulement les répétitions par défaut des exercices jamais faits avant - ne force rien sur ceux déjà
+        pratiqués.
+      </p>
+    </>
+  )
+
   return (
     <div className="page">
       <Link to="/" className="back-link">
@@ -186,34 +256,91 @@ export function PrepView({ session, data, setData }) {
 
       <h1>{session.templateName}</h1>
 
+      {alreadyDone && session.entries.length > 0 && (
+        <section className="featured-session prep-quickstart">
+          <ul className="session-stats prep-quickstart__stats">
+            <li>~{estimatedDuration}</li>
+            <li>{estimate.totalSets} séries</li>
+          </ul>
+          {restField}
+          <BigButton onClick={() => setShowWarmup(true)}>Commencer la séance</BigButton>
+        </section>
+      )}
+
       <DraggableList
         className="prep-exercise-list"
         items={session.entries}
         getKey={(entry) => entry.exerciseId}
         onReorder={handleReorder}
-        renderItem={(entry, index, dragHandleProps) => {
+        renderItem={(entry, index, { titleProps, isCollapsed }) => {
           const entryExercise = data.exercises.find((e) => e.id === entry.exerciseId)
+
+          // Déplacement en cours (appui long sur un titre) : titres seuls.
+          if (isCollapsed) {
+            return (
+              <div className="prep-exercise prep-exercise--collapsed">
+                <span className="prep-exercise__name" {...titleProps}>
+                  {entry.exerciseName}
+                </span>
+              </div>
+            )
+          }
+
+          const removeButton = (
+            <button
+              type="button"
+              className="prep-exercise__remove"
+              onClick={() => handleRemoveExercise(entry.exerciseId)}
+              aria-label="Retirer de cette séance"
+            >
+              ✕
+            </button>
+          )
+
+          // Mode compact, exercice replié : une ligne nom + résumé ; un
+          // toucher la déplie (et replie l'éventuel autre exercice ouvert).
+          const expanded = !alreadyDone || expandedId === entry.exerciseId
+          if (!expanded) {
+            return (
+              <div className="prep-exercise prep-exercise--folded">
+                <div className="prep-exercise__header">
+                  <button
+                    type="button"
+                    className="prep-exercise__toggle"
+                    {...titleProps}
+                    onClick={() => setExpandedId(entry.exerciseId)}
+                    aria-expanded="false"
+                  >
+                    <span className="prep-exercise__name">{entry.exerciseName}</span>
+                    <span className="prep-exercise__summary">
+                      {formatPlannedSetsSummary(entry.sets, entry.exerciseName)}
+                    </span>
+                  </button>
+                  {removeButton}
+                </div>
+              </div>
+            )
+          }
+
           return (
           <div className="prep-exercise">
             <div className="prep-exercise__header">
-              <button type="button" className="prep-exercise__handle" aria-label="Réordonner (appui long)" {...dragHandleProps}>
-                ⠿
-              </button>
-              <span className="prep-exercise__name">{entry.exerciseName}</span>
-              <button type="button" className="prep-exercise__remove" onClick={() => handleMove(index, -1)} aria-label="Monter">
-                ↑
-              </button>
-              <button type="button" className="prep-exercise__remove" onClick={() => handleMove(index, 1)} aria-label="Descendre">
-                ↓
-              </button>
-              <button
-                type="button"
-                className="prep-exercise__remove"
-                onClick={() => handleRemoveExercise(entry.exerciseId)}
-                aria-label="Retirer de cette séance"
-              >
-                ✕
-              </button>
+              {alreadyDone ? (
+                <button
+                  type="button"
+                  className="prep-exercise__toggle"
+                  {...titleProps}
+                  onClick={() => setExpandedId(null)}
+                  aria-expanded="true"
+                >
+                  <span className="prep-exercise__name">{entry.exerciseName}</span>
+                </button>
+              ) : (
+                <span className="prep-exercise__name" {...titleProps}>
+                  {entry.exerciseName}
+                </span>
+              )}
+              {removeButton}
             </div>
 
             <div className="prep-exercise__set-controls">
@@ -276,60 +403,17 @@ export function PrepView({ session, data, setData }) {
 
       {session.entries.length === 0 ? (
         <p className="empty-state">Ajoute au moins un exercice pour commencer.</p>
+      ) : alreadyDone ? (
+        <details className="prep-more-options">
+          <summary>Plus d'options</summary>
+          {startingField}
+          {goalField}
+        </details>
       ) : (
         <>
-          <label className="prep-field">
-            <span>Commencer par</span>
-            <select
-              className="prep-field__select"
-              value={session.entries[0].exerciseId}
-              onChange={handleStartingExerciseChange}
-            >
-              {session.entries.map((entry) => (
-                <option key={entry.exerciseId} value={entry.exerciseId}>
-                  {entry.exerciseName}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="prep-field">
-            <span>Temps de repos</span>
-            <div className="rest-duration-fields">
-              <label className="rest-duration-fields__field">
-                <NumberField
-                  value={Math.floor(session.restSeconds / 60)}
-                  onChange={handleRestMinutesChange}
-                  aria-label="Minutes de repos"
-                />
-                <span>min</span>
-              </label>
-              <label className="rest-duration-fields__field">
-                <NumberField
-                  value={session.restSeconds % 60}
-                  onChange={handleRestSecondsChange}
-                  aria-label="Secondes de repos"
-                />
-                <span>s</span>
-              </label>
-            </div>
-          </div>
-
-          <label className="prep-field">
-            <span>Objectif de la séance</span>
-            <select className="prep-field__select" value={session.goal ?? ''} onChange={handleGoalChange}>
-              <option value="">Aucun (garde les valeurs habituelles)</option>
-              {TRAINING_GOALS.map((goal) => (
-                <option key={goal.value} value={goal.value}>
-                  {goal.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <p className="prep-field__hint">
-            Ajuste seulement les répétitions par défaut des exercices jamais faits avant - ne force rien sur ceux déjà
-            pratiqués.
-          </p>
+          {startingField}
+          {restField}
+          {goalField}
 
           <ul className="session-stats">
             <li>Durée estimée : ~{estimatedDuration}</li>

@@ -1,140 +1,234 @@
-import { useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { vibrateSuccess } from '../lib/haptics.js'
 
-const LONG_PRESS_MS = 300
+const LONG_PRESS_MS = 400
 const MOVE_CANCEL_THRESHOLD = 10
+// Zone (px) près du haut/bas de l'écran où le doigt fait défiler la page
+// pendant un déplacement, et vitesse max (px par image).
+const AUTO_SCROLL_EDGE = 80
+const AUTO_SCROLL_MAX_SPEED = 14
 
-// Sur iOS Safari, les Pointer Events seuls ne suffisent pas à empêcher la
-// sélection de texte / le menu contextuel natif ("Copier / Rechercher") que
-// déclenche un appui long : touch-action + user-select + touch-callout en
-// CSS (voir dragHandleProps.style ci-dessous) réduisent le risque, mais
-// seul un preventDefault() explicite sur les événements tactiles natifs
-// (touchstart/touchmove), attachés en non-passif, l'empêche de façon fiable
-// - un handler React onTouchMove ne peut pas preventDefault (passif par
-// défaut). Ref-callback avec nettoyage (React 19) plutôt qu'un useEffect
-// séparé : la poignée change d'élément DOM à chaque item de la liste.
-function suppressNativeTouchGestures(el) {
-  if (!el) return
-  const prevent = (e) => e.preventDefault()
-  el.addEventListener('touchstart', prevent, { passive: false })
-  el.addEventListener('touchmove', prevent, { passive: false })
-  return () => {
-    el.removeEventListener('touchstart', prevent)
-    el.removeEventListener('touchmove', prevent)
-  }
-}
-
-// Liste réordonnable par appui long + glisser (tactile et souris, via les
-// Pointer Events). `renderItem` reçoit les props à poser sur la "poignée"
-// (l'élément qui déclenche le drag au toucher).
+// Liste réordonnable par appui long sur le TITRE d'un élément, puis glisser
+// (tactile et souris). Pas de poignée dédiée : renderItem(item, index,
+// { titleProps, isCollapsed, isDragging }) pose `titleProps` sur le titre.
+//
+// Défilement : rien n'est bloqué tant que l'appui long n'est pas déclenché
+// (pas de preventDefault sur touchstart, touch-action laissé par défaut) -
+// un balayage qui commence sur un titre fait défiler la page normalement,
+// le navigateur annule alors le pointeur (pointercancel) et l'appui long
+// avec. Ce n'est qu'une fois l'appui long déclenché qu'un écouteur
+// touchmove non passif bloque le défilement natif ; la page défile alors
+// d'elle-même si le doigt approche du haut ou du bas de l'écran.
+//
+// Pendant le déplacement, toute la liste passe en mode replié
+// (isCollapsed : chaque écran n'affiche que le titre, sur une hauteur
+// fixe) : l'élément tenu suit le doigt, les autres se décalent pour montrer
+// l'emplacement d'arrivée. Au relâchement : onReorder(from, to), puis
+// affichage normal.
 export function DraggableList({ items, getKey, onReorder, renderItem, className }) {
   const itemRefs = useRef(new Map())
-  const pressTimer = useRef(null)
-  const pressStart = useRef({ x: 0, y: 0 })
-  const [dragState, setDragState] = useState(null) // { index, startY, offsetY, overIndex, startRect }
+  const press = useRef(null) // { index, x, y, pointerType, timer }
+  const fingerY = useRef(0)
+  const suppressClick = useRef(false)
+  // { index, pointerType, fingerY, scrollY, slots: [{ docTop, height }] | null }
+  const [drag, setDrag] = useState(null)
+  // Lus au relâchement, hors rendu : les emplacements mesurés (posés dès
+  // la mesure) et le dernier onReorder. La position du doigt vient de
+  // fingerY (mis à jour à chaque mouvement, avant tout rendu) : le dernier
+  // mouvement avant le relâchement compte même s'il n'a pas encore été
+  // rendu par React.
+  const slotsRef = useRef(null)
+  const onReorderRef = useRef(onReorder)
+  useEffect(() => {
+    onReorderRef.current = onReorder
+  })
 
   function registerItemRef(key, el) {
     if (el) itemRefs.current.set(key, el)
     else itemRefs.current.delete(key)
   }
 
-  function clearPressTimer() {
-    if (pressTimer.current) {
-      clearTimeout(pressTimer.current)
-      pressTimer.current = null
-    }
+  function cancelPress() {
+    if (press.current) clearTimeout(press.current.timer)
+    press.current = null
   }
 
-  function handleHandlePointerDown(index, e) {
-    pressStart.current = { x: e.clientX, y: e.clientY }
-    clearPressTimer()
-    pressTimer.current = setTimeout(() => {
-      // Capturé maintenant : une fois le drag commencé, cet élément reçoit un
-      // transform CSS et son getBoundingClientRect() ne reflète plus sa
-      // position "au repos", donc on ne peut plus s'y fier pendant le geste.
-      const startRect = itemRefs.current.get(getKey(items[index]))?.getBoundingClientRect()
-      setDragState({ index, startY: e.clientY, offsetY: 0, overIndex: index, startRect })
+  function handleTitlePointerDown(index, e) {
+    if (e.button != null && e.button !== 0) return
+    cancelPress()
+    fingerY.current = e.clientY
+    const pending = { index, x: e.clientX, y: e.clientY, pointerType: e.pointerType }
+    pending.timer = setTimeout(() => {
+      press.current = null
+      vibrateSuccess()
+      // Le clic qui suit le relâchement (même sans déplacement) ne doit
+      // pas être interprété comme un simple toucher sur le titre.
+      suppressClick.current = true
+      setDrag({ index, pointerType: pending.pointerType, fingerY: fingerY.current, scrollY: window.scrollY, slots: null })
     }, LONG_PRESS_MS)
+    press.current = pending
   }
 
-  function handleHandlePointerMove(e) {
-    if (!pressTimer.current) return
-    const dx = Math.abs(e.clientX - pressStart.current.x)
-    const dy = Math.abs(e.clientY - pressStart.current.y)
-    if (dx > MOVE_CANCEL_THRESHOLD || dy > MOVE_CANCEL_THRESHOLD) clearPressTimer()
+  function handleTitlePointerMove(e) {
+    if (!press.current) return
+    fingerY.current = e.clientY
+    const dx = Math.abs(e.clientX - press.current.x)
+    const dy = Math.abs(e.clientY - press.current.y)
+    if (dx > MOVE_CANCEL_THRESHOLD || dy > MOVE_CANCEL_THRESHOLD) cancelPress()
   }
 
-  function computeOverIndex(fromIndex, offsetY, startRect) {
-    if (!startRect) return fromIndex
-    const draggedCenter = startRect.top + startRect.height / 2 + offsetY
-
-    let overIndex = fromIndex
-    items.forEach((item, index) => {
-      if (index === fromIndex) return
-      const el = itemRefs.current.get(getKey(item))
-      if (!el) return
-      const rect = el.getBoundingClientRect()
-      const center = rect.top + rect.height / 2
-      if (draggedCenter > center) overIndex = index
+  // Liste repliée rendue : on mesure les emplacements (coordonnées du
+  // document, insensibles au défilement), puis on fait défiler pour que
+  // l'élément tenu reste sous le doigt malgré le changement de hauteur.
+  useLayoutEffect(() => {
+    if (!drag || drag.slots) return
+    const slots = items.map((item) => {
+      const rect = itemRefs.current.get(getKey(item))?.getBoundingClientRect()
+      return rect ? { docTop: rect.top + window.scrollY, height: rect.height } : { docTop: 0, height: 0 }
     })
-    return overIndex
-  }
+    slotsRef.current = slots
+    const held = slots[drag.index]
+    window.scrollBy(0, held.docTop - window.scrollY + held.height / 2 - drag.fingerY)
+    setDrag((d) => d && { ...d, slots, scrollY: window.scrollY })
+    // Mesure unique au déclenchement (drag.slots passe de null à rempli).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drag])
 
-  function handleContainerPointerMove(e) {
-    if (!dragState) return
-    const offsetY = e.clientY - dragState.startY
-    setDragState((s) => ({
-      ...s,
-      offsetY,
-      overIndex: computeOverIndex(s.index, offsetY, s.startRect),
-    }))
-  }
+  const dragging = drag != null
+  const dragIndex = drag?.index
+  const isTouchDrag = drag?.pointerType === 'touch'
 
-  function handleContainerPointerUp() {
-    clearPressTimer()
-    if (dragState && dragState.overIndex !== dragState.index) {
-      onReorder(dragState.index, dragState.overIndex)
+  // Suivi du doigt, fin du geste et défilement automatique, seulement
+  // pendant un déplacement.
+  useEffect(() => {
+    if (!dragging) return
+
+    function move(clientY) {
+      fingerY.current = clientY
+      setDrag((d) => d && { ...d, fingerY: clientY, scrollY: window.scrollY })
     }
-    setDragState(null)
-  }
+
+    function end() {
+      const slots = slotsRef.current
+      slotsRef.current = null
+      setDrag(null)
+      if (slots) {
+        const to = getTargetIndex({ index: dragIndex, slots, fingerY: fingerY.current, scrollY: window.scrollY })
+        if (to !== dragIndex) onReorderRef.current(dragIndex, to)
+      }
+      setTimeout(() => {
+        suppressClick.current = false
+      }, 400)
+    }
+
+    function handleTouchMove(e) {
+      // Appui long déclenché : le défilement natif est bloqué à partir
+      // d'ici seulement (voir le commentaire en tête de composant).
+      e.preventDefault()
+      if (e.touches[0]) move(e.touches[0].clientY)
+    }
+    const handlePointerMove = (e) => move(e.clientY)
+
+    let frame = requestAnimationFrame(function autoScroll() {
+      const y = fingerY.current
+      let speed = 0
+      if (y < AUTO_SCROLL_EDGE) speed = -AUTO_SCROLL_MAX_SPEED * (1 - y / AUTO_SCROLL_EDGE)
+      else if (y > window.innerHeight - AUTO_SCROLL_EDGE) {
+        speed = AUTO_SCROLL_MAX_SPEED * (1 - (window.innerHeight - y) / AUTO_SCROLL_EDGE)
+      }
+      if (speed !== 0) {
+        window.scrollBy(0, speed)
+        setDrag((d) => d && { ...d, scrollY: window.scrollY })
+      }
+      frame = requestAnimationFrame(autoScroll)
+    })
+
+    // Tactile : uniquement les événements touch (iOS peut annuler le
+    // pointeur au début du geste) ; souris/stylet : les Pointer Events.
+    if (isTouchDrag) {
+      document.addEventListener('touchmove', handleTouchMove, { passive: false })
+      document.addEventListener('touchend', end)
+      document.addEventListener('touchcancel', end)
+    } else {
+      document.addEventListener('pointermove', handlePointerMove)
+      document.addEventListener('pointerup', end)
+      document.addEventListener('pointercancel', end)
+    }
+    return () => {
+      cancelAnimationFrame(frame)
+      document.removeEventListener('touchmove', handleTouchMove)
+      document.removeEventListener('touchend', end)
+      document.removeEventListener('touchcancel', end)
+      document.removeEventListener('pointermove', handlePointerMove)
+      document.removeEventListener('pointerup', end)
+      document.removeEventListener('pointercancel', end)
+    }
+  }, [dragging, dragIndex, isTouchDrag])
+
+  useEffect(() => () => cancelPress(), [])
+
+  const targetIndex = drag?.slots ? getTargetIndex(drag) : null
+  const step = drag?.slots ? getSlotStep(drag.slots) : 0
 
   return (
-    <ol
-      className={className}
-      onPointerMove={dragState ? handleContainerPointerMove : undefined}
-      onPointerUp={dragState ? handleContainerPointerUp : undefined}
-      onPointerCancel={dragState ? handleContainerPointerUp : undefined}
-    >
+    <ol className={`${className ?? ''}${dragging ? ' draggable-list--collapsed' : ''}`}>
       {items.map((item, index) => {
         const key = getKey(item)
-        const isDragging = dragState?.index === index
-        const style = isDragging
-          ? { transform: `translateY(${dragState.offsetY}px)`, position: 'relative', zIndex: 2 }
-          : undefined
+        const isDragging = drag?.index === index
+        let transform
+        if (drag?.slots) {
+          if (isDragging) {
+            const slot = drag.slots[index]
+            transform = drag.fingerY + drag.scrollY - (slot.docTop + slot.height / 2)
+          } else if (index > drag.index && index <= targetIndex) transform = -step
+          else if (index < drag.index && index >= targetIndex) transform = step
+        }
 
-        const dragHandleProps = {
-          ref: suppressNativeTouchGestures,
-          onPointerDown: (e) => handleHandlePointerDown(index, e),
-          onPointerMove: handleHandlePointerMove,
-          onPointerUp: clearPressTimer,
-          style: {
-            touchAction: 'none',
-            userSelect: 'none',
-            WebkitUserSelect: 'none',
-            WebkitTouchCallout: 'none',
+        const titleProps = {
+          onPointerDown: (e) => handleTitlePointerDown(index, e),
+          onPointerMove: handleTitlePointerMove,
+          onPointerUp: cancelPress,
+          onPointerCancel: cancelPress,
+          onContextMenu: (e) => e.preventDefault(),
+          onClickCapture: (e) => {
+            if (!suppressClick.current) return
+            e.stopPropagation()
+            e.preventDefault()
           },
+          style: { userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none' },
         }
 
         return (
           <li
             key={key}
             ref={(el) => registerItemRef(key, el)}
-            style={style}
-            className={isDragging ? 'draggable-list__item draggable-list__item--dragging' : 'draggable-list__item'}
+            style={transform != null ? { transform: `translateY(${transform}px)` } : undefined}
+            className={[
+              'draggable-list__item',
+              dragging && 'draggable-list__item--collapsed',
+              isDragging && 'draggable-list__item--dragging',
+            ]
+              .filter(Boolean)
+              .join(' ')}
           >
-            {renderItem(item, index, dragHandleProps)}
+            {renderItem(item, index, { titleProps, isCollapsed: dragging, isDragging })}
           </li>
         )
       })}
     </ol>
   )
+}
+
+// Rang d'arrivée de l'élément tenu : nombre d'autres éléments dont le
+// centre est au-dessus du doigt (coordonnées du document).
+function getTargetIndex(drag) {
+  const fingerDocY = drag.fingerY + drag.scrollY
+  return drag.slots.filter((slot, i) => i !== drag.index && slot.docTop + slot.height / 2 < fingerDocY).length
+}
+
+// Distance entre deux emplacements consécutifs (hauteur fixe + marge, voir
+// le mode replié), dont se décalent les éléments pour laisser la place.
+function getSlotStep(slots) {
+  if (slots.length < 2) return slots[0]?.height ?? 0
+  return slots[1].docTop - slots[0].docTop
 }

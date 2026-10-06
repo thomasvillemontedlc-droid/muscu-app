@@ -49,7 +49,7 @@ export function RoutineRunner({
   const [remaining, setRemaining] = useState(0)
   const [newName, setNewName] = useState('')
 
-  // Le chrono continue sous zéro (-1s, -2s...) tant qu'on ne passe pas au
+  // Le chrono continue sous zéro (affiché +1s, +2s...) tant qu'on ne passe pas au
   // mouvement suivant : il indique de combien on a dépassé, sans jamais
   // avancer tout seul. Pas de chrono pour un mouvement sans durée.
   const timed = running && items[index]?.durationSeconds > 0
@@ -186,7 +186,8 @@ export function RoutineRunner({
           {sideLabel && <span className="routine-runner__side"> · {sideLabel}</span>}
         </p>
         <p className={`routine-runner__timer${overtime ? ' routine-runner__timer--overtime' : ''}`}>
-          {current.durationSeconds > 0 ? `${remaining}s` : '—'}
+          {/* Dépassement affiché en positif : +1s, +2s... */}
+          {current.durationSeconds > 0 ? (overtime ? `+${-remaining}s` : `${remaining}s`) : '—'}
         </p>
         {isLast && finishLabel && onFinish ? (
           <BigButton

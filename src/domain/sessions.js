@@ -32,19 +32,29 @@ export function expandForSides(sets, unilateral) {
 // modèle d'origine si le template en a mémorisé (voir
 // domain/templateModels.js#createTemplateFromModel — un template créé
 // vide ou à la main n'a pas de defaultSets, on retombe alors sur une
-// série vide comme avant). La séance démarre en phase "prep" (écran de
-// préparation), voir domain/sessionRunner.js pour la suite du déroulé guidé.
+// série vide comme avant). Exception : des séries/répétitions par défaut
+// redéfinies depuis la dernière performance (defaultSetsUpdatedAt plus
+// récent) l'emportent sur elle pour le nombre de séries et les répétitions,
+// les charges restant celles de la dernière fois (voir withLastWeights).
+// La séance démarre en phase "prep" (écran de préparation), voir domain/sessionRunner.js pour la suite du déroulé guidé.
 export function startSessionFromTemplate(sessions, template, exercises) {
   const entries = template.exerciseIds.map((exerciseId) => {
     const exercise = getExerciseById(exercises, exerciseId)
     const last = getLastPerformance(sessions, exerciseId)
     const defaultSets = template.defaultSets?.[exerciseId]
     const fallbackSets = expandForSides(defaultSets ?? [{ weight: 0, reps: 0 }], exercise?.unilateral)
+    const defaultsUpdatedAt = template.defaultSetsUpdatedAt?.[exerciseId]
+
+    let sets
+    if (!last) sets = fallbackSets
+    else if (defaultSets && defaultsUpdatedAt && defaultsUpdatedAt > last.date) {
+      sets = withLastWeights(fallbackSets, last.sets)
+    } else sets = last.sets
 
     return {
       exerciseId,
       exerciseName: exercise?.name ?? 'Exercice supprimé',
-      sets: last ? last.sets.map(withTarget) : fallbackSets.map(withTarget),
+      sets: sets.map(withTarget),
     }
   })
 
@@ -69,6 +79,21 @@ export function startSessionFromTemplate(sessions, template, exercises) {
   }
 
   return { session, sessions: [...sessions, session] }
+}
+
+// Séries/répétitions par défaut modifiées APRÈS la dernière performance
+// (voir domain/templates.js#setDefaultSetsInTemplates) : on prend leur
+// nombre de séries et leurs répétitions, mais les charges de la dernière
+// fois, série par série. Au-delà du nombre de séries d'alors, la dernière
+// charge connue est répétée (par côté si l'historique était déjà pairé
+// droit/gauche).
+function withLastWeights(targetSets, lastSets) {
+  const paired = lastSets.length >= 2 && lastSets.some((set) => set.side != null)
+  return targetSets.map((set, i) => {
+    const fallbackIndex = paired ? lastSets.length - 2 + (i % 2) : lastSets.length - 1
+    const source = lastSets[i] ?? lastSets[fallbackIndex]
+    return { ...set, weight: source.weight }
+  })
 }
 
 // Reprend le dernier temps de repos choisi par l'utilisateur, pour éviter de

@@ -1,19 +1,33 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
-import { createTemplate, deleteTemplate, sortTemplatesForToday } from '../domain/templates.js'
+import { createTemplate, deleteTemplate, deleteTemplates, sortTemplatesForToday } from '../domain/templates.js'
 import { createTemplateFromModel, TEMPLATE_STRUCTURES } from '../domain/templateModels.js'
 import { getActiveProgramIndex, getNextProgramTemplateId, getNextTemplateOverrideId } from '../domain/program.js'
 import { getInProgressSession, startSessionFromTemplate } from '../domain/sessions.js'
 import { BigButton } from '../components/BigButton.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { TourStep } from '../components/TourStep.jsx'
+import { TemplateBulkEditSheet } from '../components/TemplateBulkEditSheet.jsx'
 
 export function TemplatesListPage() {
   const { data, setData } = useAppDataContext()
   const [newName, setNewName] = useState('')
   const [pendingDeleteId, setPendingDeleteId] = useState(null)
+  // Sélection multiple (bouton "Sélectionner") : supprimer ou modifier
+  // plusieurs séances types d'un coup, voir TemplateBulkEditSheet.jsx.
+  const [selecting, setSelecting] = useState(false)
+  const [selectedIds, setSelectedIds] = useState([])
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false)
+  const [bulkEditOpen, setBulkEditOpen] = useState(false)
+  const [notice, setNotice] = useState(null)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!notice) return
+    const timer = setTimeout(() => setNotice(null), 2500)
+    return () => clearTimeout(timer)
+  }, [notice])
 
   const inProgressSession = getInProgressSession(data.sessions)
 
@@ -67,6 +81,42 @@ export function TemplatesListPage() {
   function confirmDelete() {
     setData({ ...data, templates: deleteTemplate(data.templates, pendingDeleteId) })
     setPendingDeleteId(null)
+  }
+
+  // Ids encore existants (une séance supprimée ailleurs sort d'elle-même
+  // de la sélection).
+  const selected = selectedIds.filter((id) => data.templates.some((t) => t.id === id))
+  const allSelected = data.templates.length > 0 && selected.length === data.templates.length
+  const programTemplateIds = new Set(data.programs.flatMap((p) => p?.templateIds ?? []))
+  const selectedInProgram = selected.filter((id) => programTemplateIds.has(id)).length
+  const selectedLabel = `${selected.length} séance${selected.length > 1 ? 's' : ''}`
+
+  function toggleSelecting() {
+    setSelecting(!selecting)
+    setSelectedIds([])
+  }
+
+  function toggleSelected(templateId) {
+    setSelectedIds(
+      selected.includes(templateId) ? selected.filter((id) => id !== templateId) : [...selected, templateId],
+    )
+  }
+
+  function toggleAll() {
+    setSelectedIds(allSelected ? [] : data.templates.map((t) => t.id))
+  }
+
+  function handleBulkDelete() {
+    setData(deleteTemplates(data, selected))
+    setNotice(`${selectedLabel} supprimée${selected.length > 1 ? 's' : ''}.`)
+    setSelectedIds([])
+    setConfirmBulkDelete(false)
+  }
+
+  function handleBulkEditDone(message) {
+    setBulkEditOpen(false)
+    setSelectedIds([])
+    setNotice(message)
   }
 
   function handleStart(template) {
@@ -162,42 +212,102 @@ export function TemplatesListPage() {
 
       {data.templates.length > 0 && (
         <div className="template-list-header">
-          <h2>Mes séances enregistrées</h2>
+          <div className="template-list-header__row">
+            <h2>Mes séances enregistrées</h2>
+            <button type="button" className="template-list-header__select" onClick={toggleSelecting}>
+              {selecting ? 'Annuler' : 'Sélectionner'}
+            </button>
+          </div>
           <p className="template-list-header__hint">Déjà prêtes : lancez-les directement.</p>
+          {selecting && (
+            <label className="template-list__select-all">
+              <input type="checkbox" checked={allSelected} onChange={toggleAll} />
+              Tout sélectionner
+            </label>
+          )}
         </div>
       )}
 
-      <ul className="template-list">
-        {sortedTemplates.map((template) => (
-          <li key={template.id} className="template-list__item">
-            <span className="template-list__name">{template.name}</span>
-            <span className="template-list__count">{template.exerciseIds.length} exercice(s)</span>
-            <div className="template-list__actions">
-              <BigButton
-                onClick={() => handleStart(template)}
-                disabled={template.exerciseIds.length === 0}
-              >
-                Lancer
-              </BigButton>
-              <BigButton variant="secondary" onClick={() => navigate(`/templates/${template.id}`)}>
-                Modifier
-              </BigButton>
-              <details className="template-list__menu">
-                <summary className="template-list__menu-trigger" aria-label="Plus d'options">
-                  ⋯
-                </summary>
-                <button
-                  type="button"
-                  className="subtle-button subtle-button--danger"
-                  onClick={() => setPendingDeleteId(template.id)}
+      <ul className={`template-list ${selecting ? 'template-list--selecting' : ''}`}>
+        {sortedTemplates.map((template) =>
+          selecting ? (
+            <li
+              key={template.id}
+              className={`template-list__item ${selected.includes(template.id) ? 'template-list__item--selected' : ''}`}
+            >
+              <label className="template-list__select">
+                <input
+                  type="checkbox"
+                  checked={selected.includes(template.id)}
+                  onChange={() => toggleSelected(template.id)}
+                />
+                <span>
+                  <span className="template-list__name">{template.name}</span>
+                  <span className="template-list__count">{template.exerciseIds.length} exercice(s)</span>
+                </span>
+              </label>
+            </li>
+          ) : (
+            <li key={template.id} className="template-list__item">
+              <span className="template-list__name">{template.name}</span>
+              <span className="template-list__count">{template.exerciseIds.length} exercice(s)</span>
+              <div className="template-list__actions">
+                <BigButton
+                  onClick={() => handleStart(template)}
+                  disabled={template.exerciseIds.length === 0}
                 >
-                  Supprimer cette séance type
-                </button>
-              </details>
-            </div>
-          </li>
-        ))}
+                  Lancer
+                </BigButton>
+                <BigButton variant="secondary" onClick={() => navigate(`/templates/${template.id}`)}>
+                  Modifier
+                </BigButton>
+                <details className="template-list__menu">
+                  <summary className="template-list__menu-trigger" aria-label="Plus d'options">
+                    ⋯
+                  </summary>
+                  <button
+                    type="button"
+                    className="subtle-button subtle-button--danger"
+                    onClick={() => setPendingDeleteId(template.id)}
+                  >
+                    Supprimer cette séance type
+                  </button>
+                </details>
+              </div>
+            </li>
+          ),
+        )}
       </ul>
+
+      {selecting && (
+        <div className="bulk-bar">
+          <span className="bulk-bar__count">
+            {selectedLabel} sélectionnée{selected.length > 1 ? 's' : ''}
+          </span>
+          <div className="bulk-bar__actions">
+            <BigButton variant="secondary" disabled={selected.length === 0} onClick={() => setBulkEditOpen(true)}>
+              Modifier
+            </BigButton>
+            <BigButton variant="danger" disabled={selected.length === 0} onClick={() => setConfirmBulkDelete(true)}>
+              Supprimer
+            </BigButton>
+          </div>
+        </div>
+      )}
+
+      {notice && (
+        <p className={`bulk-notice ${selecting ? 'bulk-notice--above-bar' : ''}`} role="status">
+          {notice}
+        </p>
+      )}
+
+      {bulkEditOpen && (
+        <TemplateBulkEditSheet
+          templateIds={selected}
+          onClose={() => setBulkEditOpen(false)}
+          onDone={handleBulkEditDone}
+        />
+      )}
 
       <TourStep
         id="create-first-session"
@@ -218,6 +328,21 @@ export function TemplatesListPage() {
         danger
         onConfirm={confirmDelete}
         onCancel={() => setPendingDeleteId(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmBulkDelete}
+        title={selected.length > 1 ? `Supprimer ${selected.length} séances ?` : 'Supprimer cette séance ?'}
+        message={
+          'Ton historique est conservé.' +
+          (selectedInProgram > 0
+            ? ` ${selectedInProgram} ${selectedInProgram > 1 ? 'sont' : 'est'} dans ton programme et en ${selectedInProgram > 1 ? 'seront retirées' : 'sera retirée'}.`
+            : '')
+        }
+        confirmLabel="Supprimer"
+        danger
+        onConfirm={handleBulkDelete}
+        onCancel={() => setConfirmBulkDelete(false)}
       />
     </div>
   )

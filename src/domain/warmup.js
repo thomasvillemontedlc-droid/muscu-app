@@ -13,6 +13,17 @@ export function getPlannedMusclesWorked(session) {
   return MUSCLE_GROUPS.filter((id) => worked.has(id))
 }
 
+// Mouvement fait un côté à la fois (sides: true) : déroulé automatiquement
+// en deux étapes "Côté droit" puis "Côté gauche" de même durée par
+// components/RoutineRunner.jsx. Les autres restent de simples noms.
+function sided(name) {
+  return { name, sides: true }
+}
+
+function toMove(move) {
+  return typeof move === 'string' ? { name: move, sides: false } : move
+}
+
 // Mouvement d'échauffement générique par groupe musculaire : gestes simples
 // sans matériel, pensés comme mise en train avant la séance plutôt que
 // comme un échauffement personnalisé (voir la mention affichée avec la
@@ -32,7 +43,7 @@ const WARMUP_MOVES = {
   obliques: 'Rotations du buste',
   lombaires: 'Chat-vache (mobilité du dos)',
   quadriceps: 'Squats à vide',
-  'ischio-jambiers': 'Fentes avant à vide',
+  'ischio-jambiers': sided('Fentes avant à vide'),
   fessiers: 'Squats à vide',
   mollets: 'Montées sur pointes de pieds',
   adducteurs: 'Cercles de hanches',
@@ -59,19 +70,19 @@ const WARMUP_MOVE_OPTIONS = {
   deltoides: ['Élévations latérales à vide', 'Cercles de bras'],
   biceps: ['Flexions légères des coudes à vide'],
   triceps: ['Rotations des bras'],
-  'avant-bras': ['Étirements des poignets'],
+  'avant-bras': [sided('Étirements des poignets')],
   brachial: ['Rotations des avant-bras'],
   'abdos-haut': ['Mini-crunchs à vide'],
   'abdos-bas': ['Montées de genoux lentes'],
   'abdos-profonds': ['Gainage léger (15s)'],
   obliques: ['Flexions latérales du buste'],
   lombaires: ['Rotations du bassin'],
-  quadriceps: ['Fentes avant à vide', 'Montées de genoux'],
-  'ischio-jambiers': ['Balancements de jambe', 'Squats à vide'],
-  fessiers: ['Pont fessier à vide', 'Fentes avant à vide'],
+  quadriceps: [sided('Fentes avant à vide'), 'Montées de genoux'],
+  'ischio-jambiers': [sided('Balancements de jambe'), 'Squats à vide'],
+  fessiers: ['Pont fessier à vide', sided('Fentes avant à vide')],
   mollets: ['Sautillements légers'],
-  adducteurs: ['Fentes latérales à vide'],
-  abducteurs: ['Marche latérale (pas chassés)'],
+  adducteurs: [sided('Fentes latérales à vide')],
+  abducteurs: [sided('Marche latérale (pas chassés)')],
 }
 
 // Rameur y figure aussi (pas seulement dans RAMEUR_WARMUP) : redevient
@@ -89,10 +100,10 @@ export function getWarmupSuggestions(muscleIds) {
   const moves = [RAMEUR_WARMUP]
 
   for (const muscleId of muscleIds) {
-    const name = WARMUP_MOVES[muscleId] ?? DEFAULT_WARMUP_MOVE
+    const { name, sides } = toMove(WARMUP_MOVES[muscleId] ?? DEFAULT_WARMUP_MOVE)
     if (seen.has(name)) continue
     seen.add(name)
-    moves.push({ id: muscleId, muscleLabel: getMuscleLabel(muscleId), name, durationSeconds: DEFAULT_WARMUP_SECONDS })
+    moves.push({ id: muscleId, muscleLabel: getMuscleLabel(muscleId), name, sides, durationSeconds: DEFAULT_WARMUP_SECONDS })
   }
 
   if (moves.length === 1) {
@@ -102,24 +113,25 @@ export function getWarmupSuggestions(muscleIds) {
   return moves
 }
 
-// Noms de mouvements à proposer dans le champ "Ajouter un mouvement" de
-// l'échauffement (voir components/RoutineRunner.jsx#suggestions) : les
-// alternatives des muscles ciblés par la séance à venir, puis quelques
+// Mouvements ({ name, sides }) à proposer dans le champ "Ajouter un
+// mouvement" de l'échauffement (voir components/RoutineRunner.jsx#suggestions) :
+// les alternatives des muscles ciblés par la séance à venir, puis quelques
 // options générales, sans doublon.
 export function getWarmupMoveSuggestions(muscleIds) {
   const seen = new Set()
   const suggestions = []
 
-  function add(name) {
-    if (seen.has(name)) return
-    seen.add(name)
-    suggestions.push(name)
+  function add(raw) {
+    const move = toMove(raw)
+    if (seen.has(move.name)) return
+    seen.add(move.name)
+    suggestions.push(move)
   }
 
   for (const muscleId of muscleIds) {
-    for (const name of WARMUP_MOVE_OPTIONS[muscleId] ?? []) add(name)
+    for (const move of WARMUP_MOVE_OPTIONS[muscleId] ?? []) add(move)
   }
-  for (const name of GENERAL_WARMUP_OPTIONS) add(name)
+  for (const move of GENERAL_WARMUP_OPTIONS) add(move)
 
   return suggestions
 }

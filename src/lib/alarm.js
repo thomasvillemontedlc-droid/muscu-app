@@ -67,6 +67,14 @@ export async function playCountdownBeep(secondsLeft) {
   scheduleBeep(ctx, ctx.currentTime, beep.duration, beep.gain, 660)
 }
 
+// Bip unique, ex. fin du temps d'un mouvement d'échauffement/étirement
+// (voir components/RoutineRunner.jsx).
+export async function playSingleBeep() {
+  const ctx = await getRunningContext()
+  if (!ctx) return
+  scheduleBeep(ctx, ctx.currentTime, 0.2, 0.3, 880)
+}
+
 async function getRunningContext() {
   const ctx = getContext()
   if (ctx.state === 'suspended') await ctx.resume()

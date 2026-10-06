@@ -1,8 +1,21 @@
 import { useEffect, useState } from 'react'
+import { playSingleBeep, unlockAudio } from '../lib/alarm.js'
 import { vibrateSuccess } from '../lib/haptics.js'
 import { BigButton } from './BigButton.jsx'
 import { DurationField } from './DurationField.jsx'
 import { TourStep } from './TourStep.jsx'
+
+// Un mouvement `sides: true` -> deux entrées adjacentes droit/gauche de
+// même durée (même forme que celles produites par "Par côté", voir
+// handleSplitSide) ; les autres restent tels quels.
+function expandSides(item) {
+  const { sides, ...rest } = item
+  if (!sides) return [rest]
+  return [
+    { ...rest, id: `${rest.id}-droit`, side: 'droit' },
+    { ...rest, id: `${rest.id}-gauche`, side: 'gauche' },
+  ]
+}
 
 // Déroulé générique d'une petite liste de mouvements (échauffement avant
 // séance, étirements en fin de séance) : liste modifiable avant de lancer
@@ -11,29 +24,51 @@ import { TourStep } from './TourStep.jsx'
 // suivant" (goToNext), décidé par l'utilisateur, jamais automatique au bout
 // du chrono (qui n'est qu'une référence affichée, voir le premier effet
 // ci-dessous). skipLabel/onDone abandonnent TOUTE la routine, c'est
-// différent de goToNext qui avance d'un cran.
-export function RoutineRunner({ title, hint, initialItems, suggestions = [], onDone, skipLabel = 'Passer', tip }) {
-  const [items, setItems] = useState(initialItems)
+// différent de goToNext qui avance d'un cran. Sur le DERNIER mouvement, le
+// bouton principal devient finishLabel/onFinish (ex. "Commencer la séance",
+// "Voir mes progrès") s'ils sont fournis, sinon "Mouvement suivant" qui
+// termine la routine (onDone).
+// Un mouvement `sides: true` (fait un côté à la fois, voir
+// domain/stretches.js et domain/warmup.js) est déroulé automatiquement en
+// deux étapes droit puis gauche de même durée (fusionnables avant de
+// lancer) ; `suggestions` accepte des noms ou des { name, sides }.
+export function RoutineRunner({
+  title,
+  hint,
+  initialItems,
+  suggestions = [],
+  onDone,
+  skipLabel = 'Passer',
+  finishLabel,
+  onFinish,
+  tip,
+}) {
+  const [items, setItems] = useState(() => initialItems.flatMap(expandSides))
   const [running, setRunning] = useState(false)
   const [index, setIndex] = useState(0)
   const [remaining, setRemaining] = useState(0)
   const [newName, setNewName] = useState('')
 
+  // Le chrono continue sous zéro (-1s, -2s...) tant qu'on ne passe pas au
+  // mouvement suivant : il indique de combien on a dépassé, sans jamais
+  // avancer tout seul. Pas de chrono pour un mouvement sans durée.
+  const timed = running && items[index]?.durationSeconds > 0
   useEffect(() => {
-    if (!running || remaining <= 0) return
+    if (!timed) return
     const id = setTimeout(() => setRemaining((r) => r - 1), 1000)
     return () => clearTimeout(id)
-  }, [running, remaining])
+  }, [timed, remaining])
 
-  // Juste une vibration de repère quand le temps affiché est écoulé - plus
+  // Bip + vibration de repère quand le temps affiché arrive à zéro - plus
   // d'avancement automatique (voir le commentaire au-dessus du composant).
-  // Ne se déclenche qu'une fois par mouvement (dépend de `remaining`, qui ne
-  // redescend pas sous 0 une fois arrivé là, voir l'effet précédent).
+  // Une seule fois par mouvement : `remaining` ne repasse jamais par 0 en
+  // descendant ensuite.
   useEffect(() => {
-    if (!running || remaining !== 0) return
-    if (items[index]?.durationSeconds > 0) vibrateSuccess()
+    if (!timed || remaining !== 0) return
+    playSingleBeep()
+    vibrateSuccess()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running, remaining])
+  }, [timed, remaining])
 
   function goToNext() {
     setIndex((current) => {
@@ -53,6 +88,9 @@ export function RoutineRunner({ title, hint, initialItems, suggestions = [], onD
       onDone()
       return
     }
+    // Geste utilisateur : débloque l'audio pour le bip de fin de mouvement
+    // (voir lib/alarm.js#unlockAudio).
+    unlockAudio()
     setIndex(0)
     setRemaining(items[0].durationSeconds)
     setRunning(true)
@@ -100,20 +138,24 @@ export function RoutineRunner({ title, hint, initialItems, suggestions = [], onD
     })
   }
 
-  function addItem(name) {
+  function addItem(name, sides = false) {
     if (!name) return
-    setItems((prev) => [...prev, { id: crypto.randomUUID(), muscleLabel: null, name, durationSeconds: 30 }])
+    const item = { id: crypto.randomUUID(), muscleLabel: null, name, sides, durationSeconds: 30 }
+    setItems((prev) => [...prev, ...expandSides(item)])
   }
 
+  // Saisie libre : un mouvement connu des suggestions garde son `sides`.
   function handleAdd() {
-    addItem(newName.trim())
+    const name = newName.trim()
+    addItem(name, normalizedSuggestions.find((s) => s.name === name)?.sides ?? false)
     setNewName('')
   }
 
+  const normalizedSuggestions = suggestions.map((s) => (typeof s === 'string' ? { name: s, sides: false } : s))
   const addedNames = new Set(items.map((item) => item.name))
   const query = newName.trim().toLowerCase()
-  const visibleSuggestions = suggestions.filter(
-    (name) => !addedNames.has(name) && (query === '' || name.toLowerCase().includes(query)),
+  const visibleSuggestions = normalizedSuggestions.filter(
+    ({ name }) => !addedNames.has(name) && (query === '' || name.toLowerCase().includes(query)),
   )
 
   if (running) {
@@ -129,6 +171,8 @@ export function RoutineRunner({ title, hint, initialItems, suggestions = [], onD
       return logicalNumber
     })
     const sideLabel = current.side === 'droit' ? 'Côté droit' : current.side === 'gauche' ? 'Côté gauche' : null
+    const isLast = index === items.length - 1
+    const overtime = current.durationSeconds > 0 && remaining < 0
 
     return (
       <div className="routine-runner">
@@ -141,8 +185,21 @@ export function RoutineRunner({ title, hint, initialItems, suggestions = [], onD
           {current.name}
           {sideLabel && <span className="routine-runner__side"> · {sideLabel}</span>}
         </p>
-        <p className="routine-runner__timer">{current.durationSeconds > 0 ? `${remaining}s` : '—'}</p>
-        <BigButton onClick={goToNext}>Mouvement suivant</BigButton>
+        <p className={`routine-runner__timer${overtime ? ' routine-runner__timer--overtime' : ''}`}>
+          {current.durationSeconds > 0 ? `${remaining}s` : '—'}
+        </p>
+        {isLast && finishLabel && onFinish ? (
+          <BigButton
+            onClick={() => {
+              setRunning(false)
+              onFinish()
+            }}
+          >
+            {finishLabel}
+          </BigButton>
+        ) : (
+          <BigButton onClick={goToNext}>Mouvement suivant</BigButton>
+        )}
         <button
           type="button"
           className="subtle-button"
@@ -224,12 +281,12 @@ export function RoutineRunner({ title, hint, initialItems, suggestions = [], onD
 
       {visibleSuggestions.length > 0 && (
         <div className="routine-runner__suggestions">
-          {visibleSuggestions.map((name) => (
+          {visibleSuggestions.map(({ name, sides }) => (
             <button
               key={name}
               type="button"
               className="routine-runner__suggestion"
-              onClick={() => addItem(name)}
+              onClick={() => addItem(name, sides)}
             >
               + {name}
             </button>

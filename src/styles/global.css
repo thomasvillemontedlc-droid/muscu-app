@@ -3702,3 +3702,9 @@ body {
   font-weight: 700;
   text-align: center;
 }
+
+/* Mouvement d'échauffement/étirement : temps dépassé (-1s, -2s...) tant
+   qu'on ne passe pas au suivant (voir RoutineRunner.jsx). */
+.routine-runner__timer--overtime {
+  color: var(--color-warning);
+}

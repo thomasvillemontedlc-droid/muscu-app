@@ -41,9 +41,12 @@ export function FinishedView({ session, data }) {
           muscleLabel: s.muscleLabel,
           name: s.name,
           durationSeconds: s.holdSeconds,
+          sides: s.sides,
         }))}
         skipLabel="Passer les étirements"
         onDone={() => setRunningStretches(false)}
+        finishLabel="Voir mes progrès"
+        onFinish={() => navigate('/progress')}
       />
     )
   }

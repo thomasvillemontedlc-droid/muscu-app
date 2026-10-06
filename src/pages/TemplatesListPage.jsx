@@ -3,7 +3,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { createTemplate, deleteTemplate, deleteTemplates, sortTemplatesForToday } from '../domain/templates.js'
 import { createTemplateFromModel, TEMPLATE_STRUCTURES } from '../domain/templateModels.js'
-import { getActiveProgramIndex, getNextProgramTemplateId, getNextTemplateOverrideId } from '../domain/program.js'
+import {
+  getActiveProgramIndex,
+  getActiveProgramTemplateIds,
+  getNextProgramSuggestion,
+  getNextTemplateOverrideId,
+} from '../domain/program.js'
 import { getInProgressSession, startSessionFromTemplate } from '../domain/sessions.js'
 import { BigButton } from '../components/BigButton.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
@@ -38,9 +43,15 @@ export function TemplatesListPage() {
   // même question ("quoi faire aujourd'hui"), le programme explicite prime
   // simplement sur l'habitude déduite.
   const sortedTemplates = sortTemplatesForToday(data.templates, data.sessions)
-  const nextProgramTemplateId = getNextProgramTemplateId(data.alternation, data.programs, data.sessions)
-  const nextProgramTemplate = nextProgramTemplateId
-    ? data.templates.find((t) => t.id === nextProgramTemplateId)
+  // Selon QUELLES séances du programme actif ont été faites (et quand),
+  // avec une raison courte affichée sous la séance mise en avant.
+  const programSuggestion = getNextProgramSuggestion(
+    getActiveProgramTemplateIds(data.alternation, data.programs),
+    data.sessions,
+    data.templates,
+  )
+  const nextProgramTemplate = programSuggestion
+    ? data.templates.find((t) => t.id === programSuggestion.templateId)
     : null
   // Un choix manuel ("Prochaine séance" depuis Progression) passe avant le
   // programme et l'habitude, le temps qu'il soit lancé.
@@ -145,6 +156,9 @@ export function TemplatesListPage() {
               {featuredLabel}
             </p>
             <p className="featured-session__name">{featuredTemplate.name}</p>
+            {isFeaturedFromProgram && !overrideTemplate && (
+              <p className="featured-session__reason">{programSuggestion.reason}</p>
+            )}
             <ul className="featured-session__exercises">
               {featuredTemplate.exerciseIds.map((exerciseId) => {
                 const exercise = data.exercises.find((e) => e.id === exerciseId)

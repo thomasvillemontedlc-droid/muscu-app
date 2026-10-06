@@ -1,5 +1,6 @@
 import { getFirstVariantModel } from './rotation.js'
-import { getSessionStatus } from './sessions.js'
+import { RECOVERY_HOURS } from './recovery.js'
+import { getInProgressSession, getSessionStatus } from './sessions.js'
 
 const WEEK_MS = 7 * 24 * 3600 * 1000
 
@@ -13,20 +14,6 @@ function getWeekStart(date) {
   const mondayOffset = day === 0 ? -6 : 1 - day
   d.setDate(d.getDate() + mondayOffset)
   return d
-}
-
-// Nombre de séances du programme déjà au moins entamées depuis le lundi de
-// la semaine en cours, tous templates du programme confondus (pas suivi
-// séparément par template : si l'ordre n'est pas respecté à la lettre, la
-// suggestion avance quand même plutôt que de rester bloquée dessus).
-function getCompletedThisWeek(program, sessions) {
-  const weekStart = getWeekStart(new Date())
-  return sessions.filter(
-    (s) =>
-      program.templateIds.includes(s.templateId) &&
-      new Date(s.date) >= weekStart &&
-      getSessionStatus(s) !== 'not-done',
-  ).length
 }
 
 // Index (0 ou 1) du programme actif selon l'alternance : 0 si l'alternance
@@ -58,14 +45,100 @@ export function getAlternationPreview(periodWeeks, weekCount = 12) {
   return Array.from({ length: weekCount }, (_, i) => (Math.floor(i / periodWeeks) % 2) + 1)
 }
 
-// Prochain template à proposer : celui à la position (nb déjà fait cette
-// semaine) dans l'ordre du programme ACTIF (voir getActiveProgramIndex),
-// qui reboucle au-delà de sa longueur. null si ce programme est vide.
-export function getNextProgramTemplateId(alternation, programs, sessions, now = new Date()) {
-  const program = programs[getActiveProgramIndex(alternation, programs, now)]
-  if (!program || program.templateIds.length === 0) return null
-  const completed = getCompletedThisWeek(program, sessions)
-  return program.templateIds[completed % program.templateIds.length]
+// Séance "récente" : faite il y a moins que le délai de récupération
+// musculaire (domain/recovery.js) - on évite de la reproposer tout de suite.
+const RECENT_HOURS = RECOVERY_HOURS
+const HOUR_MS = 3600 * 1000
+const WEEKDAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
+
+// templateIds du programme ACTIF (alternance comprise, voir
+// getActiveProgramIndex), [] s'il n'y en a pas.
+export function getActiveProgramTemplateIds(alternation, programs, now = new Date()) {
+  return programs[getActiveProgramIndex(alternation, programs, now)]?.templateIds ?? []
+}
+
+// Prochaine séance du programme, selon QUELLES séances ont été faites (pas
+// seulement combien) - fonction pure. `templateIds` : programme actif, dans
+// l'ordre. Pour chaque séance : doneThisWeek (entamée depuis lundi 00:00)
+// et lastDoneAt (dernière fois entamée, toutes semaines confondues). La
+// séance en cours (démarrée, pas terminée) ne compte pas comme faite.
+// 1. Candidats : séances pas encore faites cette semaine, dans l'ordre du
+//    programme ; semaine bouclée -> toutes, de la plus anciennement faite à
+//    la plus récente (jamais faite en premier).
+// 2. Le premier candidat jamais fait ou fait il y a plus de RECENT_HOURS.
+// 3. Sinon (tous récents) : le candidat fait il y a le plus longtemps.
+// Renvoie { templateId, reason } (reason : explication courte affichée sous
+// la séance mise en avant), ou null si le programme est vide.
+export function getNextProgramSuggestion(templateIds, sessions, templates, now = new Date()) {
+  if (templateIds.length === 0) return null
+
+  const inProgress = getInProgressSession(sessions)
+  const started = sessions.filter((s) => s !== inProgress && getSessionStatus(s) !== 'not-done')
+  const weekStart = getWeekStart(now)
+  const nameOf = (id) => templates.find((t) => t.id === id)?.name ?? 'Séance supprimée'
+
+  const stats = templateIds.map((templateId) => {
+    const dates = started.filter((s) => s.templateId === templateId).map((s) => new Date(s.date))
+    const lastDoneAt = dates.length > 0 ? new Date(Math.max(...dates)) : null
+    return { templateId, lastDoneAt, doneThisWeek: dates.some((d) => d >= weekStart) }
+  })
+  const isRecent = (stat) => stat.lastDoneAt != null && now - stat.lastDoneAt < RECENT_HOURS * HOUR_MS
+
+  const notDoneThisWeek = stats.filter((stat) => !stat.doneThisWeek)
+  const weekComplete = notDoneThisWeek.length === 0
+  const candidates = weekComplete
+    ? [...stats].sort((a, b) => (a.lastDoneAt ?? -Infinity) - (b.lastDoneAt ?? -Infinity))
+    : notDoneThisWeek
+
+  const firstRested = candidates.find((stat) => !isRecent(stat))
+  const chosen = firstRested ?? candidates.reduce((oldest, stat) => (stat.lastDoneAt < oldest.lastDoneAt ? stat : oldest))
+
+  // Raison : contexte de la semaine, puis ce qui a orienté le choix.
+  const parts = []
+  if (weekComplete) {
+    parts.push('Toutes les séances de la semaine sont faites')
+  } else {
+    const doneThisWeek = stats.filter((stat) => stat.doneThisWeek)
+    if (doneThisWeek.length > 0) {
+      const latest = doneThisWeek.reduce((a, b) => (b.lastDoneAt > a.lastDoneAt ? b : a))
+      parts.push(`${nameOf(latest.templateId)} faite ${formatDay(latest.lastDoneAt, now)}`)
+      const remaining = notDoneThisWeek.map((stat) => nameOf(stat.templateId))
+      parts.push(`${joinNames(remaining)} ${remaining.length > 1 ? 'restantes' : 'restante'} cette semaine`)
+    } else {
+      parts.push('Rien de fait cette semaine')
+    }
+  }
+  if (!firstRested) {
+    parts.push(`toutes faites il y a moins de ${RECENT_HOURS} h, ${nameOf(chosen.templateId)} la plus ancienne`)
+  } else {
+    const skipped = candidates.slice(0, candidates.indexOf(chosen))
+    for (const stat of skipped) parts.push(`${nameOf(stat.templateId)} faite ${formatDay(stat.lastDoneAt, now)}, trop récent`)
+    if (weekComplete && skipped.length === 0) parts.push(`${nameOf(chosen.templateId)} la plus ancienne`)
+  }
+
+  return { templateId: chosen.templateId, reason: parts.join(' · ') }
+}
+
+// "aujourd'hui", "hier", le jour de la semaine (moins de 7 jours), sinon
+// "il y a N jours" - en jours calendaires locaux.
+function formatDay(date, now) {
+  const days = Math.round((startOfDay(now) - startOfDay(date)) / (24 * HOUR_MS))
+  if (days <= 0) return "aujourd'hui"
+  if (days === 1) return 'hier'
+  if (days < 7) return WEEKDAYS[date.getDay()]
+  return `il y a ${days} jours`
+}
+
+function startOfDay(date) {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+// "A", "A et B", "A, B et C".
+function joinNames(names) {
+  if (names.length <= 1) return names.join('')
+  return `${names.slice(0, -1).join(', ')} et ${names[names.length - 1]}`
 }
 
 export function addTemplateToProgram(program, templateId) {

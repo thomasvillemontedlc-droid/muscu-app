@@ -63,6 +63,16 @@ export function RestBanner({ timer, onAdjust, nextExerciseName, nextLastPerforma
         </p>
       )}
 
+      {/* Audio suspendu/interrompu (retour dans l'app sur iOS...) : le
+          décompte et l'alarme ne sonneraient pas. N'importe quel toucher le
+          réactive (lib/alarm.js#installAudioUnlockListeners) ; disparaît dès
+          que le son est de nouveau disponible. */}
+      {!timer.audioReady && (
+        <p className="rest-timer__audio-locked" role="status">
+          🔇 Touche l'écran pour réactiver le son
+        </p>
+      )}
+
       <div className="rest-timer__custom">
         <button
           type="button"

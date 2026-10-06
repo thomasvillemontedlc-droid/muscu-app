@@ -1,6 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { markRestAlarmPlayed } from '../domain/sessionRunner.js'
-import { playAlarmBeep, playCountdownBeep, resumeAudioIfNeeded } from '../lib/alarm.js'
+import {
+  isAudioReady,
+  playAlarmBeep,
+  playCountdownBeep,
+  resumeAudioIfNeeded,
+  subscribeAudioState,
+} from '../lib/alarm.js'
 import { flashScreen } from '../lib/flash.js'
 import { vibrateAlarm } from '../lib/haptics.js'
 import { releaseWakeLock, requestWakeLock } from '../lib/wakeLock.js'
@@ -45,6 +51,11 @@ function usePageVisible() {
 export function useRestTimer(session, setData) {
   const now = useNow(250)
   const visible = usePageVisible()
+  // Son disponible (contexte audio 'running') : relu à chaque tick de useNow
+  // et à chaque changement d'état du contexte (ctx.onstatechange, voir
+  // lib/alarm.js#subscribeAudioState). Faux = RestBanner invite à toucher
+  // l'écran pour réactiver le son.
+  const audioReady = useSyncExternalStore(subscribeAudioState, isAudioReady)
   const active = session.restStartedAt != null
 
   const restUntil = active ? session.restStartedAt + session.restSeconds * 1000 : null
@@ -106,17 +117,25 @@ export function useRestTimer(session, setData) {
       if (document.visibilityState !== 'visible') return
       requestWakeLock()
       // Voir lib/alarm.js#resumeAudioIfNeeded : même limite côté audio,
-      // le contexte se suspend tout seul en arrière-plan et ne reprend pas
-      // de lui-même au retour.
+      // le contexte se suspend (ou s'interrompt, sur iOS) en arrière-plan
+      // et ne reprend pas de lui-même au retour.
+      resumeAudioIfNeeded()
+    }
+    // pageshow : retour sur une page restaurée depuis le cache (bfcache),
+    // où visibilitychange n'est pas toujours émis.
+    function handlePageShow() {
+      requestWakeLock()
       resumeAudioIfNeeded()
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('pageshow', handlePageShow)
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('pageshow', handlePageShow)
       releaseWakeLock()
     }
   }, [active])
 
-  return active ? { remainingMs, isOvershoot, overshootMs, countdownSecond, endedWhileAway } : null
+  return active ? { remainingMs, isOvershoot, overshootMs, countdownSecond, endedWhileAway, audioReady } : null
 }

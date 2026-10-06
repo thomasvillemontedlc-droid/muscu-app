@@ -4,12 +4,16 @@ import {
   getOrCreateExercise,
   setExerciseBarWeight,
   setExerciseGripWidth,
-  setExercisePulleyLevel,
+  setExercisePulleyHeight,
+  setExercisePulleyNotch,
   setExerciseUnilateral,
   setExerciseWeightMode,
 } from '../../domain/exercises.js'
 import { getExercisesUsedInTemplate } from '../../domain/history.js'
-import { addSet, removeSet, setEntryUnilateral, setSetCount, updateSet } from '../../domain/sessions.js'
+import { addSet, getDisplayedSetCount, removeSet, setEntryUnilateral, setSetCount, updateSet } from '../../domain/sessions.js'
+import { isWarmupSet } from '../../domain/setKinds.js'
+import { getSetLabel } from '../../lib/formatSet.js'
+import { formatDecimal } from '../../lib/formatNumber.js'
 import { getEstimatedSessionStats } from '../../domain/sessionSummary.js'
 import {
   addExerciseEntryToSession,
@@ -80,8 +84,12 @@ export function PrepView({ session, data, setData }) {
     })
   }
 
-  function handlePulleyLevelChange(exerciseId, pulleyLevel) {
-    setData((current) => ({ ...current, exercises: setExercisePulleyLevel(current.exercises, exerciseId, pulleyLevel) }))
+  function handlePulleyHeightChange(exerciseId, pulleyHeight) {
+    setData((current) => ({ ...current, exercises: setExercisePulleyHeight(current.exercises, exerciseId, pulleyHeight) }))
+  }
+
+  function handlePulleyNotchChange(exerciseId, pulleyNotch) {
+    setData((current) => ({ ...current, exercises: setExercisePulleyNotch(current.exercises, exerciseId, pulleyNotch) }))
   }
 
   function handleGripWidthChange(exerciseId, gripWidth) {
@@ -210,7 +218,7 @@ export function PrepView({ session, data, setData }) {
               <label className="prep-exercise__set-count">
                 <span>Nombre de séries</span>
                 <StepperField
-                  value={entryExercise?.unilateral ? entry.sets.length / 2 : entry.sets.length}
+                  value={getDisplayedSetCount(entry.sets, entryExercise?.unilateral)}
                   onChange={(count) => handleSetCountChange(entry.exerciseId, count)}
                   step={1}
                   min={1}
@@ -236,6 +244,8 @@ export function PrepView({ session, data, setData }) {
                 // partager son état entre deux séances différentes.
                 key={`${session.id}-${entry.exerciseId}-${setIndex}`}
                 index={setIndex}
+                label={getSetLabel(entry.sets, setIndex)}
+                warmup={isWarmupSet(set)}
                 weight={set.weight}
                 reps={set.reps}
                 side={set.side}
@@ -244,7 +254,8 @@ export function PrepView({ session, data, setData }) {
                 onChangeReps={(reps) => handleUpdateSet(entry.exerciseId, setIndex, { reps })}
                 onChangeWeightMode={(mode) => handleWeightModeChange(entry.exerciseId, mode)}
                 onChangeBarWeight={(barWeight) => handleBarWeightChange(entry.exerciseId, barWeight)}
-                onChangePulleyLevel={(level) => handlePulleyLevelChange(entry.exerciseId, level)}
+                onChangePulleyHeight={(height) => handlePulleyHeightChange(entry.exerciseId, height)}
+                onChangePulleyNotch={(notch) => handlePulleyNotchChange(entry.exerciseId, notch)}
                 onChangeGripWidth={(width) => handleGripWidthChange(entry.exerciseId, width)}
                 onRemove={() => handleRemoveSet(entry.exerciseId, setIndex)}
                 removeDisabled={set.side != null}
@@ -321,7 +332,7 @@ export function PrepView({ session, data, setData }) {
           <ul className="session-stats">
             <li>Durée estimée : ~{estimatedDuration}</li>
             <li>{estimate.totalSets} séries</li>
-            <li>~{estimate.totalReps} répétitions</li>
+            <li>~{formatDecimal(estimate.totalReps)} répétitions</li>
           </ul>
 
           <BigButton onClick={() => setShowWarmup(true)}>Commencer la séance</BigButton>

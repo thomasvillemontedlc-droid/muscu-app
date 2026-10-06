@@ -1,5 +1,5 @@
 import { createEmptyData, SCHEMA_VERSION } from './schema.js'
-import { seedDefaultExercises } from '../domain/exercises.js'
+import { migratePulleyLevel, seedDefaultExercises } from '../domain/exercises.js'
 
 const STORAGE_KEY = 'muscu-app-data'
 
@@ -81,6 +81,13 @@ function migrate(data) {
   // l'alternance est réactivée.
   if (previousVersion < 5) {
     migrated = { ...migrated, alternation: { ...migrated.alternation, enabled: false } }
+  }
+
+  // v5 -> v6 : le réglage de poulie unique (pulleyLevel, texte libre) est
+  // séparé en hauteur (pulleyHeight) et cran (pulleyNotch), voir
+  // domain/exercises.js#migratePulleyLevel.
+  if (previousVersion < 6) {
+    migrated = { ...migrated, exercises: migrated.exercises.map(migratePulleyLevel) }
   }
 
   return migrated

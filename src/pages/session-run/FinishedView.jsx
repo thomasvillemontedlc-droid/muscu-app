@@ -4,6 +4,7 @@ import { buildSessionSummary, getCompletionProgress, getSessionStats, getTrendFr
 import { getMuscleIntensities, getMuscleVolumes } from '../../domain/muscleHeatmap.js'
 import { getPrimaryMusclesWorked, getStretchSuggestions } from '../../domain/stretches.js'
 import { formatSet } from '../../lib/formatSet.js'
+import { formatDecimal } from '../../lib/formatNumber.js'
 import { formatDuration } from '../../lib/formatDuration.js'
 import { getFeelingLabel } from '../../components/FeelingPicker.jsx'
 import { TrendDot } from '../../components/TrendDot.jsx'
@@ -58,7 +59,7 @@ export function FinishedView({ session, data }) {
       <ul className="session-stats">
         {duration && <li>Durée : {duration}</li>}
         <li>{stats.totalSets} séries</li>
-        <li>{stats.totalReps} répétitions</li>
+        <li>{formatDecimal(stats.totalReps)} répétitions</li>
       </ul>
 
       {completionProgress && <p className="session-summary__completion">{completionProgress.message}</p>}

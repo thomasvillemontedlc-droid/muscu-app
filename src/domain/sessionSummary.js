@@ -1,5 +1,6 @@
 import { getLastPerformance } from './history.js'
 import { getExerciseUnit } from './muscleGroups.js'
+import { getWorkSets, isWarmupSet } from './setKinds.js'
 
 // Hypothèse grossière pour l'estimation de durée avant de lancer la séance
 // (voir getEstimatedSessionStats) : temps d'exécution d'une répétition
@@ -23,13 +24,13 @@ export function getPreviousSessionByTemplate(sessions, currentSession) {
 // Charge max pour un exercice classique, durée max tenue (secondes, stockées
 // dans "reps") pour un exercice "au temps" — voir domain/muscleGroups.js#getExerciseUnit.
 function getMaxMetric(sets, unit) {
-  return sets.reduce((max, set) => Math.max(max, unit === 'time' ? set.reps : set.weight), 0)
+  return getWorkSets(sets).reduce((max, set) => Math.max(max, unit === 'time' ? set.reps : set.weight), 0)
 }
 
 // Équivalent du "volume" (poids × reps) pour un exercice au temps : la durée
 // totale tenue sur la série, plutôt qu'une charge qui n'a pas de sens ici.
 function getMetricVolume(sets, unit) {
-  return sets.reduce((total, set) => total + (unit === 'time' ? set.reps : set.weight * set.reps), 0)
+  return getWorkSets(sets).reduce((total, set) => total + (unit === 'time' ? set.reps : set.weight * set.reps), 0)
 }
 
 // Séances créées avant le suivi de complétion (completedExerciseIds absent)
@@ -40,7 +41,7 @@ function getCompletedCounts(session) {
   const completedEntries = session.entries.filter((e) => completedIds.includes(e.exerciseId))
   return {
     exercises: completedEntries.length,
-    sets: completedEntries.reduce((total, e) => total + e.sets.length, 0),
+    sets: completedEntries.reduce((total, e) => total + getWorkSets(e.sets).length, 0),
   }
 }
 
@@ -100,7 +101,8 @@ export function getCompletionProgress(sessions, session) {
 export function getSessionStats(session) {
   const completedIds = session.completedExerciseIds ?? session.entries.map((e) => e.exerciseId)
   const completedEntries = session.entries.filter((e) => completedIds.includes(e.exerciseId))
-  const allSets = completedEntries.flatMap((e) => e.sets)
+  // Séries d'échauffement exclues des séries et répétitions comptées.
+  const allSets = completedEntries.flatMap((e) => getWorkSets(e.sets))
 
   return {
     durationMs: session.startedAt && session.finishedAt ? session.finishedAt - session.startedAt : null,
@@ -123,8 +125,11 @@ export function getEstimatedSessionStats(session) {
   for (const entry of session.entries) {
     const unit = getExerciseUnit(entry.exerciseName)
     for (const set of entry.sets) {
-      totalSets += 1
-      totalReps += set.reps
+      // Un échauffement prend du temps mais ne compte pas comme une série.
+      if (!isWarmupSet(set)) {
+        totalSets += 1
+        totalReps += set.reps
+      }
       activeSeconds += unit === 'time' ? set.reps : set.reps * ESTIMATED_SECONDS_PER_REP
     }
   }
@@ -198,7 +203,7 @@ export function buildSessionSummary(sessions, session) {
       return {
         exerciseId: entry.exerciseId,
         exerciseName: entry.exerciseName,
-        sets: entry.sets,
+        sets: getWorkSets(entry.sets),
         feeling: entry.feeling ?? null,
         progressKg,
         progressUnit: unit === 'time' ? 's' : 'kg',

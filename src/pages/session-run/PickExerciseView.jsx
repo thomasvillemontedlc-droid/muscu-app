@@ -7,7 +7,7 @@ import {
   finishSessionEarly,
   pickExercise,
 } from '../../domain/sessionRunner.js'
-import { setEntryFeeling, setEntryUnilateral, setSetCount } from '../../domain/sessions.js'
+import { getDisplayedSetCount, setEntryFeeling, setEntryUnilateral, setSetCount } from '../../domain/sessions.js'
 import { useRestTimer } from '../../hooks/useRestTimer.js'
 import { RestBanner } from '../../components/RestBanner.jsx'
 import { ExercisePicker } from '../../components/ExercisePicker.jsx'
@@ -93,7 +93,7 @@ export function PickExerciseView({ session, data, setData }) {
                   <label>
                     <span>Nombre de séries</span>
                     <StepperField
-                      value={entryExercise?.unilateral ? entry.sets.length / 2 : entry.sets.length}
+                      value={getDisplayedSetCount(entry.sets, entryExercise?.unilateral)}
                       onChange={(count) => handleSetCountChange(entry.exerciseId, count)}
                       step={1}
                       min={1}

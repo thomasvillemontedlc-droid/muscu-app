@@ -1,6 +1,7 @@
 import { createId } from '../storage/ids.js'
 import { getExerciseById } from './exercises.js'
 import { getLastPerformance } from './history.js'
+import { getFirstWorkSetIndex, getWorkSets, isWarmupSet } from './setKinds.js'
 
 // Fige la répétition pré-remplie comme objectif de LA SÉRIE À VENIR
 // (targetReps), écrasant un éventuel targetReps hérité de la source (`set`
@@ -200,16 +201,20 @@ export function removeSet(sessions, sessionId, exerciseId, setIndex) {
 // `count` est toujours NOMINAL (ce que l'utilisateur voit) : pour un
 // exercice unilatéral, `unilateral=true` fait compter/compléter par PAIRES
 // droit/gauche (count=3 -> 6 séries réellement stockées), jamais une série
-// orpheline d'un seul côté.
+// orpheline d'un seul côté. Ne compte et ne touche que les séries de
+// travail : les séries d'échauffement (toujours en tête, voir
+// addWarmupSet) restent telles quelles.
 export function setSetCount(sessions, sessionId, exerciseId, count, unilateral = false) {
   return mapEntry(sessions, sessionId, exerciseId, (entry) => {
+    const warmups = entry.sets.filter(isWarmupSet)
+    const work = getWorkSets(entry.sets)
     const targetLength = unilateral ? count * 2 : count
-    if (targetLength === entry.sets.length) return entry
-    if (targetLength < entry.sets.length) return { ...entry, sets: entry.sets.slice(0, targetLength) }
+    if (targetLength === work.length) return entry
+    if (targetLength < work.length) return { ...entry, sets: [...warmups, ...work.slice(0, targetLength)] }
 
-    const lastSet = entry.sets[entry.sets.length - 1] ?? { weight: 0, reps: 0 }
+    const lastSet = work[work.length - 1] ?? { weight: 0, reps: 0 }
     const { side: _lastSide, ...lastSetWithoutSide } = lastSet
-    const toAdd = targetLength - entry.sets.length
+    const toAdd = targetLength - work.length
 
     const added = unilateral
       ? Array.from({ length: Math.ceil(toAdd / 2) }, () => [
@@ -218,7 +223,7 @@ export function setSetCount(sessions, sessionId, exerciseId, count, unilateral =
         ]).flat()
       : Array.from({ length: toAdd }, () => ({ ...lastSet }))
 
-    return { ...entry, sets: [...entry.sets, ...added].slice(0, targetLength) }
+    return { ...entry, sets: [...warmups, ...[...work, ...added].slice(0, targetLength)] }
   })
 }
 
@@ -227,6 +232,13 @@ export function setSetCount(sessions, sessionId, exerciseId, count, unilateral =
 // côté droit - le gauche est perdu, c'est la règle acceptée pour ce geste).
 // N'est effectif que si l'état actuel diffère (évite de re-doubler ou de
 // fusionner une entrée déjà dans le bon état).
+// Nombre de séries affiché ("Nombre de séries") : séries de travail
+// seulement, comptées par paire pour un exercice unilatéral.
+export function getDisplayedSetCount(sets, unilateral = false) {
+  const count = getWorkSets(sets).length
+  return unilateral ? count / 2 : count
+}
+
 export function setEntryUnilateral(sessions, sessionId, exerciseId, unilateral) {
   return mapEntry(sessions, sessionId, exerciseId, (entry) => {
     const alreadyPaired = entry.sets.some((set) => set.side != null)
@@ -250,11 +262,52 @@ export function setEntryUnilateral(sessions, sessionId, exerciseId, unilateral) 
 // jamais touchées, puisqu'on ne modifie que la série en cours et le futur).
 // Ça évite de garder le pré-remplissage de la séance précédente sur les
 // séries suivantes une fois qu'on a corrigé la charge en cours de séance.
+// La propagation reste dans la même catégorie : corriger un échauffement
+// ne touche que les échauffements suivants, jamais les séries de travail
+// (et inversement).
 export function updateSet(sessions, sessionId, exerciseId, setIndex, changes) {
-  return mapEntry(sessions, sessionId, exerciseId, (entry) => ({
-    ...entry,
-    sets: entry.sets.map((set, i) => (i >= setIndex ? { ...set, ...changes } : set)),
-  }))
+  return mapEntry(sessions, sessionId, exerciseId, (entry) => {
+    const warmup = isWarmupSet(entry.sets[setIndex])
+    return {
+      ...entry,
+      sets: entry.sets.map((set, i) => (i >= setIndex && isWarmupSet(set) === warmup ? { ...set, ...changes } : set)),
+    }
+  })
+}
+
+// Insère une série d'échauffement (warmup: true, voir domain/setKinds.js)
+// juste avant la première série de travail. Le curseur ne bouge pas : s'il
+// était sur la 1re série de travail, il tombe sur le nouvel échauffement
+// (la série à faire maintenant) ; s'il était sur un échauffement pas encore
+// fait, celui-ci reste à faire en premier. Pré-remplie à la moitié de la charge
+// de la première série de travail (arrondie au pas `weightStep`), mêmes
+// répétitions. Une paire droit/gauche pour un exercice unilatéral.
+export function addWarmupSet(sessions, sessionId, exerciseId, { unilateral = false, weightStep = 1 } = {}) {
+  return sessions.map((s) => {
+    if (s.id !== sessionId) return s
+    let insertIndex = 0
+    const entries = s.entries.map((entry) => {
+      if (entry.exerciseId !== exerciseId) return entry
+      insertIndex = getFirstWorkSetIndex(entry.sets)
+      const firstWork = entry.sets[insertIndex] ?? { weight: 0, reps: 0 }
+      const weight = Math.round(firstWork.weight / 2 / weightStep) * weightStep
+      const base = { weight: Math.round(weight * 100) / 100, reps: firstWork.reps, targetReps: firstWork.reps, warmup: true }
+      const added = expandForSides([base], unilateral)
+      return { ...entry, sets: [...entry.sets.slice(0, insertIndex), ...added, ...entry.sets.slice(insertIndex)] }
+    })
+    const insertedCount = unilateral ? 2 : 1
+    // Index déjà au-delà du point d'insertion (série de travail entamée, ou
+    // repos en cours qui se clôture sur sa série d'origine par index, voir
+    // domain/sessionRunner.js#closeOutPendingRest) : décalés d'autant.
+    const shiftsCursor = s.currentExerciseId === exerciseId && s.currentSetIndex > insertIndex
+    const shiftsPendingRest = s.pendingRestExerciseId === exerciseId && s.pendingRestSetIndex >= insertIndex
+    return {
+      ...s,
+      entries,
+      ...(shiftsCursor && { currentSetIndex: s.currentSetIndex + insertedCount }),
+      ...(shiftsPendingRest && { pendingRestSetIndex: s.pendingRestSetIndex + insertedCount }),
+    }
+  })
 }
 
 // Comme updateSet, mais ne touche QUE la série visée — pas de propagation

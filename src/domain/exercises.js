@@ -68,15 +68,60 @@ export function setExerciseBarWeight(exercises, exerciseId, barWeight) {
   return exercises.map((e) => (e.id === exerciseId ? { ...e, barWeight } : e))
 }
 
-// Niveau de poulie (exercices à la poulie réglable en hauteur), mémorisé par
-// exercice comme barWeight/weightStep : une simple chaîne libre ("Haute",
-// "3", "cran 5"...), voir components/WeightField.jsx pour la saisie.
-export function setExercisePulleyLevel(exercises, exerciseId, pulleyLevel) {
-  return exercises.map((e) => (e.id === exerciseId ? { ...e, pulleyLevel } : e))
+// Tout exercice dont le nom contient "poulie" : on y mémorise le cran
+// (pulleyNotch, entier).
+export function isPulleyExercise(name) {
+  return slugify(name ?? '').includes('poulie')
+}
+
+// Poulie réglable en HAUTEUR : seulement les vis-à-vis (écarté/oiseau
+// vis-à-vis...), où la hauteur varie réellement d'une fois sur l'autre. Les
+// "poulie haute"/"poulie basse" (tirages, extensions triceps, curl...) ont
+// une position fixe déjà encodée dans leur nom.
+export function isPulleyHeightExercise(name) {
+  return isPulleyExercise(name) && slugify(name ?? '').includes('vis-a-vis')
+}
+
+export const PULLEY_HEIGHTS = ['Haute', 'Moyenne', 'Basse']
+
+// Hauteur de poulie ('Haute' | 'Moyenne' | 'Basse' | null) et cran (entier
+// | null), mémorisés par exercice comme barWeight/weightStep, voir
+// components/WeightField.jsx pour la saisie.
+export function setExercisePulleyHeight(exercises, exerciseId, pulleyHeight) {
+  return exercises.map((e) => (e.id === exerciseId ? { ...e, pulleyHeight } : e))
+}
+
+export function setExercisePulleyNotch(exercises, exerciseId, pulleyNotch) {
+  return exercises.map((e) => (e.id === exerciseId ? { ...e, pulleyNotch } : e))
+}
+
+// Ancien réglage unique pulleyLevel (texte libre) -> pulleyHeight si c'était
+// une des 3 hauteurs, pulleyNotch si c'était un nombre entier, ignoré
+// sinon. Voir storage/storage.js (migration v5 -> v6).
+export function migratePulleyLevel(exercise) {
+  if (!('pulleyLevel' in exercise)) return exercise
+  const { pulleyLevel, ...rest } = exercise
+  const text = String(pulleyLevel ?? '').trim()
+  const height = PULLEY_HEIGHTS.find((h) => h.toLowerCase() === text.toLowerCase())
+  if (height) return { ...rest, pulleyHeight: height }
+  if (/^\d+$/.test(text)) return { ...rest, pulleyNotch: Number(text) }
+  return rest
+}
+
+// "Poulie haute · cran 7" (ou l'un des deux seulement), null si rien n'est
+// mémorisé - rappel affiché avec la dernière performance.
+export function getPulleySummary(exercise) {
+  if (!exercise || !isPulleyExercise(exercise.name)) return null
+  const parts = []
+  if (exercise.pulleyHeight && isPulleyHeightExercise(exercise.name)) {
+    parts.push(`Poulie ${exercise.pulleyHeight.toLowerCase()}`)
+  }
+  if (exercise.pulleyNotch != null) parts.push(`${parts.length ? 'cran' : 'Cran'} ${exercise.pulleyNotch}`)
+  return parts.length ? parts.join(' · ') : null
 }
 
 // Largeur de prise (tirages horizontal/vertical et variantes), même
-// principe que pulleyLevel ci-dessus mais pour un réglage qui varie par
+// principe que pulleyHeight ci-dessus mais pour un réglage qui varie par
 // largeur de prise plutôt que par hauteur de poulie - voir
 // components/WeightField.jsx#isGripWidthExercise.
 export function setExerciseGripWidth(exercises, exerciseId, gripWidth) {

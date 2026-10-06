@@ -10,8 +10,20 @@ function roundToStep(value) {
 // Gros boutons +/- de part et d'autre de la valeur (usage une main pendant
 // une série), qui se change en champ clavier normal le temps de taper un
 // chiffre : un tap sur la valeur affichée ouvre la saisie, la perte de
-// focus (ou Entrée) revient à l'affichage +/-.
-export function StepperField({ value, onChange, step = 1, min = 0, decimal = false, className, disabled, 'aria-label': ariaLabel }) {
+// focus (ou Entrée) revient à l'affichage +/-. `normalize`/`format` :
+// voir components/NumberField.jsx (ex. demi-répétitions à la virgule).
+export function StepperField({
+  value,
+  onChange,
+  step = 1,
+  min = 0,
+  decimal = false,
+  normalize,
+  format = String,
+  className,
+  disabled,
+  'aria-label': ariaLabel,
+}) {
   const [editing, setEditing] = useState(false)
 
   function handleDecrement() {
@@ -34,6 +46,8 @@ export function StepperField({ value, onChange, step = 1, min = 0, decimal = fal
         <NumberField
           className={className}
           decimal={decimal}
+          normalize={normalize}
+          format={format}
           value={value}
           onChange={onChange}
           disabled={disabled}
@@ -62,7 +76,7 @@ export function StepperField({ value, onChange, step = 1, min = 0, decimal = fal
         disabled={disabled}
         aria-label={ariaLabel}
       >
-        {value}
+        {format(value)}
       </button>
       <button
         type="button"

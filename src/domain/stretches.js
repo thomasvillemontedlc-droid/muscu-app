@@ -1,4 +1,5 @@
 import { getExerciseMuscles, getMuscleLabel, MUSCLE_GROUPS } from './muscleGroups.js'
+import { getWorkSets } from './setKinds.js'
 
 // Base fournie par l'utilisateur (etirements-musculation.md, ~35
 // étirements) : 2 à 3 par muscle pour varier d'une séance à l'autre,
@@ -87,7 +88,7 @@ export function getPrimaryMusclesWorked(session) {
 
   for (const entry of session.entries) {
     if (!completedIds.includes(entry.exerciseId)) continue
-    if (!entry.sets.some((set) => set.weight * set.reps > 0)) continue
+    if (!getWorkSets(entry.sets).some((set) => set.weight * set.reps > 0)) continue
     for (const muscleId of getExerciseMuscles(entry.exerciseName).primary) worked.add(muscleId)
   }
 

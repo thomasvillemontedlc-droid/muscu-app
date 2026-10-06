@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { buildSessionSummary, getSessionStats } from '../domain/sessionSummary.js'
 import { formatSet } from '../lib/formatSet.js'
+import { formatDecimal } from '../lib/formatNumber.js'
 import { getFeelingLabel } from '../components/FeelingPicker.jsx'
 import { BigButton } from '../components/BigButton.jsx'
 
@@ -46,7 +47,7 @@ export function PrintPage() {
             <section key={session.id} className="print-session">
               <h2>{session.templateName}</h2>
               <p className="print-session__meta">
-                {formatDate(session.date)} — {stats.totalSets} séries, {stats.totalReps} répétitions
+                {formatDate(session.date)} — {stats.totalSets} séries, {formatDecimal(stats.totalReps)} répétitions
               </p>
 
               <ul className="print-session__exercises">

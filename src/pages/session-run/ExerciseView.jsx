@@ -4,6 +4,8 @@ import { getExercisesUsedInTemplate, getLastPerformance } from '../../domain/his
 import { getExerciseUnit } from '../../domain/muscleGroups.js'
 import {
   addSet,
+  addWarmupSet,
+  getDisplayedSetCount,
   markChargeSuggestionResolved,
   removeSet,
   setEntryUnilateral,
@@ -12,10 +14,13 @@ import {
   updateSingleSet,
 } from '../../domain/sessions.js'
 import {
+  getEffectiveWeightStep,
   getOrCreateExercise,
+  getPulleySummary,
   setExerciseBarWeight,
   setExerciseGripWidth,
-  setExercisePulleyLevel,
+  setExercisePulleyHeight,
+  setExercisePulleyNotch,
   setExerciseUnilateral,
   setExerciseWeightMode,
   setExerciseWeightStep,
@@ -48,7 +53,9 @@ import { ExerciseProgressBar } from '../../components/ExerciseProgressBar.jsx'
 import { SetComparisonTable } from '../../components/SetComparisonTable.jsx'
 import { StepperField } from '../../components/StepperField.jsx'
 import { WeightField } from '../../components/WeightField.jsx'
-import { getSetPosition } from '../../lib/formatSet.js'
+import { getSetLabel, getSetPosition } from '../../lib/formatSet.js'
+import { formatDecimal, roundToHalf } from '../../lib/formatNumber.js'
+import { getFirstWorkSetIndex, isWarmupSet } from '../../domain/setKinds.js'
 import { Confetti } from '../../components/Confetti.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
 import { TourStep } from '../../components/TourStep.jsx'
@@ -112,16 +119,40 @@ export function ExerciseView({ session, data, setData }) {
   // chaque série), et pas pour un exercice au temps (pas de "charge" à
   // proposer pour un gainage). entry.chargeSuggestionResolved évite de la
   // reproposer si on navigue entre exercices sans avoir répondu.
+  const firstWorkSetIndex = getFirstWorkSetIndex(entry.sets)
+  const isWarmup = isWarmupSet(set)
   const chargeSuggestion =
-    !isTimeBased && session.currentSetIndex === 0 && !entry.chargeSuggestionResolved
+    !isTimeBased && session.currentSetIndex === firstWorkSetIndex && !entry.chargeSuggestionResolved
       ? getChargeSuggestion(otherSessions, entry.exerciseId, exercise)
       : null
   const setPosition = getSetPosition(entry.sets, session.currentSetIndex)
+  const setDetail = setPosition.warmup
+    ? `Échauffement${setPosition.sideLabel ? ` · ${setPosition.sideLabel}` : ''}`
+    : `Série ${setPosition.position} / ${setPosition.total}${setPosition.sideLabel ? ` · ${setPosition.sideLabel}` : ''}`
+  // Un échauffement s'ajoute avant les séries de travail, tant qu'aucune
+  // n'a été entamée (curseur sur un échauffement ou sur la 1re série de
+  // travail) et que l'exercice n'est pas déjà terminé.
+  const canAddWarmup =
+    session.currentSetIndex <= firstWorkSetIndex && !session.completedExerciseIds.includes(entry.exerciseId)
+  const pulleySummary = getPulleySummary(exercise)
 
+  // Durée en secondes pour un exercice au temps, sinon répétitions par
+  // demi (7,5) : arrondi au 0,5 le plus proche.
   function handleRepsChange(reps) {
+    const value = isTimeBased ? reps : roundToHalf(reps)
     setData({
       ...data,
-      sessions: updateSet(data.sessions, session.id, entry.exerciseId, session.currentSetIndex, { reps }),
+      sessions: updateSet(data.sessions, session.id, entry.exerciseId, session.currentSetIndex, { reps: value }),
+    })
+  }
+
+  function handleAddWarmup() {
+    setData({
+      ...data,
+      sessions: addWarmupSet(data.sessions, session.id, entry.exerciseId, {
+        unilateral: exercise?.unilateral ?? false,
+        weightStep: getEffectiveWeightStep(exercise),
+      }),
     })
   }
 
@@ -159,10 +190,17 @@ export function ExerciseView({ session, data, setData }) {
     }))
   }
 
-  function handlePulleyLevelChange(pulleyLevel) {
+  function handlePulleyHeightChange(pulleyHeight) {
     setData((current) => ({
       ...current,
-      exercises: setExercisePulleyLevel(current.exercises, entry.exerciseId, pulleyLevel),
+      exercises: setExercisePulleyHeight(current.exercises, entry.exerciseId, pulleyHeight),
+    }))
+  }
+
+  function handlePulleyNotchChange(pulleyNotch) {
+    setData((current) => ({
+      ...current,
+      exercises: setExercisePulleyNotch(current.exercises, entry.exerciseId, pulleyNotch),
     }))
   }
 
@@ -265,10 +303,17 @@ export function ExerciseView({ session, data, setData }) {
     }))
   }
 
-  function handleEditPulleyLevelChange(exerciseId, pulleyLevel) {
+  function handleEditPulleyHeightChange(exerciseId, pulleyHeight) {
     setData((current) => ({
       ...current,
-      exercises: setExercisePulleyLevel(current.exercises, exerciseId, pulleyLevel),
+      exercises: setExercisePulleyHeight(current.exercises, exerciseId, pulleyHeight),
+    }))
+  }
+
+  function handleEditPulleyNotchChange(exerciseId, pulleyNotch) {
+    setData((current) => ({
+      ...current,
+      exercises: setExercisePulleyNotch(current.exercises, exerciseId, pulleyNotch),
     }))
   }
 
@@ -294,7 +339,7 @@ export function ExerciseView({ session, data, setData }) {
     const targetEntry = session.entries.find((e) => e.exerciseId === exerciseId)
     const targetExercise = data.exercises.find((e) => e.id === exerciseId)
     const lastSet = targetEntry.sets[targetEntry.sets.length - 1] ?? { weight: 0, reps: 0 }
-    const { side: _side, ...lastSetWithoutSide } = lastSet
+    const { side: _side, warmup: _warmup, ...lastSetWithoutSide } = lastSet
     const newSets = targetExercise?.unilateral
       ? [{ ...lastSetWithoutSide, side: 'droit' }, { ...lastSetWithoutSide, side: 'gauche' }]
       : [lastSetWithoutSide]
@@ -320,7 +365,7 @@ export function ExerciseView({ session, data, setData }) {
 
   function handleAcceptChargeSuggestion(weight) {
     setData((current) => {
-      const sessions = updateSet(current.sessions, session.id, entry.exerciseId, 0, { weight })
+      const sessions = updateSet(current.sessions, session.id, entry.exerciseId, firstWorkSetIndex, { weight })
       return { ...current, sessions: markChargeSuggestionResolved(sessions, session.id, entry.exerciseId) }
     })
   }
@@ -412,7 +457,7 @@ export function ExerciseView({ session, data, setData }) {
                   <label className="prep-exercise__set-count">
                     <span>Nombre de séries</span>
                     <StepperField
-                      value={entryExercise?.unilateral ? sessionEntry.sets.length / 2 : sessionEntry.sets.length}
+                      value={getDisplayedSetCount(sessionEntry.sets, entryExercise?.unilateral)}
                       onChange={(count) => handleSetCountChange(sessionEntry.exerciseId, count)}
                       step={1}
                       min={1}
@@ -435,6 +480,8 @@ export function ExerciseView({ session, data, setData }) {
                   <SetRow
                     key={setIndex}
                     index={setIndex}
+                    label={getSetLabel(sessionEntry.sets, setIndex)}
+                    warmup={isWarmupSet(set)}
                     weight={set.weight}
                     reps={set.reps}
                     side={set.side}
@@ -443,7 +490,8 @@ export function ExerciseView({ session, data, setData }) {
                     onChangeReps={(reps) => handleEditSetRepsChange(sessionEntry.exerciseId, setIndex, reps)}
                     onChangeWeightMode={(mode) => handleEditWeightModeChange(sessionEntry.exerciseId, mode)}
                     onChangeBarWeight={(barWeight) => handleEditBarWeightChange(sessionEntry.exerciseId, barWeight)}
-                    onChangePulleyLevel={(level) => handleEditPulleyLevelChange(sessionEntry.exerciseId, level)}
+                    onChangePulleyHeight={(height) => handleEditPulleyHeightChange(sessionEntry.exerciseId, height)}
+                    onChangePulleyNotch={(notch) => handleEditPulleyNotchChange(sessionEntry.exerciseId, notch)}
                     onChangeGripWidth={(width) => handleEditGripWidthChange(sessionEntry.exerciseId, width)}
                     onRemove={() => handleRemoveSetFromEntry(sessionEntry.exerciseId, setIndex)}
                     removeDisabled={isCurrentExercise || set.side != null}
@@ -513,10 +561,7 @@ export function ExerciseView({ session, data, setData }) {
           selector=".rest-timer"
           text="Pour être sûr d'entendre l'alarme, évite de verrouiller l'écran manuellement pendant le repos : le son n'est pas garanti écran verrouillé."
         />
-        <p className="rest-page__set-detail">
-          Série {setPosition.position} / {setPosition.total}
-          {setPosition.sideLabel ? ` · ${setPosition.sideLabel}` : ''}
-        </p>
+        <p className="rest-page__set-detail">{setDetail}</p>
         <button type="button" className="rest-page__skip" onClick={handleSkipRest}>
           Passer le repos
         </button>
@@ -542,10 +587,7 @@ export function ExerciseView({ session, data, setData }) {
       <RestBanner timer={timer} onAdjust={handleAdjustRest} />
 
       <h1>{entry.exerciseName}</h1>
-      <p className="session-date">
-        Série {setPosition.position} / {setPosition.total}
-        {setPosition.sideLabel ? ` · ${setPosition.sideLabel}` : ''}
-      </p>
+      <p className={`session-date${isWarmup ? ' session-date--warmup' : ''}`}>{setDetail}</p>
 
       {chargeSuggestion && (
         <ChargeSuggestionCard
@@ -557,6 +599,7 @@ export function ExerciseView({ session, data, setData }) {
       )}
 
       {!last && <p className="last-performance last-performance--empty">Première fois sur cet exercice</p>}
+      {pulleySummary && <p className="last-performance last-performance--pulley">Réglage : {pulleySummary}</p>}
 
       <SetComparisonTable entry={entry} last={last} currentSetIndex={session.currentSetIndex} />
 
@@ -586,14 +629,28 @@ export function ExerciseView({ session, data, setData }) {
               aria-label="Durée"
             />
           ) : (
-            <StepperField
-              className="exercise-active__input"
-              value={set.reps}
-              onChange={handleRepsChange}
-              step={1}
-              disabled={validating}
-              aria-label="Répétitions"
-            />
+            <>
+              <StepperField
+                className="exercise-active__input"
+                value={set.reps}
+                onChange={handleRepsChange}
+                step={1}
+                decimal
+                normalize={roundToHalf}
+                format={formatDecimal}
+                disabled={validating}
+                aria-label="Répétitions"
+              />
+              <button
+                type="button"
+                className="exercise-active__half-rep"
+                onClick={() => handleRepsChange(set.reps + 0.5)}
+                disabled={validating}
+                aria-label="Ajouter une demi-répétition"
+              >
+                ½
+              </button>
+            </>
           )}
         </label>
         <label className="exercise-active__field">
@@ -611,7 +668,8 @@ export function ExerciseView({ session, data, setData }) {
             onModeChange={handleWeightModeChange}
             onBarWeightChange={handleBarWeightChange}
             onStepChange={handleStepChange}
-            onPulleyLevelChange={handlePulleyLevelChange}
+            onPulleyHeightChange={handlePulleyHeightChange}
+            onPulleyNotchChange={handlePulleyNotchChange}
             onGripWidthChange={handleGripWidthChange}
             stepper
             aria-label="Poids en kg"
@@ -626,8 +684,14 @@ export function ExerciseView({ session, data, setData }) {
       />
 
       <BigButton onClick={handleValidate} disabled={validating}>
-        {validating ? 'Série validée ✓' : 'Valider la série'}
+        {validating ? 'Série validée ✓' : isWarmup ? "Valider l'échauffement" : 'Valider la série'}
       </BigButton>
+
+      {canAddWarmup && (
+        <button type="button" className="add-set-button add-set-button--warmup" onClick={handleAddWarmup} disabled={validating}>
+          + Série d'échauffement
+        </button>
+      )}
 
       {session.currentSetIndex > 0 && (
         <BigButton variant="secondary" onClick={handleFinishExercise} disabled={validating}>

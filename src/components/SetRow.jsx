@@ -1,4 +1,5 @@
 import { getExerciseUnit } from '../domain/muscleGroups.js'
+import { formatDecimal, roundToHalf } from '../lib/formatNumber.js'
 import { DurationField } from './DurationField.jsx'
 import { NumberField } from './NumberField.jsx'
 import { WeightField } from './WeightField.jsx'
@@ -6,9 +7,14 @@ import { WeightField } from './WeightField.jsx'
 // Répétitions et poids toujours sur la même ligne, chacun sous son propre
 // libellé (comme dans l'écran de séance guidée) : garantit un haut de champ
 // aligné entre les deux même quand le poids passe en mode "par côté" (qui
-// ajoute du contenu sous le champ, mais jamais au-dessus).
+// ajoute du contenu sous le champ, mais jamais au-dessus). `label` :
+// lib/formatSet.js#getSetLabel ("Échauffement" ou "Série #n", qui compte
+// les séries de travail seulement) ; à défaut, numérotation par index.
+// Répétitions par demi (7,5) : saisie décimale arrondie au 0,5.
 export function SetRow({
   index,
+  label,
+  warmup = false,
   weight,
   reps,
   side,
@@ -17,7 +23,8 @@ export function SetRow({
   onChangeReps,
   onChangeWeightMode,
   onChangeBarWeight,
-  onChangePulleyLevel,
+  onChangePulleyHeight,
+  onChangePulleyNotch,
   onChangeGripWidth,
   onRemove,
   removeDisabled = false,
@@ -26,18 +33,19 @@ export function SetRow({
   // Numérotation par paire pour une série unilatérale (droit+gauche =
   // UNE série aux yeux de l'utilisateur), voir domain/sessions.js et
   // lib/formatSet.js#getSetPosition pour la même logique ailleurs.
-  const label = side ? `Série #${Math.floor(index / 2) + 1} (${side === 'droit' ? 'D' : 'G'})` : `Série #${index + 1}`
+  const displayLabel =
+    label ?? (side ? `Série #${Math.floor(index / 2) + 1} (${side === 'droit' ? 'D' : 'G'})` : `Série #${index + 1}`)
 
   return (
-    <div className="set-row">
+    <div className={`set-row${warmup ? ' set-row--warmup' : ''}`}>
       <div className="set-row__header">
-        <span className="set-row__label">{label}</span>
+        <span className="set-row__label">{displayLabel}</span>
         <button
           type="button"
           className="set-row__remove"
           onClick={onRemove}
           disabled={removeDisabled}
-          aria-label={`Supprimer la série ${index + 1}`}
+          aria-label={`Supprimer : ${displayLabel}`}
           title={removeDisabled ? 'Série en cours, ne peut pas être retirée maintenant' : undefined}
         >
           ✕
@@ -52,14 +60,17 @@ export function SetRow({
               className="set-row__input"
               value={reps}
               onChange={onChangeReps}
-              aria-label={`Durée série ${index + 1}`}
+              aria-label={`Durée ${displayLabel}`}
             />
           ) : (
             <NumberField
               className="set-row__input"
+              decimal
+              normalize={roundToHalf}
+              format={formatDecimal}
               value={reps}
               onChange={onChangeReps}
-              aria-label={`Répétitions série ${index + 1}`}
+              aria-label={`Répétitions ${displayLabel}`}
             />
           )}
         </label>
@@ -76,9 +87,10 @@ export function SetRow({
             onChange={onChangeWeight}
             onModeChange={onChangeWeightMode}
             onBarWeightChange={onChangeBarWeight}
-            onPulleyLevelChange={onChangePulleyLevel}
+            onPulleyHeightChange={onChangePulleyHeight}
+            onPulleyNotchChange={onChangePulleyNotch}
             onGripWidthChange={onChangeGripWidth}
-            aria-label={`Poids série ${index + 1} (kg)`}
+            aria-label={`Poids ${displayLabel} (kg)`}
           />
         </label>
       </div>

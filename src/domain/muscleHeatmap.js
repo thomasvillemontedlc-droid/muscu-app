@@ -1,4 +1,5 @@
 import { getExerciseMuscles, getExerciseUnit, MUSCLE_GROUPS } from './muscleGroups.js'
+import { getWorkSets } from './setKinds.js'
 
 // Muscle secondaire compté à moitié : sollicité, mais moins que le muscle
 // principal de l'exercice.
@@ -10,7 +11,7 @@ const SECONDARY_WEIGHT = 0.5
 // exercices ressortent toujours à 0 (poids non renseigné) et disparaissent
 // de la carte musculaire.
 function getSetsVolume(sets, unit) {
-  return sets.reduce((total, set) => total + (unit === 'time' ? set.reps : set.weight * set.reps), 0)
+  return getWorkSets(sets).reduce((total, set) => total + (unit === 'time' ? set.reps : set.weight * set.reps), 0)
 }
 
 function addEntryVolume(volumes, entry) {

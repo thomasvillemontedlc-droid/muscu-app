@@ -1,4 +1,5 @@
 import { getSessionStatus } from './sessions.js'
+import { getWorkSets } from './setKinds.js'
 
 // "YYYY-MM-DD" en jour CALENDAIRE LOCAL de l'utilisateur, pas la date UTC
 // que renverrait toISOString()/slice(0,10) sur une date-heure — sinon une
@@ -12,13 +13,16 @@ function toLocalDayKey(date) {
 // confondus. Sert à pré-remplir les champs quand on relance une séance
 // (fonctionnalité 3), et à évaluer la suggestion de hausse de charge (voir
 // domain/chargeSuggestion.js, qui a aussi besoin du ressenti saisi ce jour-là).
+// Séries de travail seulement (voir domain/setKinds.js) : un exercice dont
+// seul l'échauffement a été fait n'a pas de "dernière performance".
 export function getLastPerformance(sessions, exerciseId) {
   const sorted = [...sessions].sort((a, b) => b.date.localeCompare(a.date))
 
   for (const session of sorted) {
     const entry = session.entries.find((e) => e.exerciseId === exerciseId)
-    if (entry && entry.sets.length > 0) {
-      return { date: session.date, sets: entry.sets, feeling: entry.feeling ?? null }
+    const sets = entry ? getWorkSets(entry.sets) : []
+    if (sets.length > 0) {
+      return { date: session.date, sets, feeling: entry.feeling ?? null }
     }
   }
 

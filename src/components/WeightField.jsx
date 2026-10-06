@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 import { slugify } from '../lib/slugify.js'
-import { getEffectiveWeightStep } from '../domain/exercises.js'
+import { sanitizeInteger } from '../lib/numberInput.js'
+import {
+  getEffectiveWeightStep,
+  isPulleyExercise,
+  isPulleyHeightExercise,
+  PULLEY_HEIGHTS,
+} from '../domain/exercises.js'
 import { NumberField } from './NumberField.jsx'
 import { StepperField } from './StepperField.jsx'
 
@@ -23,32 +29,65 @@ function hasSharedBar(name) {
   return slugify(name ?? '').includes('barre')
 }
 
-// Exercice à la poulie réglable en HAUTEUR : seulement les vis-à-vis
-// (écarté/oiseau vis-à-vis, et tout équivalent), où la hauteur de poulie
-// varie réellement d'une fois sur l'autre. Les exercices "poulie haute"/
-// "poulie basse" (tirages, extensions triceps, curl...) ont une position
-// fixe déjà encodée dans leur nom : pas ce champ pour eux, voir
-// isGripWidthExercise ci-dessous pour les tirages (qui varient par largeur
-// de prise, pas par hauteur).
-function isPulleyExercise(name) {
-  const slug = slugify(name ?? '')
-  return slug.includes('poulie') && slug.includes('vis-a-vis')
-}
-
 // Tirage horizontal/vertical et variantes : varient par largeur de prise
-// (large/moyenne/serrée), pas par hauteur de poulie - voir isPulleyExercise
-// ci-dessus pour la distinction.
+// (large/moyenne/serrée), pas par hauteur de poulie - voir
+// domain/exercises.js#isPulleyHeightExercise pour la distinction.
 function isGripWidthExercise(name) {
   return slugify(name ?? '').includes('tirage')
 }
 
-const PULLEY_LEVEL_PRESETS = ['Haute', 'Moyenne', 'Basse']
 const GRIP_WIDTH_PRESETS = ['Large', 'Moyenne', 'Serrée']
 
-// Choix rapide + valeur libre mémorisés par exercice (exercise.pulleyLevel /
-// exercise.gripWidth, voir domain/exercises.js), même principe que
-// FeelingPicker : 3 boutons + un champ texte, les deux écrivent la même
-// valeur.
+// Réglages de poulie mémorisés par exercice (voir domain/exercises.js) :
+// hauteur Haute/Moyenne/Basse pour les seuls vis-à-vis, cran (entier,
+// clavier numérique) pour tout exercice à la poulie. Le cran est optionnel :
+// champ vide = null.
+function PulleyFields({ exercise, onHeightChange, onNotchChange }) {
+  const height = exercise?.pulleyHeight ?? null
+  return (
+    <div className="weight-field__pulley">
+      {isPulleyHeightExercise(exercise?.name) && onHeightChange && (
+        <>
+          <span>Hauteur de poulie</span>
+          <div className="weight-field__preset-buttons">
+            {PULLEY_HEIGHTS.map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                className={`weight-field__preset-button${height === preset ? ' weight-field__preset-button--selected' : ''}`}
+                onClick={() => onHeightChange(height === preset ? null : preset)}
+              >
+                {preset}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      {onNotchChange && (
+        <label className="weight-field__notch">
+          <span>Cran</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            className="weight-field__preset-input"
+            placeholder="—"
+            value={exercise?.pulleyNotch ?? ''}
+            onChange={(e) => {
+              const cleaned = sanitizeInteger(e.target.value)
+              onNotchChange(cleaned === '' ? null : Number(cleaned))
+            }}
+            aria-label="Cran de la poulie"
+          />
+        </label>
+      )}
+    </div>
+  )
+}
+
+// Choix rapide + valeur libre mémorisés par exercice (exercise.gripWidth,
+// voir domain/exercises.js), même principe que FeelingPicker : 3 boutons +
+// un champ texte, les deux écrivent la même valeur.
 function PresetField({ label, presets, value, placeholder, ariaLabel, className, onChange }) {
   return (
     <div className={className}>
@@ -100,7 +139,8 @@ export function WeightField({
   onModeChange,
   onBarWeightChange,
   onStepChange,
-  onPulleyLevelChange,
+  onPulleyHeightChange,
+  onPulleyNotchChange,
   onGripWidthChange,
   className,
   stepper = false,
@@ -109,16 +149,8 @@ export function WeightField({
   const mode = exercise?.weightInputMode ?? 'total'
   const isDumbbell = isDumbbellExercise(exercise?.name)
   const hasBar = hasSharedBar(exercise?.name)
-  const pulleyControl = isPulleyExercise(exercise?.name) && onPulleyLevelChange && (
-    <PresetField
-      className="weight-field__pulley"
-      label="Niveau de poulie"
-      presets={PULLEY_LEVEL_PRESETS}
-      value={exercise?.pulleyLevel ?? null}
-      placeholder="Cran précis (optionnel)"
-      ariaLabel="Niveau de poulie précis"
-      onChange={onPulleyLevelChange}
-    />
+  const pulleyControl = isPulleyExercise(exercise?.name) && (onPulleyHeightChange || onPulleyNotchChange) && (
+    <PulleyFields exercise={exercise} onHeightChange={onPulleyHeightChange} onNotchChange={onPulleyNotchChange} />
   )
   const gripControl = isGripWidthExercise(exercise?.name) && onGripWidthChange && (
     <PresetField

@@ -1,4 +1,5 @@
 import { getExerciseMuscles, getMuscleLabel, MUSCLE_GROUPS } from './muscleGroups.js'
+import { getWorkSets } from './setKinds.js'
 
 // Seuils de récupération, modifiables ici. En dessous de RECOVERY_HOURS, le
 // muscle est considéré encore en cours de récupération ; au-delà de
@@ -12,9 +13,9 @@ function getCompletedEntries(session) {
 }
 
 // Muscles sollicités (principal ou secondaire) par une entrée, seulement si
-// au moins une série a réellement été faite.
+// au moins une série de travail (hors échauffement) a réellement été faite.
 function getEntryMuscles(entry) {
-  const hasVolume = entry.sets.some((set) => set.weight * set.reps > 0)
+  const hasVolume = getWorkSets(entry.sets).some((set) => set.weight * set.reps > 0)
   if (!hasVolume) return []
   const { primary, secondary } = getExerciseMuscles(entry.exerciseName)
   return [...primary, ...secondary]

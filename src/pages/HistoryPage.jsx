@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { getSessionsGroupedByDate, getWeekActivity } from '../domain/history.js'
 import { deleteSession, getSessionStatus, setEntryFeeling, updateSingleSet } from '../domain/sessions.js'
-import { setExerciseBarWeight, setExerciseGripWidth, setExercisePulleyLevel, setExerciseWeightMode } from '../domain/exercises.js'
+import { setExerciseBarWeight, setExerciseGripWidth, setExercisePulleyHeight, setExercisePulleyNotch, setExerciseWeightMode } from '../domain/exercises.js'
 import { buildSessionSummary, getTrendFromDiff } from '../domain/sessionSummary.js'
 import { getMuscleIntensities, getMuscleVolumes, hasAnyIntensity } from '../domain/muscleHeatmap.js'
-import { formatSet } from '../lib/formatSet.js'
+import { formatSet, getSetLabel } from '../lib/formatSet.js'
+import { isWarmupSet } from '../domain/setKinds.js'
 import { TrendDot } from '../components/TrendDot.jsx'
 import { BodyHeatmap, BodyHeatmapLegend } from '../components/BodyHeatmap.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
@@ -86,8 +87,12 @@ export function HistoryPage() {
     setData((current) => ({ ...current, exercises: setExerciseBarWeight(current.exercises, exerciseId, barWeight) }))
   }
 
-  function handleEditPulleyLevelChange(exerciseId, pulleyLevel) {
-    setData((current) => ({ ...current, exercises: setExercisePulleyLevel(current.exercises, exerciseId, pulleyLevel) }))
+  function handleEditPulleyHeightChange(exerciseId, pulleyHeight) {
+    setData((current) => ({ ...current, exercises: setExercisePulleyHeight(current.exercises, exerciseId, pulleyHeight) }))
+  }
+
+  function handleEditPulleyNotchChange(exerciseId, pulleyNotch) {
+    setData((current) => ({ ...current, exercises: setExercisePulleyNotch(current.exercises, exerciseId, pulleyNotch) }))
   }
 
   function handleEditGripWidthChange(exerciseId, gripWidth) {
@@ -156,6 +161,8 @@ export function HistoryPage() {
                               <SetRow
                                 key={setIndex}
                                 index={setIndex}
+                                label={getSetLabel(entry.sets, setIndex)}
+                                warmup={isWarmupSet(set)}
                                 weight={set.weight}
                                 reps={set.reps}
                                 side={set.side}
@@ -164,7 +171,8 @@ export function HistoryPage() {
                                 onChangeReps={(reps) => handleEditRepsChange(session.id, entry.exerciseId, setIndex, reps)}
                                 onChangeWeightMode={(mode) => handleEditWeightModeChange(entry.exerciseId, mode)}
                                 onChangeBarWeight={(barWeight) => handleEditBarWeightChange(entry.exerciseId, barWeight)}
-                                onChangePulleyLevel={(level) => handleEditPulleyLevelChange(entry.exerciseId, level)}
+                                onChangePulleyHeight={(height) => handleEditPulleyHeightChange(entry.exerciseId, height)}
+                                onChangePulleyNotch={(notch) => handleEditPulleyNotchChange(entry.exerciseId, notch)}
                                 onChangeGripWidth={(width) => handleEditGripWidthChange(entry.exerciseId, width)}
                                 removeDisabled
                               />

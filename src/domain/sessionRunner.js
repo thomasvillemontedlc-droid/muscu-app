@@ -1,6 +1,8 @@
 import { getLastPerformance } from './history.js'
-import { getExerciseUnit } from './muscleGroups.js'
+import { getEffectiveWeightStep } from './exercises.js'
+import { getExerciseMuscles, getExerciseUnit } from './muscleGroups.js'
 import { expandForSides, getSessionById, updateSession, withTarget } from './sessions.js'
+import { getWorkSets, isWarmupSet } from './setKinds.js'
 import { getGoalDefaultReps } from './trainingGoal.js'
 
 // Les poids/reps sont toujours écrits via domain/sessions.js#updateSet, en
@@ -63,6 +65,65 @@ export function setSessionGoal(sessions, sessionId, goal) {
   })
 
   return updateSession(sessions, sessionId, { goal, entries })
+}
+
+// Exercices du catalogue qui partagent au moins un muscle principal avec
+// `exerciseName` (lui-même exclu), pour proposer en tête des remplaçants
+// pertinents (ex. "Oiseau à la poulie vis-à-vis" pour "Oiseau haltères
+// buste penché").
+export function getSameMuscleExerciseIds(exercises, exerciseName) {
+  const primary = getExerciseMuscles(exerciseName).primary
+  if (primary.length === 0) return []
+  return exercises
+    .filter((e) => e.name !== exerciseName)
+    .filter((e) => getExerciseMuscles(e.name).primary.some((id) => primary.includes(id)))
+    .map((e) => e.id)
+}
+
+// Remplace un exercice par un autre en pleine séance, à la même place :
+// même nombre de séries, séries déjà validées (getResumeSetIndex pour un
+// exercice entamé) conservées telles quelles, séries restantes pré-remplies
+// avec la dernière performance du nouvel exercice (séries de travail, rang
+// par rang, la dernière répétée au-delà). Une série d'échauffement restante
+// le reste, à la moitié de la charge (arrondie au pas de l'exercice). Le
+// curseur, la complétion et le repos en cours suivent le nouvel id. Sans
+// effet si le nouvel exercice est déjà dans la séance.
+export function replaceExerciseInSession(sessions, sessionId, oldExerciseId, newExercise) {
+  const session = getSessionById(sessions, sessionId)
+  if (!session || session.entries.some((e) => e.exerciseId === newExercise.id)) return sessions
+  const oldEntry = session.entries.find((e) => e.exerciseId === oldExerciseId)
+  if (!oldEntry) return sessions
+
+  const otherSessions = sessions.filter((s) => s.id !== sessionId)
+  const last = getLastPerformance(otherSessions, newExercise.id)
+  const completed = session.completedExerciseIds.includes(oldExerciseId)
+  const doneCount = completed ? oldEntry.sets.length : getResumeSetIndex(session, oldEntry)
+  const sameUnit = getExerciseUnit(oldEntry.exerciseName) === getExerciseUnit(newExercise.name)
+  const step = getEffectiveWeightStep(newExercise)
+
+  const sets = oldEntry.sets.map((set, i) => {
+    if (i < doneCount) return set
+    const workIndex = getWorkSets(oldEntry.sets.slice(0, i)).length
+    const source = last ? (last.sets[workIndex] ?? last.sets[last.sets.length - 1]) : null
+    const reps = source ? source.reps : sameUnit ? set.reps : 0
+    let weight = source ? source.weight : 0
+    if (isWarmupSet(set)) weight = Math.round(weight / 2 / step) * step
+    const next = { weight: Math.round(weight * 100) / 100, reps }
+    if (set.side) next.side = set.side
+    if (isWarmupSet(set)) next.warmup = true
+    return withTarget(next)
+  })
+
+  const { chargeSuggestionResolved: _resolved, feeling: _feeling, ...rest } = oldEntry
+  const entry = { ...rest, exerciseId: newExercise.id, exerciseName: newExercise.name, sets }
+  const swap = (id) => (id === oldExerciseId ? newExercise.id : id)
+
+  return updateSession(sessions, sessionId, {
+    entries: session.entries.map((e) => (e.exerciseId === oldExerciseId ? entry : e)),
+    currentExerciseId: swap(session.currentExerciseId),
+    completedExerciseIds: session.completedExerciseIds.map(swap),
+    pendingRestExerciseId: swap(session.pendingRestExerciseId),
+  })
 }
 
 export function removeExerciseEntryFromSession(sessions, sessionId, exerciseId) {
@@ -133,7 +194,15 @@ export function validateCurrentSet(sessions, sessionId) {
   const session = getSessionById(sessions, sessionId)
   if (!session) return sessions
 
-  const entries = closeOutPendingRest(session, session.entries)
+  // doneSetCount : progression mémorisée par exercice (séries validées),
+  // pour reprendre au bon endroit après un détour par la liste (voir
+  // getResumeSetIndex). Jamais diminué : revenir corriger une série
+  // précédente puis la revalider ne fait pas "oublier" les suivantes.
+  const entries = closeOutPendingRest(session, session.entries).map((entry) =>
+    entry.exerciseId === session.currentExerciseId
+      ? { ...entry, doneSetCount: Math.max(entry.doneSetCount ?? 0, session.currentSetIndex + 1) }
+      : entry,
+  )
 
   const currentEntry = entries.find((e) => e.exerciseId === session.currentExerciseId)
   const nextSetIndex = session.currentSetIndex + 1
@@ -250,17 +319,28 @@ export function finishCurrentExerciseEarly(sessions, sessionId) {
   })
 }
 
+// Série sur laquelle reprendre un exercice : sa dernière série s'il est
+// déjà complété (pour ne pas tout re-parcourir juste pour corriger la fin),
+// sinon la première série non validée (entry.doneSetCount, voir
+// validateCurrentSet). Séances en cours d'avant ce champ : l'exercice
+// courant reprend là où était le curseur (goToExerciseList le conserve).
+export function getResumeSetIndex(session, entry) {
+  const lastIndex = Math.max(0, entry.sets.length - 1)
+  if (session.completedExerciseIds.includes(entry.exerciseId)) return lastIndex
+  const fallback = entry.exerciseId === session.currentExerciseId ? session.currentSetIndex : 0
+  return Math.min(entry.doneSetCount ?? fallback, lastIndex)
+}
+
 // Étape 4 -> étape 2 : reprend sur l'exercice choisi, qu'il soit déjà fait
-// ou non (permet d'y retourner corriger une valeur). Sur un exercice déjà
-// complété, on se place sur sa dernière série plutôt que la première, pour
-// ne pas avoir à tout re-parcourir juste pour corriger la fin.
+// ou non (permet d'y retourner corriger une valeur), à la série donnée par
+// getResumeSetIndex. Ne touche à aucune valeur saisie : déplace juste le
+// curseur.
 export function pickExercise(sessions, sessionId, exerciseId) {
   const session = getSessionById(sessions, sessionId)
   if (!session) return sessions
 
   const entry = session.entries.find((e) => e.exerciseId === exerciseId)
-  const alreadyCompleted = session.completedExerciseIds.includes(exerciseId)
-  const startIndex = alreadyCompleted ? Math.max(0, entry.sets.length - 1) : 0
+  const startIndex = getResumeSetIndex(session, entry)
 
   return updateSession(sessions, sessionId, {
     phase: 'exercise',

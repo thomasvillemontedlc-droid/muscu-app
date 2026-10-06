@@ -3565,3 +3565,110 @@ body {
   color: var(--color-text);
   font-weight: 600;
 }
+
+/* Navigation pendant la séance : liste "Exercices" (PickExerciseView.jsx) */
+.pick-exercise-list__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pick-exercise-list__row > .big-button {
+  flex: 1;
+  min-width: 0;
+}
+
+.pick-exercise-list__replace,
+.exercise-active__replace {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.exercise-active__replace:disabled {
+  opacity: 0.4;
+}
+
+/* Exercice quitté en cours de route : mis en évidence, avec sa série. */
+.pick-exercise-list__current {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 16px;
+  text-align: left;
+  background: var(--color-feature-bg);
+  color: var(--color-text);
+  border: 2px solid var(--color-accent-text);
+}
+
+.pick-exercise-list__badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-accent-text);
+}
+
+.pick-exercise-list__item--done .big-button {
+  opacity: 0.6;
+}
+
+/* Écran d'exercice : titre + bouton Remplacer sur la même ligne. */
+.exercise-active__title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.exercise-active__title-row h1 {
+  min-width: 0;
+}
+
+.replace-exercise__hint {
+  font-size: 0.85rem;
+}
+
+.replace-exercise__error {
+  color: var(--color-danger);
+  font-size: 0.9rem;
+  margin: 6px 0 0;
+}
+
+.replace-exercise__template {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin-top: 12px;
+  font-size: 0.95rem;
+}
+
+.replace-exercise__template input {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  accent-color: var(--color-primary);
+}
+
+/* Bandeau de repos : dernière performance du prochain exercice. */
+.rest-timer__next-last {
+  margin: 0;
+  padding: 0 16px;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 0.95rem;
+}
+
+.rest-timer__next-name {
+  display: block;
+  color: var(--color-text);
+  font-weight: 600;
+}

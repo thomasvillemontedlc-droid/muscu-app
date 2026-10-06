@@ -42,6 +42,26 @@ export function getSetPosition(sets, index) {
   return { warmup: false, position: paired ? Math.floor(workIndex / 2) + 1 : workIndex + 1, total, sideLabel }
 }
 
+// Résumé d'une performance pour le bandeau de repos : "4 × 10 à 40 kg" si
+// toutes les séries sont identiques, "10, 9, 8 à 40 kg" si seule la charge
+// est commune, sinon la liste des séries. Séries de travail seulement ; une
+// paire droit/gauche compte pour une série. null s'il n'y a rien.
+export function formatPerformanceSummary(sets, exerciseName) {
+  const work = getWorkSets(sets)
+  if (work.length === 0) return null
+  const paired = work.every((set) => set.side != null)
+  const series = paired ? work.filter((set) => set.side === 'droit') : work
+  const isTime = getExerciseUnit(exerciseName) === 'time'
+  const formatReps = (reps) => (isTime ? `${reps} s` : formatDecimal(reps))
+  const sameWeight = series.every((set) => set.weight === series[0].weight)
+  const sameReps = series.every((set) => set.reps === series[0].reps)
+  const weightSuffix = series[0].weight > 0 ? ` à ${formatDecimal(series[0].weight)} kg` : ''
+
+  if (sameWeight && sameReps) return `${series.length} × ${formatReps(series[0].reps)}${weightSuffix}`
+  if (sameWeight) return `${series.map((set) => formatReps(set.reps)).join(', ')}${weightSuffix}`
+  return series.map((set) => formatSet({ ...set, side: undefined }, exerciseName)).join(', ')
+}
+
 // Libellé court d'une série dans une liste éditable (voir
 // components/SetRow.jsx) : "Échauffement" ou "Série #n", + (D)/(G).
 export function getSetLabel(sets, index) {

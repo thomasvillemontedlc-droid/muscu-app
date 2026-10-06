@@ -10,8 +10,10 @@ const DEFAULT_CUSTOM_SECONDS = 5
 // temps restant sans réinitialiser le chrono (voir
 // domain/sessionRunner.js#adjustRestSeconds) ; reste utilisable pendant le
 // dépassement, où il peut d'ailleurs faire revenir le décompte au-dessus de
-// zéro.
-export function RestBanner({ timer, onAdjust }) {
+// zéro. `nextLastPerformance` (optionnel) : résumé de la dernière
+// performance du prochain exercice (lib/formatSet.js#formatPerformanceSummary),
+// précédé de son nom si `nextExerciseName` est fourni.
+export function RestBanner({ timer, onAdjust, nextExerciseName, nextLastPerformance }) {
   // État purement local à ce bandeau (la valeur tapée, pas le repos
   // lui-même) : pas besoin de le faire vivre dans la séance, il repart à sa
   // valeur par défaut à chaque nouveau montage du composant.
@@ -74,6 +76,13 @@ export function RestBanner({ timer, onAdjust }) {
           +
         </button>
       </div>
+
+      {nextLastPerformance && (
+        <p className="rest-timer__next-last">
+          {nextExerciseName && <span className="rest-timer__next-name">{nextExerciseName}</span>}
+          La dernière fois : {nextLastPerformance}
+        </p>
+      )}
     </div>
   )
 }

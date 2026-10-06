@@ -191,6 +191,9 @@ export function removeSet(sessions, sessionId, exerciseId, setIndex) {
   return mapEntry(sessions, sessionId, exerciseId, (entry) => ({
     ...entry,
     sets: entry.sets.filter((_, i) => i !== setIndex),
+    // Une série validée retirée : une de moins dans la progression mémorisée
+    // (voir domain/sessionRunner.js#validateCurrentSet).
+    ...(setIndex < entry.doneSetCount && { doneSetCount: entry.doneSetCount - 1 }),
   }))
 }
 
@@ -293,7 +296,11 @@ export function addWarmupSet(sessions, sessionId, exerciseId, { unilateral = fal
       const weight = Math.round(firstWork.weight / 2 / weightStep) * weightStep
       const base = { weight: Math.round(weight * 100) / 100, reps: firstWork.reps, targetReps: firstWork.reps, warmup: true }
       const added = expandForSides([base], unilateral)
-      return { ...entry, sets: [...entry.sets.slice(0, insertIndex), ...added, ...entry.sets.slice(insertIndex)] }
+      const next = { ...entry, sets: [...entry.sets.slice(0, insertIndex), ...added, ...entry.sets.slice(insertIndex)] }
+      // Progression mémorisée (voir domain/sessionRunner.js#validateCurrentSet)
+      // au-delà du point d'insertion : décalée comme les séries.
+      if (entry.doneSetCount > insertIndex) next.doneSetCount = entry.doneSetCount + added.length
+      return next
     })
     const insertedCount = unilateral ? 2 : 1
     // Index déjà au-delà du point d'insertion (série de travail entamée, ou

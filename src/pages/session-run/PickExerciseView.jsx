@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { getOrCreateExercise, setExerciseUnilateral } from '../../domain/exercises.js'
-import { getExercisesUsedInTemplate } from '../../domain/history.js'
+import { getExercisesUsedInTemplate, getLastPerformance } from '../../domain/history.js'
 import {
   addExerciseEntryToSession,
   adjustRestSeconds,
   finishSessionEarly,
+  getResumeSetIndex,
   pickExercise,
 } from '../../domain/sessionRunner.js'
+import { formatPerformanceSummary, getSetPosition } from '../../lib/formatSet.js'
+import { ReplaceExerciseSheet } from '../../components/ReplaceExerciseSheet.jsx'
 import { getDisplayedSetCount, setEntryFeeling, setEntryUnilateral, setSetCount } from '../../domain/sessions.js'
 import { useRestTimer } from '../../hooks/useRestTimer.js'
 import { RestBanner } from '../../components/RestBanner.jsx'
@@ -25,6 +28,19 @@ export function PickExerciseView({ session, data, setData }) {
   const [justAddedId, setJustAddedId] = useState(null)
   const otherSessions = data.sessions.filter((s) => s.id !== session.id)
   const suggestedIds = getExercisesUsedInTemplate(otherSessions, session.templateName)
+  const [replacingId, setReplacingId] = useState(null)
+  const replacingEntry = session.entries.find((e) => e.exerciseId === replacingId)
+  // Exercice quitté en cours de route ("Tous les exercices" conserve
+  // currentExerciseId) : mis en avant, et c'est aussi le prochain pour le
+  // rappel de dernière performance du bandeau de repos.
+  const currentEntry = session.entries.find((e) => e.exerciseId === session.currentExerciseId)
+  const currentLast = currentEntry ? getLastPerformance(otherSessions, currentEntry.exerciseId) : null
+  const currentLastSummary = currentLast ? formatPerformanceSummary(currentLast.sets, currentEntry.exerciseName) : null
+
+  function getCurrentBadge(entry) {
+    const pos = getSetPosition(entry.sets, getResumeSetIndex(session, entry))
+    return pos.warmup ? 'En cours · échauffement' : `En cours · série ${pos.position}/${pos.total}`
+  }
 
   function handlePick(exerciseId) {
     setData({ ...data, sessions: pickExercise(data.sessions, session.id, exerciseId) })
@@ -73,18 +89,50 @@ export function PickExerciseView({ session, data, setData }) {
       <h1>Exercices</h1>
       <p className="last-performance">{session.templateName}</p>
 
-      <RestBanner timer={timer} onAdjust={handleAdjustRest} />
+      <RestBanner
+        timer={timer}
+        onAdjust={handleAdjustRest}
+        nextExerciseName={currentEntry?.exerciseName}
+        nextLastPerformance={currentLastSummary}
+      />
 
       <ul className="pick-exercise-list">
         {session.entries.map((entry) => {
           const done = session.completedExerciseIds.includes(entry.exerciseId)
+          const isCurrent = !done && entry === currentEntry
           const entryExercise = data.exercises.find((e) => e.id === entry.exerciseId)
           return (
-            <li key={entry.exerciseId}>
-              <BigButton variant={done ? 'secondary' : 'primary'} onClick={() => handlePick(entry.exerciseId)}>
-                {done ? '✓ ' : ''}
-                {entry.exerciseName}
-              </BigButton>
+            <li
+              key={entry.exerciseId}
+              className={isCurrent ? 'pick-exercise-list__item--current' : done ? 'pick-exercise-list__item--done' : undefined}
+            >
+              <div className="pick-exercise-list__row">
+                {isCurrent ? (
+                  <button
+                    type="button"
+                    className="big-button pick-exercise-list__current"
+                    onClick={() => handlePick(entry.exerciseId)}
+                  >
+                    <span>{entry.exerciseName}</span>
+                    <span className="pick-exercise-list__badge">{getCurrentBadge(entry)}</span>
+                  </button>
+                ) : (
+                  <BigButton variant={done ? 'secondary' : 'primary'} onClick={() => handlePick(entry.exerciseId)}>
+                    {done ? '✓ ' : ''}
+                    {entry.exerciseName}
+                  </BigButton>
+                )}
+                {!done && (
+                  <button
+                    type="button"
+                    className="pick-exercise-list__replace"
+                    onClick={() => setReplacingId(entry.exerciseId)}
+                    aria-label={`Remplacer ${entry.exerciseName}`}
+                  >
+                    Remplacer
+                  </button>
+                )}
+              </div>
               {done && (
                 <FeelingPicker feeling={entry.feeling} onChange={(feeling) => handleFeelingChange(entry.exerciseId, feeling)} />
               )}
@@ -129,6 +177,16 @@ export function PickExerciseView({ session, data, setData }) {
       <button type="button" className="subtle-button" onClick={handleFinish}>
         Terminer la séance
       </button>
+
+      {replacingEntry && (
+        <ReplaceExerciseSheet
+          session={session}
+          entry={replacingEntry}
+          data={data}
+          setData={setData}
+          onClose={() => setReplacingId(null)}
+        />
+      )}
     </div>
   )
 }

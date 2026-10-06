@@ -53,7 +53,8 @@ import { ExerciseProgressBar } from '../../components/ExerciseProgressBar.jsx'
 import { SetComparisonTable } from '../../components/SetComparisonTable.jsx'
 import { StepperField } from '../../components/StepperField.jsx'
 import { WeightField } from '../../components/WeightField.jsx'
-import { getSetLabel, getSetPosition } from '../../lib/formatSet.js'
+import { formatPerformanceSummary, getSetLabel, getSetPosition } from '../../lib/formatSet.js'
+import { ReplaceExerciseSheet } from '../../components/ReplaceExerciseSheet.jsx'
 import { formatDecimal, roundToHalf } from '../../lib/formatNumber.js'
 import { getFirstWorkSetIndex, isWarmupSet } from '../../domain/setKinds.js'
 import { Confetti } from '../../components/Confetti.jsx'
@@ -107,6 +108,7 @@ export function ExerciseView({ session, data, setData }) {
   // qu'on ne touche pas explicitement à la liste d'exercices.
   const [editingSession, setEditingSession] = useState(false)
   const [restImageOpen, setRestImageOpen] = useState(false)
+  const [replaceOpen, setReplaceOpen] = useState(false)
   const timer = useRestTimer(session)
   const entry = session.entries.find((e) => e.exerciseId === session.currentExerciseId)
   const set = entry.sets[session.currentSetIndex]
@@ -114,6 +116,9 @@ export function ExerciseView({ session, data, setData }) {
   const isTimeBased = getExerciseUnit(entry.exerciseName) === 'time'
   const otherSessions = data.sessions.filter((s) => s.id !== session.id)
   const last = getLastPerformance(otherSessions, entry.exerciseId)
+  // Rappel pendant le repos (bandeau RestBanner) : même source que le
+  // tableau de comparaison, séries de travail seulement.
+  const lastSummary = last ? formatPerformanceSummary(last.sets, entry.exerciseName) : null
   const suggestedIds = getExercisesUsedInTemplate(otherSessions, session.templateName)
   // Seulement à l'arrivée sur la toute première série de l'exercice (pas à
   // chaque série), et pas pour un exercice au temps (pas de "charge" à
@@ -548,7 +553,7 @@ export function ExerciseView({ session, data, setData }) {
             <p className="rest-page__next-label">Prochain exercice</p>
             <h2 className="rest-page__next-name">{entry.exerciseName}</h2>
           </div>
-          <RestBanner timer={timer} onAdjust={handleAdjustRest} />
+          <RestBanner timer={timer} onAdjust={handleAdjustRest} nextLastPerformance={lastSummary} />
         </div>
         {restImageOpen && <ExerciseImageOverlay name={entry.exerciseName} onClose={() => setRestImageOpen(false)} />}
         <TourStep
@@ -584,9 +589,23 @@ export function ExerciseView({ session, data, setData }) {
 
       <ExerciseProgressBar session={session} />
 
-      <RestBanner timer={timer} onAdjust={handleAdjustRest} />
+      <RestBanner timer={timer} onAdjust={handleAdjustRest} nextLastPerformance={lastSummary} />
 
-      <h1>{entry.exerciseName}</h1>
+      <div className="exercise-active__title-row">
+        <h1>{entry.exerciseName}</h1>
+        <button type="button" className="exercise-active__replace" onClick={() => setReplaceOpen(true)} disabled={validating}>
+          Remplacer
+        </button>
+      </div>
+      {replaceOpen && (
+        <ReplaceExerciseSheet
+          session={session}
+          entry={entry}
+          data={data}
+          setData={setData}
+          onClose={() => setReplaceOpen(false)}
+        />
+      )}
       <p className={`session-date${isWarmup ? ' session-date--warmup' : ''}`}>{setDetail}</p>
 
       {chargeSuggestion && (

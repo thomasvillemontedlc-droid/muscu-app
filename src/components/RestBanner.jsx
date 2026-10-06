@@ -38,7 +38,11 @@ export function RestBanner({ timer, onAdjust, nextExerciseName, nextLastPerforma
         >
           −15s
         </button>
-        <span className="rest-timer__clock">
+        {/* Grossit à chacune des 3 dernières secondes (en phase avec les
+            bips de décompte, voir hooks/useRestTimer.js). */}
+        <span
+          className={`rest-timer__clock${timer.countdownSecond ? ` rest-timer__clock--countdown-${timer.countdownSecond}` : ''}`}
+        >
           {timer.isOvershoot ? `+${formatClock(timer.overshootMs)}` : formatClock(timer.remainingMs)}
         </span>
         <button
@@ -50,6 +54,14 @@ export function RestBanner({ timer, onAdjust, nextExerciseName, nextLastPerforma
           +15s
         </button>
       </div>
+
+      {/* Repos fini pendant que l'app était en arrière-plan : l'alarme
+          vient de sonner au retour, on dit depuis combien de temps. */}
+      {timer.endedWhileAway && (
+        <p className="rest-timer__ended-away" role="status">
+          Repos terminé depuis {formatClock(timer.overshootMs)}
+        </p>
+      )}
 
       <div className="rest-timer__custom">
         <button

@@ -3672,3 +3672,33 @@ body {
   color: var(--color-text);
   font-weight: 600;
 }
+
+/* Décompte des 3 dernières secondes du repos : le chiffre grossit à chaque
+   bip (voir hooks/useRestTimer.js), puis l'alarme. */
+.rest-timer__clock {
+  display: inline-block;
+  transition: transform 0.2s ease-out;
+}
+
+.rest-timer__clock--countdown-3 {
+  transform: scale(1.06);
+  color: var(--color-accent-text);
+}
+
+.rest-timer__clock--countdown-2 {
+  transform: scale(1.13);
+  color: var(--color-accent-text);
+}
+
+.rest-timer__clock--countdown-1 {
+  transform: scale(1.2);
+  color: var(--color-accent-text);
+}
+
+/* Repos terminé app en arrière-plan : message au retour. */
+.rest-timer__ended-away {
+  margin: 0;
+  color: var(--color-danger);
+  font-weight: 700;
+  text-align: center;
+}

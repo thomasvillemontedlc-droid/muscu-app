@@ -38,26 +38,51 @@ export function resumeAudioIfNeeded() {
 // erreur - c'est ce qui rendait l'alarme silencieuse après un retour en
 // arrière-plan (voir le commentaire de resumeAudioIfNeeded ci-dessus).
 export async function playAlarmBeep() {
-  const ctx = getContext()
-  if (ctx.state === 'suspended') await ctx.resume()
-  if (ctx.state !== 'running') return
+  const ctx = await getRunningContext()
+  if (!ctx) return
 
   const now = ctx.currentTime
   const beepDuration = 0.15
   const gap = 0.1
 
   for (let i = 0; i < 3; i++) {
-    const start = now + i * (beepDuration + gap)
-    const oscillator = ctx.createOscillator()
-    const gainNode = ctx.createGain()
-    oscillator.type = 'sine'
-    oscillator.frequency.value = 880
-    gainNode.gain.setValueAtTime(0.001, start)
-    gainNode.gain.exponentialRampToValueAtTime(0.3, start + 0.01)
-    gainNode.gain.exponentialRampToValueAtTime(0.001, start + beepDuration)
-    oscillator.connect(gainNode)
-    gainNode.connect(ctx.destination)
-    oscillator.start(start)
-    oscillator.stop(start + beepDuration)
+    scheduleBeep(ctx, now + i * (beepDuration + gap), beepDuration, 0.3, 880)
   }
+}
+
+// Décompte des 3 dernières secondes du repos ("bip, biip, biiip") : un bip
+// par seconde, de plus en plus long et fort à l'approche de zéro, puis
+// l'alarme de fin (playAlarmBeep). `secondsLeft` = 3, 2 ou 1.
+const COUNTDOWN_BEEPS = {
+  3: { duration: 0.08, gain: 0.12 },
+  2: { duration: 0.15, gain: 0.2 },
+  1: { duration: 0.25, gain: 0.3 },
+}
+
+export async function playCountdownBeep(secondsLeft) {
+  const beep = COUNTDOWN_BEEPS[secondsLeft]
+  if (!beep) return
+  const ctx = await getRunningContext()
+  if (!ctx) return
+  scheduleBeep(ctx, ctx.currentTime, beep.duration, beep.gain, 660)
+}
+
+async function getRunningContext() {
+  const ctx = getContext()
+  if (ctx.state === 'suspended') await ctx.resume()
+  return ctx.state === 'running' ? ctx : null
+}
+
+function scheduleBeep(ctx, start, duration, gain, frequency) {
+  const oscillator = ctx.createOscillator()
+  const gainNode = ctx.createGain()
+  oscillator.type = 'sine'
+  oscillator.frequency.value = frequency
+  gainNode.gain.setValueAtTime(0.001, start)
+  gainNode.gain.exponentialRampToValueAtTime(gain, start + 0.01)
+  gainNode.gain.exponentialRampToValueAtTime(0.001, start + duration)
+  oscillator.connect(gainNode)
+  gainNode.connect(ctx.destination)
+  oscillator.start(start)
+  oscillator.stop(start + duration)
 }

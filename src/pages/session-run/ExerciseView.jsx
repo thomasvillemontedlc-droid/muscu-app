@@ -109,7 +109,7 @@ export function ExerciseView({ session, data, setData }) {
   const [editingSession, setEditingSession] = useState(false)
   const [restImageOpen, setRestImageOpen] = useState(false)
   const [replaceOpen, setReplaceOpen] = useState(false)
-  const timer = useRestTimer(session)
+  const timer = useRestTimer(session, setData)
   const entry = session.entries.find((e) => e.exerciseId === session.currentExerciseId)
   const set = entry.sets[session.currentSetIndex]
   const exercise = data.exercises.find((e) => e.id === entry.exerciseId)

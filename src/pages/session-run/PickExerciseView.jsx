@@ -19,7 +19,7 @@ import { StepperField } from '../../components/StepperField.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
 
 export function PickExerciseView({ session, data, setData }) {
-  const timer = useRestTimer(session)
+  const timer = useRestTimer(session, setData)
   const [showAddExercise, setShowAddExercise] = useState(false)
   // Exercice tout juste ajouté depuis cet écran : affiche son nombre de
   // séries (choisi ici plutôt que de garder la valeur silencieusement

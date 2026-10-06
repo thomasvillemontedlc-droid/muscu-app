@@ -142,12 +142,27 @@ export function setRestSeconds(sessions, sessionId, restSeconds) {
 // modifie restSeconds, pas restStartedAt, donc le chrono continue de courir
 // sans se réinitialiser (voir useRestTimer.js, remainingMs recalculé à
 // partir des deux). Peut faire passer sous zéro comme au-dessus, le
-// dépassement se comporte alors normalement.
+// dépassement se comporte alors normalement. Si l'ajustement fait revenir
+// le décompte au-dessus de zéro, l'alarme est réarmée (restAlarmPlayedAt
+// remis à null) pour sonner au prochain passage à zéro.
 export function adjustRestSeconds(sessions, sessionId, deltaSeconds) {
   const session = getSessionById(sessions, sessionId)
   if (!session) return sessions
 
-  return setRestSeconds(sessions, sessionId, session.restSeconds + deltaSeconds)
+  const restSeconds = session.restSeconds + deltaSeconds
+  const backAboveZero =
+    session.restStartedAt != null && session.restStartedAt + restSeconds * 1000 > Date.now()
+  return updateSession(sessions, sessionId, {
+    restSeconds,
+    ...(backAboveZero && { restAlarmPlayedAt: null }),
+  })
+}
+
+// Mémorise que l'alarme de fin du repos en cours a sonné (voir
+// hooks/useRestTimer.js) : elle ne sera jamais rejouée pour ce repos, même
+// après un changement d'écran ou un rechargement de l'app.
+export function markRestAlarmPlayed(sessions, sessionId, playedAt = Date.now()) {
+  return updateSession(sessions, sessionId, { restAlarmPlayedAt: playedAt })
 }
 
 // Étape 1 -> étape 2 : démarre sur le premier exercice de la liste.
@@ -213,6 +228,8 @@ export function validateCurrentSet(sessions, sessionId) {
     restUntil: Date.now() + session.restSeconds * 1000,
     pendingRestExerciseId: session.currentExerciseId,
     pendingRestSetIndex: session.currentSetIndex,
+    // Nouveau repos : son alarme n'a pas encore sonné.
+    restAlarmPlayedAt: null,
   }
 
   if (!exerciseFinished) {

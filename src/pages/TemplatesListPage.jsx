@@ -14,6 +14,7 @@ import { BigButton } from '../components/BigButton.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { TourStep } from '../components/TourStep.jsx'
 import { TemplateBulkEditSheet } from '../components/TemplateBulkEditSheet.jsx'
+import { BackupReminder } from '../components/BackupReminder.jsx'
 
 export function TemplatesListPage() {
   const { data, setData } = useAppDataContext()
@@ -139,6 +140,7 @@ export function TemplatesListPage() {
   return (
     <div className="page">
       <h1>Mes séances</h1>
+      <BackupReminder />
 
       {inProgressSession ? (
         <section className="featured-session">

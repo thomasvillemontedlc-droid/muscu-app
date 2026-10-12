@@ -29,7 +29,9 @@ export function MiniRestTimer({ timer, onAdjust, onSkip, onExpand }) {
         −15s
       </button>
       <button type="button" className="rest-bar__clock" onClick={onExpand} aria-label="Afficher le repos en grand">
-        Repos {clock}
+        {/* Son coupé (retour après verrouillage...) : n'importe quel
+            toucher le réactive, voir lib/alarm.js#unlockAudio. */}
+        {timer.audioReady ? '' : '🔇 '}Repos {clock}
       </button>
       <button type="button" className="rest-bar__adjust" onClick={() => onAdjust(15)} aria-label="Ajouter 15 secondes au repos">
         +15s

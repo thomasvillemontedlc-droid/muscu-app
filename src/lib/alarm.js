@@ -8,6 +8,24 @@ let listenersInstalled = false
 let pendingAlarmUntil = 0
 const PENDING_ALARM_MS = 60 * 1000
 const RESUME_TIMEOUT_MS = 1500
+// Contexte "zombie" : après un verrouillage de l'écran, iOS peut laisser
+// l'AudioContext dans l'état 'running' alors qu'il ne produit plus aucun
+// son (son horloge currentTime est figée). L'état seul ne suffit donc pas :
+// après chaque passage en arrière-plan (ou un gel du JavaScript, téléphone
+// en veille), le contexte est "suspect" jusqu'à ce qu'on ait vérifié que
+// son horloge avance, ou qu'un toucher en ait créé un neuf.
+let suspect = false
+// Même après une vérification réussie, le premier toucher qui suit un
+// passage en arrière-plan recrée quand même un contexte neuf : on ne peut
+// pas tester ici qu'un son sort vraiment du haut-parleur, et un contexte
+// neuf créé dans un geste est le seul état dont on soit sûr sur iOS.
+let refreshOnNextGesture = false
+const PROBE_MS = 250
+// Battement qui détecte un gel du JavaScript (écran verrouillé sans
+// visibilitychange, ça arrive sur iOS) : un écart anormal entre deux
+// battements rend le contexte suspect.
+const HEARTBEAT_MS = 1000
+const FREEZE_GAP_MS = 3000
 const stateSubscribers = new Set()
 
 function notifyState() {
@@ -28,6 +46,22 @@ function createContext() {
 // 'closed' (certains navigateurs mobiles ferment l'AudioContext après une
 // longue mise en arrière-plan plutôt que de juste le suspendre) - un
 // contexte fermé ne peut plus jamais être repris via resume().
+function markSuspect() {
+  if (!sharedContext) return
+  refreshOnNextGesture = true
+  if (suspect) return
+  suspect = true
+  notifyState()
+}
+
+// Horloge du contexte qui avance réellement (le seul signe fiable qu'il
+// produit du son), mesurée sur PROBE_MS.
+async function isClockRunning(ctx) {
+  const before = ctx.currentTime
+  await new Promise((resolve) => setTimeout(resolve, PROBE_MS))
+  return ctx.state === 'running' && ctx.currentTime > before
+}
+
 function getContext() {
   if (!sharedContext || sharedContext.state === 'closed') return createContext()
   return sharedContext
@@ -82,13 +116,23 @@ async function tryResume(ctx) {
 function ensureRunning() {
   const ctx = getContext()
   if (!ctx) return Promise.resolve(null)
-  if (ctx.state === 'running') return Promise.resolve(ctx)
+  if (ctx.state === 'running' && !suspect) return Promise.resolve(ctx)
   if (pendingResume) return pendingResume
 
   pendingResume = (async () => {
-    if (await tryResume(ctx)) return ctx
+    if (ctx.state === 'running' && (await isClockRunning(ctx))) {
+      suspect = false
+      return ctx
+    }
+    if (ctx.state !== 'running' && (await tryResume(ctx)) && (await isClockRunning(ctx))) {
+      suspect = false
+      return ctx
+    }
     const fresh = recreateContext(ctx)
-    if (fresh && (await tryResume(fresh))) return fresh
+    if (fresh && (await tryResume(fresh)) && (await isClockRunning(fresh))) {
+      suspect = false
+      return fresh
+    }
     return null
   })().finally(() => {
     pendingResume = null
@@ -100,7 +144,7 @@ function ensureRunning() {
 // true si le son peut partir maintenant (contexte 'running'). Voir
 // subscribeAudioState pour être prévenu des changements.
 export function isAudioReady() {
-  return sharedContext?.state === 'running'
+  return sharedContext?.state === 'running' && !suspect
 }
 
 export function subscribeAudioState(callback) {
@@ -113,25 +157,35 @@ export function subscribeAudioState(callback) {
 // geste lui-même : iOS n'accepte de relancer l'audio que là. Si le
 // contexte ne repasse pas en 'running', il est recréé ; le prochain toucher
 // le débloquera (voir installAudioUnlockListeners).
+// Contexte suspect (retour après verrouillage) : on n'essaie même pas de
+// le relancer, on en crée un neuf DANS le geste. Avant, la recréation se
+// faisait après coup, hors geste : le contexte neuf restait bloqué et il
+// fallait toucher une deuxième fois, ce que rien n'indiquait.
 export function unlockAudio() {
-  const ctx = getContext()
+  let ctx = getContext()
   if (!ctx) return
-  if (ctx.state === 'running') {
+  if (ctx.state === 'running' && !suspect && !refreshOnNextGesture) {
     playPendingAlarm(ctx)
     return
   }
+  if (suspect || refreshOnNextGesture || ctx.state !== 'suspended') ctx = recreateContext(ctx)
+  // Contexte neuf, créé dans ce geste : plus rien de suspect. Les gestes
+  // suivants (touchend, click du même toucher) le relancent sans le
+  // recréer encore une fois.
+  refreshOnNextGesture = false
+  suspect = false
+  if (!ctx) return
   playSilentBuffer(ctx)
-  ctx
+  const resumed = ctx
+  resumed
     .resume()
     .then(() => {
-      if (ctx.state === 'running') {
-        playSilentBuffer(ctx)
-        playPendingAlarm(ctx)
-      } else {
-        recreateContext(ctx)
-      }
+      if (resumed.state !== 'running' || sharedContext !== resumed) return
+      playSilentBuffer(resumed)
+      notifyState()
+      playPendingAlarm(resumed)
     })
-    .catch(() => recreateContext(ctx))
+    .catch(() => {})
 }
 
 // Écoute en permanence les touchers/touches sur toute l'app : n'importe
@@ -141,11 +195,31 @@ export function installAudioUnlockListeners() {
   if (listenersInstalled) return
   listenersInstalled = true
   const handler = () => {
-    if (!isAudioReady()) unlockAudio()
+    if (!isAudioReady() || refreshOnNextGesture) unlockAudio()
   }
   for (const type of ['touchend', 'pointerdown', 'keydown']) {
     document.addEventListener(type, handler, { passive: true, capture: true })
   }
+
+  // Sortie de l'app ou écran verrouillé : contexte suspect. Au retour, on
+  // vérifie tout de suite s'il marche encore (sans geste) ; sinon le
+  // prochain toucher en crée un neuf (unlockAudio ci-dessus).
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') markSuspect()
+    else resumeAudioIfNeeded()
+  })
+  window.addEventListener('pagehide', markSuspect)
+  window.addEventListener('pageshow', resumeAudioIfNeeded)
+
+  let lastBeat = Date.now()
+  setInterval(() => {
+    const now = Date.now()
+    if (now - lastBeat > FREEZE_GAP_MS) {
+      markSuspect()
+      if (document.visibilityState === 'visible') resumeAudioIfNeeded()
+    }
+    lastBeat = now
+  }, HEARTBEAT_MS)
 }
 
 // Retente un réveil du contexte au retour de l'app au premier plan

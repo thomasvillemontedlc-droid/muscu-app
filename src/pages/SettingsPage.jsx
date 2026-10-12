@@ -5,6 +5,8 @@ import { useThemeContext } from '../hooks/ThemeContext.jsx'
 import { filterSessionsByScope } from '../domain/sessions.js'
 import { seedDefaultExercises } from '../domain/exercises.js'
 import { parseImportedData } from '../storage/storage.js'
+import { recordBackup } from '../domain/backup.js'
+import { downloadJson, getExportFilename } from '../lib/downloadJson.js'
 import { resetTour } from '../storage/tour.js'
 import { BigButton } from '../components/BigButton.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
@@ -52,29 +54,20 @@ export function SettingsPage() {
     })
   }
 
-  // Attacher l'élément au DOM avant de cliquer, et ne révoquer l'URL
-  // qu'après un court délai : sur mobile, cliquer un <a> détaché du DOM ou
-  // révoquer l'URL trop tôt peut silencieusement empêcher le téléchargement.
-  function downloadJson(exportData, filename) {
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  // Un export de toutes les séances compte comme sauvegarde (rappel
+  // domain/backup.js), pas un export partiel.
+  function exportScoped() {
+    const scopedData = { ...data, sessions: getScopedSessions() }
+    downloadJson(scopedData, getExportFilename())
+    if (scope === 'all') setData((current) => recordBackup(current))
   }
 
   function handleExport() {
-    const scopedData = { ...data, sessions: getScopedSessions() }
-    downloadJson(scopedData, `muscu-export-${new Date().toISOString().slice(0, 10)}.json`)
+    exportScoped()
   }
 
   function handleSendTo(url) {
-    const scopedData = { ...data, sessions: getScopedSessions() }
-    downloadJson(scopedData, `muscu-export-${new Date().toISOString().slice(0, 10)}.json`)
+    exportScoped()
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
@@ -152,6 +145,11 @@ export function SettingsPage() {
         <p>
           Toutes tes données restent uniquement sur ce téléphone (localStorage). Exporte
           régulièrement pour ne rien perdre, surtout avant de vider le cache du navigateur.
+        </p>
+        <p className="settings-section__hint">
+          {data.settings?.lastBackupAt
+            ? `Dernière sauvegarde complète : ${new Date(data.settings.lastBackupAt).toLocaleDateString('fr-FR')}`
+            : 'Aucune sauvegarde complète pour l’instant.'}
         </p>
 
         <label className="prep-field">

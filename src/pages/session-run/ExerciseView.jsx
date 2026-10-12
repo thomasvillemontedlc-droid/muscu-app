@@ -10,9 +10,11 @@ import {
   removeSet,
   setEntryUnilateral,
   setSetCount,
+  updateSession,
   updateSet,
   updateSingleSet,
 } from '../../domain/sessions.js'
+import { isLastRemainingExercise, suggestExerciseToComplete } from '../../domain/completeSession.js'
 import {
   getEffectiveWeightStep,
   getOrCreateExercise,
@@ -41,6 +43,7 @@ import { vibrateSuccess } from '../../lib/haptics.js'
 import { useRestTimer } from '../../hooks/useRestTimer.js'
 import { RestBanner } from '../../components/RestBanner.jsx'
 import { MiniRestTimer } from '../../components/MiniRestTimer.jsx'
+import { CompleteSessionCard } from '../../components/CompleteSessionCard.jsx'
 import { SessionTimeRemaining } from '../../components/SessionTimeRemaining.jsx'
 import { DraggableList } from '../../components/DraggableList.jsx'
 import { ExercisePicker } from '../../components/ExercisePicker.jsx'
@@ -53,7 +56,7 @@ import { ExerciseProgressBar } from '../../components/ExerciseProgressBar.jsx'
 import { SetComparisonTable } from '../../components/SetComparisonTable.jsx'
 import { StepperField } from '../../components/StepperField.jsx'
 import { WeightField } from '../../components/WeightField.jsx'
-import { formatPerformanceSummary, getSetLabel, getSetPosition } from '../../lib/formatSet.js'
+import { formatPerformanceSummary, formatSet, getSetLabel, getSetPosition } from '../../lib/formatSet.js'
 import { ReplaceExerciseSheet } from '../../components/ReplaceExerciseSheet.jsx'
 import { formatDecimal, roundToHalf } from '../../lib/formatNumber.js'
 import { getFirstWorkSetIndex, isWarmupSet } from '../../domain/setKinds.js'
@@ -109,9 +112,28 @@ export function ExerciseView({ session, data, setData }) {
   const [editingSession, setEditingSession] = useState(false)
   const [restImageOpen, setRestImageOpen] = useState(false)
   const [replaceOpen, setReplaceOpen] = useState(false)
+  // Choix explicite grand/compact pour le repos en cours, valable seulement
+  // pour la position où il a été fait (`key`, voir restKey) : toute
+  // navigation ou nouveau repos revient au choix automatique ci-dessous.
+  const [restView, setRestView] = useState(null)
   const timer = useRestTimer(session, setData)
   const entry = session.entries.find((e) => e.exerciseId === session.currentExerciseId)
   const set = entry.sets[session.currentSetIndex]
+  // Séries déjà validées de l'exercice (voir sessionRunner.js
+  // #validateCurrentSet) ; séances d'avant ce champ : celles avant le curseur.
+  const doneSetCount = entry.doneSetCount ?? session.currentSetIndex
+  // Repos en version compacte (barre en haut + toutes les séries
+  // modifiables) quand on est revenu en arrière pendant le repos : série
+  // précédente, ou exercice déjà commencé repris depuis la liste. Repos
+  // "normal" (curseur sur la série qui suit celle qui l'a déclenché, ou
+  // exercice pas encore commencé) : en grand comme avant. Ne dépend pas du
+  // dépassement : une fois compacte, la barre ne repasse jamais en grand
+  // toute seule (pas de saisie en cours qui disparaît sous les doigts).
+  const restKey = `${session.id}-${entry.exerciseId}-${session.currentSetIndex}-${session.restStartedAt}`
+  const isNormalRestPosition =
+    session.pendingRestExerciseId === entry.exerciseId && session.currentSetIndex === session.pendingRestSetIndex + 1
+  const autoCompact = (entry.doneSetCount ?? 0) > 0 && !isNormalRestPosition
+  const restCompact = timer != null && (restView?.key === restKey ? restView.mode === 'compact' : autoCompact)
   const exercise = data.exercises.find((e) => e.id === entry.exerciseId)
   const isTimeBased = getExerciseUnit(entry.exerciseName) === 'time'
   const otherSessions = data.sessions.filter((s) => s.id !== session.id)
@@ -147,7 +169,7 @@ export function ExerciseView({ session, data, setData }) {
     const value = isTimeBased ? reps : roundToHalf(reps)
     setData({
       ...data,
-      sessions: updateSet(data.sessions, session.id, entry.exerciseId, session.currentSetIndex, { reps: value }),
+      sessions: updateSet(data.sessions, session.id, entry.exerciseId, session.currentSetIndex, { reps: value }, doneSetCount),
     })
   }
 
@@ -170,7 +192,7 @@ export function ExerciseView({ session, data, setData }) {
     // précédente.
     setData((current) => ({
       ...current,
-      sessions: updateSet(current.sessions, session.id, entry.exerciseId, session.currentSetIndex, { weight }),
+      sessions: updateSet(current.sessions, session.id, entry.exerciseId, session.currentSetIndex, { weight }, doneSetCount),
     }))
   }
 
@@ -362,6 +384,13 @@ export function ExerciseView({ session, data, setData }) {
     })
   }
 
+  function handleDismissCompleteSuggestion() {
+    setData((current) => ({
+      ...current,
+      sessions: updateSession(current.sessions, session.id, { completeSuggestionDismissed: true }),
+    }))
+  }
+
   function handleAcceptChargeSuggestion(weight) {
     setData((current) => {
       const sessions = updateSet(current.sessions, session.id, entry.exerciseId, firstWorkSetIndex, { weight })
@@ -528,7 +557,7 @@ export function ExerciseView({ session, data, setData }) {
   // fenêtre (défilement), mais ne réduit jamais la taille du chrono
   // lui-même. Dès le dépassement, l'écran normal revient pour permettre
   // d'enchaîner sur la série suivante.
-  if (timer && !timer.isOvershoot) {
+  if (timer && !timer.isOvershoot && !restCompact) {
     return (
       <div className="page rest-page">
         {navButtons}
@@ -568,6 +597,11 @@ export function ExerciseView({ session, data, setData }) {
         <button type="button" className="rest-page__skip" onClick={handleSkipRest}>
           Passer le repos
         </button>
+        {doneSetCount > 0 && (
+          <button type="button" className="rest-page__skip" onClick={() => setRestView({ key: restKey, mode: 'compact' })}>
+            Voir mes séries
+          </button>
+        )}
         <button type="button" className="rest-page__skip" onClick={() => setEditingSession(true)}>
           Modifier ma séance
         </button>
@@ -575,8 +609,23 @@ export function ExerciseView({ session, data, setData }) {
     )
   }
 
+  // Carte "Compléter ta séance" : seulement sur le dernier exercice non
+  // terminé, tant qu'elle n'a pas été masquée pour cette séance.
+  const completeSuggestion =
+    !session.completeSuggestionDismissed && isLastRemainingExercise(session)
+      ? suggestExerciseToComplete(session, data.sessions, data.templates, data.exercises)
+      : null
+
   return (
     <div className="page">
+      {restCompact && (
+        <MiniRestTimer
+          timer={timer}
+          onAdjust={handleAdjustRest}
+          onSkip={handleSkipRest}
+          onExpand={() => setRestView({ key: restKey, mode: 'big' })}
+        />
+      )}
       <SessionTimeRemaining session={session} />
       {navButtons}
       <TourStep
@@ -587,7 +636,7 @@ export function ExerciseView({ session, data, setData }) {
 
       <ExerciseProgressBar session={session} />
 
-      <RestBanner timer={timer} onAdjust={handleAdjustRest} nextLastPerformance={lastSummary} />
+      {!restCompact && <RestBanner timer={timer} onAdjust={handleAdjustRest} nextLastPerformance={lastSummary} />}
 
       <div className="exercise-active__title-row">
         <h1>{entry.exerciseName}</h1>
@@ -618,7 +667,51 @@ export function ExerciseView({ session, data, setData }) {
       {!last && <p className="last-performance last-performance--empty">Première fois sur cet exercice</p>}
       {pulleySummary && <p className="last-performance last-performance--pulley">Réglage : {pulleySummary}</p>}
 
-      <SetComparisonTable entry={entry} last={last} currentSetIndex={session.currentSetIndex} />
+      {restCompact ? (
+        // Toutes les séries de l'exercice : celles déjà validées
+        // modifiables une à une (updateSingleSet : ni progression ni repos
+        // touchés), celle en cours mise en évidence (saisie juste en
+        // dessous), celles à venir atténuées.
+        <div className="exercise-sets">
+          {entry.sets.map((s, i) => {
+            if (i === session.currentSetIndex || i >= doneSetCount) {
+              const isCurrent = i === session.currentSetIndex
+              return (
+                <div
+                  key={i}
+                  className={`exercise-sets__line${isCurrent ? ' exercise-sets__line--current' : ' exercise-sets__line--upcoming'}`}
+                >
+                  <span>{getSetLabel(entry.sets, i)}</span>
+                  <span>{isCurrent ? 'En cours' : formatSet(s, entry.exerciseName)}</span>
+                </div>
+              )
+            }
+            return (
+              <SetRow
+                key={i}
+                index={i}
+                label={getSetLabel(entry.sets, i)}
+                warmup={isWarmupSet(s)}
+                weight={s.weight}
+                reps={s.reps}
+                side={s.side}
+                exercise={exercise}
+                onChangeWeight={(weight) => handleEditSetWeightChange(entry.exerciseId, i, weight)}
+                onChangeReps={(reps) => handleEditSetRepsChange(entry.exerciseId, i, reps)}
+                onChangeWeightMode={(mode) => handleEditWeightModeChange(entry.exerciseId, mode)}
+                onChangeBarWeight={(barWeight) => handleEditBarWeightChange(entry.exerciseId, barWeight)}
+                onChangePulleyHeight={(height) => handleEditPulleyHeightChange(entry.exerciseId, height)}
+                onChangePulleyNotch={(notch) => handleEditPulleyNotchChange(entry.exerciseId, notch)}
+                onChangeGripWidth={(width) => handleEditGripWidthChange(entry.exerciseId, width)}
+                onRemove={() => {}}
+                removeDisabled
+              />
+            )
+          })}
+        </div>
+      ) : (
+        <SetComparisonTable entry={entry} last={last} currentSetIndex={session.currentSetIndex} />
+      )}
 
       <ExerciseImageViewer key={entry.exerciseName} name={entry.exerciseName} />
 
@@ -714,6 +807,16 @@ export function ExerciseView({ session, data, setData }) {
         <BigButton variant="secondary" onClick={handleFinishExercise} disabled={validating}>
           Terminer cet exercice
         </BigButton>
+      )}
+
+      {completeSuggestion && (
+        <CompleteSessionCard
+          suggestion={completeSuggestion}
+          exercises={data.exercises}
+          suggestedIds={suggestedIds}
+          onAdd={handleAddExerciseEntry}
+          onDismiss={handleDismissCompleteSuggestion}
+        />
       )}
     </div>
   )

@@ -6,7 +6,8 @@ import { getPrimaryMusclesWorked, getStretchSuggestions } from '../../domain/str
 import { formatSet } from '../../lib/formatSet.js'
 import { formatDecimal } from '../../lib/formatNumber.js'
 import { formatDuration } from '../../lib/formatDuration.js'
-import { getFeelingLabel } from '../../components/FeelingPicker.jsx'
+import { FeelingPicker, getFeelingLabel } from '../../components/FeelingPicker.jsx'
+import { setEntryFeeling } from '../../domain/sessions.js'
 import { TrendDot } from '../../components/TrendDot.jsx'
 import { BodyHeatmap, BodyHeatmapLegend } from '../../components/BodyHeatmap.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
@@ -21,9 +22,16 @@ function formatRest(totalSeconds) {
   return `${minutes}min${String(seconds).padStart(2, '0')}`
 }
 
-export function FinishedView({ session, data }) {
+export function FinishedView({ session, data, setData }) {
   const navigate = useNavigate()
   const [runningStretches, setRunningStretches] = useState(false)
+  // Ressenti du dernier exercice : valider sa dernière série mène
+  // directement ici, sans passer par la liste où se trouve FeelingPicker
+  // (PickExerciseView.jsx). Demandé tant qu'il n'a pas de feeling ; une fois
+  // touché, la carte reste ouverte (pour la note libre) jusqu'à "OK".
+  const lastExerciseId = session.completedExerciseIds?.at(-1)
+  const lastEntry = session.entries.find((e) => e.exerciseId === lastExerciseId)
+  const [feelingOpen, setFeelingOpen] = useState(lastEntry != null && lastEntry.feeling == null)
   const summary = buildSessionSummary(data.sessions, session)
   const completionProgress = getCompletionProgress(data.sessions, session)
   const stats = getSessionStats(session)
@@ -51,10 +59,40 @@ export function FinishedView({ session, data }) {
     )
   }
 
+  function handleLastFeelingChange(feeling) {
+    setData((current) => ({
+      ...current,
+      sessions: setEntryFeeling(current.sessions, session.id, lastEntry.exerciseId, feeling),
+    }))
+  }
+
+  // "Passer" enregistre un ressenti vide : ne plus le redemander si on
+  // revient sur cet écran.
+  function handleSkipLastFeeling() {
+    handleLastFeelingChange({ value: null, note: '' })
+    setFeelingOpen(false)
+  }
+
   return (
     <div className="page">
       <h1>Séance terminée 🎉</h1>
       <p className="last-performance">{session.templateName}</p>
+
+      {feelingOpen && lastEntry && (
+        <section className="last-feeling">
+          <p className="last-feeling__title">Comment s'est passé {lastEntry.exerciseName} ?</p>
+          <FeelingPicker feeling={lastEntry.feeling} onChange={handleLastFeelingChange} />
+          {lastEntry.feeling == null ? (
+            <button type="button" className="last-feeling__skip" onClick={handleSkipLastFeeling}>
+              Passer
+            </button>
+          ) : (
+            <button type="button" className="last-feeling__skip" onClick={() => setFeelingOpen(false)}>
+              OK
+            </button>
+          )}
+        </section>
+      )}
 
       <BodyHeatmap intensities={intensities} />
       <BodyHeatmapLegend intensities={intensities} />

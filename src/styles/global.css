@@ -3818,3 +3818,149 @@ body {
   font-size: 0.85rem;
   margin: -4px 0 10px;
 }
+
+/* Repos en version compacte (ExerciseView.jsx#restCompact, voir
+   MiniRestTimer.jsx avec onExpand) : barre fine collée en haut pendant
+   qu'on corrige une série déjà faite. Sticky plutôt que fixed : ne masque
+   jamais le haut de la page. */
+.rest-bar {
+  position: sticky;
+  top: env(safe-area-inset-top);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-variant-numeric: tabular-nums;
+}
+
+.rest-bar--overshoot {
+  border-color: var(--color-danger);
+}
+
+.rest-bar__clock {
+  flex: 1;
+  min-height: 36px;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 700;
+}
+
+.rest-bar--overshoot .rest-bar__clock {
+  color: var(--color-danger);
+}
+
+.rest-bar__adjust,
+.rest-bar__skip {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.exercise-sets {
+  margin-bottom: 12px;
+}
+
+.exercise-sets__line {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.exercise-sets__line--current {
+  background: var(--color-surface);
+  border: 1px solid var(--color-accent-text);
+  font-weight: 700;
+}
+
+.exercise-sets__line--upcoming {
+  color: var(--color-muted);
+  opacity: 0.7;
+}
+
+/* Carte "Compléter ta séance" (CompleteSessionCard.jsx) : discrète, en bas
+   de l'écran du dernier exercice. */
+.complete-session {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+}
+
+.complete-session__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.complete-session__reason {
+  flex: 1;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.complete-session__dismiss {
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+}
+
+.complete-session__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.complete-session__name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.complete-session__add {
+  min-height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  font: inherit;
+  font-weight: 700;
+}
+
+/* Ressenti du dernier exercice en haut de l'écran de fin (FinishedView). */
+.last-feeling {
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid var(--color-accent-text);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.last-feeling__title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.last-feeling__skip {
+  margin-top: 8px;
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  text-decoration: underline;
+}

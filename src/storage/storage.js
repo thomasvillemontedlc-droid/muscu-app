@@ -90,5 +90,14 @@ function migrate(data) {
     migrated = { ...migrated, exercises: migrated.exercises.map(migratePulleyLevel) }
   }
 
+  // v6 -> v7 : nouveaux exercices à la barre guidée (Smith machine, voir
+  // domain/muscleGroups.js). Le catalogue n'étant semé qu'une fois (v1 ->
+  // v2), on repasse seedDefaultExercises, qui n'ajoute que les entrées
+  // canoniques encore absentes : exercices existants et historique
+  // intacts.
+  if (previousVersion < 7) {
+    migrated = { ...migrated, exercises: seedDefaultExercises(migrated.exercises) }
+  }
+
   return migrated
 }

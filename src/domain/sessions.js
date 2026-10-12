@@ -268,12 +268,20 @@ export function setEntryUnilateral(sessions, sessionId, exerciseId, unilateral) 
 // La propagation reste dans la même catégorie : corriger un échauffement
 // ne touche que les échauffements suivants, jamais les séries de travail
 // (et inversement).
-export function updateSet(sessions, sessionId, exerciseId, setIndex, changes) {
+// `doneSetCount` (optionnel) : les séries suivantes déjà validées (voir
+// sessionRunner.js#validateCurrentSet) ne sont jamais écrasées, seulement
+// celles encore à faire. Sert quand on corrige une série déjà faite
+// (retour à la série précédente).
+export function updateSet(sessions, sessionId, exerciseId, setIndex, changes, doneSetCount = 0) {
   return mapEntry(sessions, sessionId, exerciseId, (entry) => {
     const warmup = isWarmupSet(entry.sets[setIndex])
     return {
       ...entry,
-      sets: entry.sets.map((set, i) => (i >= setIndex && isWarmupSet(set) === warmup ? { ...set, ...changes } : set)),
+      sets: entry.sets.map((set, i) =>
+        i >= setIndex && isWarmupSet(set) === warmup && (i === setIndex || i >= doneSetCount)
+          ? { ...set, ...changes }
+          : set,
+      ),
     }
   })
 }

@@ -227,6 +227,19 @@ export const EXERCISE_MUSCLES = {
   'fente-laterale': { name: 'Fente latérale', primary: ['adducteurs'], secondary: ['quadriceps', 'fessiers'] },
   'marche-laterale-avec-elastique': { name: 'Marche latérale avec élastique', primary: ['abducteurs'], secondary: ['fessiers'] },
 
+  // Barre guidée (Smith machine) : même convention de nom que le squat
+  // ci-dessus. Le squat, les shrugs et les mollets à la barre guidée sont
+  // rangés avec leur groupe musculaire.
+  'developpe-couche-a-la-barre-guidee-smith-machine': { name: 'Développé couché à la barre guidée (Smith machine)', primary: ['pectoraux'], secondary: ['triceps', 'deltoides'] },
+  'developpe-incline-a-la-barre-guidee-smith-machine': { name: 'Développé incliné à la barre guidée (Smith machine)', primary: ['pectoraux'], secondary: ['deltoides', 'triceps'] },
+  'developpe-decline-a-la-barre-guidee-smith-machine': { name: 'Développé décliné à la barre guidée (Smith machine)', primary: ['pectoraux'], secondary: ['triceps'] },
+  'developpe-militaire-a-la-barre-guidee-smith-machine': { name: 'Développé militaire à la barre guidée (Smith machine)', primary: ['deltoides'], secondary: ['triceps'] },
+  'fentes-a-la-barre-guidee-smith-machine': { name: 'Fentes à la barre guidée (Smith machine)', primary: ['quadriceps', 'fessiers'], secondary: ['ischio-jambiers'] },
+  'squat-bulgare-a-la-barre-guidee-smith-machine': { name: 'Squat bulgare à la barre guidée (Smith machine)', primary: ['quadriceps', 'fessiers'], secondary: ['ischio-jambiers'] },
+  'hip-thrust-a-la-barre-guidee-smith-machine': { name: 'Hip thrust à la barre guidée (Smith machine)', primary: ['fessiers'], secondary: ['ischio-jambiers'] },
+  'souleve-de-terre-roumain-a-la-barre-guidee-smith-machine': { name: 'Soulevé de terre roumain à la barre guidée (Smith machine)', primary: ['ischio-jambiers'], secondary: ['fessiers', 'lombaires'] },
+  'rowing-a-la-barre-guidee-smith-machine': { name: 'Rowing à la barre guidée (Smith machine)', primary: ['dorsaux'], secondary: ['biceps', 'trapezes'] },
+
   // Exercices polyarticulaires (noms génériques, distincts des variantes ci-dessus)
   'souleve-de-terre': {
     name: 'Soulevé de terre',
@@ -294,6 +307,34 @@ const EXERCISE_ALIASES = {
   'abducteurs-machine': 'machine-abducteurs-ecarter',
   'curl-poignets': 'curl-poignets-barre-flexion',
   'dead-hang': 'suspension-a-la-barre-dead-hang',
+  // Barre guidée (Smith machine) : noms courts courants.
+  'squat-smith': 'squat-a-la-barre-guidee-smith-machine',
+  'smith-squat': 'squat-a-la-barre-guidee-smith-machine',
+  'developpe-couche-smith': 'developpe-couche-a-la-barre-guidee-smith-machine',
+  'smith-developpe-couche': 'developpe-couche-a-la-barre-guidee-smith-machine',
+  'smith-couche': 'developpe-couche-a-la-barre-guidee-smith-machine',
+  'developpe-incline-smith': 'developpe-incline-a-la-barre-guidee-smith-machine',
+  'smith-developpe-incline': 'developpe-incline-a-la-barre-guidee-smith-machine',
+  'smith-incline': 'developpe-incline-a-la-barre-guidee-smith-machine',
+  'developpe-decline-smith': 'developpe-decline-a-la-barre-guidee-smith-machine',
+  'smith-developpe-decline': 'developpe-decline-a-la-barre-guidee-smith-machine',
+  'smith-decline': 'developpe-decline-a-la-barre-guidee-smith-machine',
+  'developpe-militaire-smith': 'developpe-militaire-a-la-barre-guidee-smith-machine',
+  'smith-developpe-militaire': 'developpe-militaire-a-la-barre-guidee-smith-machine',
+  'smith-militaire': 'developpe-militaire-a-la-barre-guidee-smith-machine',
+  'fentes-smith': 'fentes-a-la-barre-guidee-smith-machine',
+  'smith-fentes': 'fentes-a-la-barre-guidee-smith-machine',
+  'squat-bulgare-smith': 'squat-bulgare-a-la-barre-guidee-smith-machine',
+  'fentes-bulgares-smith': 'squat-bulgare-a-la-barre-guidee-smith-machine',
+  'smith-squat-bulgare': 'squat-bulgare-a-la-barre-guidee-smith-machine',
+  'hip-thrust-smith': 'hip-thrust-a-la-barre-guidee-smith-machine',
+  'smith-hip-thrust': 'hip-thrust-a-la-barre-guidee-smith-machine',
+  'souleve-de-terre-roumain-smith': 'souleve-de-terre-roumain-a-la-barre-guidee-smith-machine',
+  'smith-souleve-de-terre-roumain': 'souleve-de-terre-roumain-a-la-barre-guidee-smith-machine',
+  'rdl-smith': 'souleve-de-terre-roumain-a-la-barre-guidee-smith-machine',
+  'smith-rdl': 'souleve-de-terre-roumain-a-la-barre-guidee-smith-machine',
+  'rowing-smith': 'rowing-a-la-barre-guidee-smith-machine',
+  'smith-rowing': 'rowing-a-la-barre-guidee-smith-machine',
 }
 
 const EMPTY_MUSCLES = { primary: [], secondary: [] }

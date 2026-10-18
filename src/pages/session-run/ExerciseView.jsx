@@ -48,6 +48,7 @@ import { SessionTimeRemaining } from '../../components/SessionTimeRemaining.jsx'
 import { DraggableList } from '../../components/DraggableList.jsx'
 import { ExercisePicker } from '../../components/ExercisePicker.jsx'
 import { SetRow } from '../../components/SetRow.jsx'
+import { DoneSetsEditor } from '../../components/DoneSetsEditor.jsx'
 import { DurationField } from '../../components/DurationField.jsx'
 import { ExerciseImage } from '../../components/ExerciseImage.jsx'
 import { ExerciseImageOverlay } from '../../components/ExerciseImageOverlay.jsx'
@@ -116,6 +117,9 @@ export function ExerciseView({ session, data, setData }) {
   // pour la position où il a été fait (`key`, voir restKey) : toute
   // navigation ou nouveau repos revient au choix automatique ci-dessous.
   const [restView, setRestView] = useState(null)
+  // "Corriger une série faite" ouvert à la main (hors repos compact), pour
+  // l'exercice où il a été ouvert seulement.
+  const [setsEditorFor, setSetsEditorFor] = useState(null)
   const timer = useRestTimer(session, setData)
   const entry = session.entries.find((e) => e.exerciseId === session.currentExerciseId)
   const set = entry.sets[session.currentSetIndex]
@@ -134,6 +138,12 @@ export function ExerciseView({ session, data, setData }) {
     session.pendingRestExerciseId === entry.exerciseId && session.currentSetIndex === session.pendingRestSetIndex + 1
   const autoCompact = (entry.doneSetCount ?? 0) > 0 && !isNormalRestPosition
   const restCompact = timer != null && (restView?.key === restKey ? restView.mode === 'compact' : autoCompact)
+  // Séries déjà faites autres que celle en cours : ce qu'on peut corriger.
+  const correctableSetIndexes = entry.sets.map((_, i) => i).filter((i) => i < doneSetCount && i !== session.currentSetIndex)
+  const showSetsEditor = restCompact || setsEditorFor === `${session.id}-${entry.exerciseId}`
+  // Série en cours déjà validée (retour en arrière) : la revalider corrige
+  // sans relancer le repos (voir sessionRunner.js#validateCurrentSet).
+  const isCorrection = session.currentSetIndex < (entry.doneSetCount ?? 0)
   const exercise = data.exercises.find((e) => e.id === entry.exerciseId)
   const isTimeBased = getExerciseUnit(entry.exerciseName) === 'time'
   const otherSessions = data.sessions.filter((s) => s.id !== session.id)
@@ -173,6 +183,17 @@ export function ExerciseView({ session, data, setData }) {
     })
   }
 
+  // Dernière répétition faite à moitié : −0,5 sur CETTE série seulement
+  // (pas propagé aux suivantes comme une saisie normale, voir updateSet).
+  function handleHalfRepDown() {
+    setData((current) => ({
+      ...current,
+      sessions: updateSingleSet(current.sessions, session.id, entry.exerciseId, session.currentSetIndex, {
+        reps: Math.max(0, set.reps - 0.5),
+      }),
+    }))
+  }
+
   function handleAddWarmup() {
     setData({
       ...data,
@@ -181,6 +202,17 @@ export function ExerciseView({ session, data, setData }) {
         weightStep: getEffectiveWeightStep(exercise),
       }),
     })
+  }
+
+  function handleAddWarmupToEntry(exerciseId) {
+    const targetExercise = data.exercises.find((e) => e.id === exerciseId)
+    setData((current) => ({
+      ...current,
+      sessions: addWarmupSet(current.sessions, session.id, exerciseId, {
+        unilateral: targetExercise?.unilateral ?? false,
+        weightStep: getEffectiveWeightStep(targetExercise),
+      }),
+    }))
   }
 
   function handleWeightChange(weight) {
@@ -533,6 +565,17 @@ export function ExerciseView({ session, data, setData }) {
                 <button type="button" className="add-set-button" onClick={() => handleAddSetToEntry(sessionEntry.exerciseId)}>
                   + Ajouter une série
                 </button>
+                {/* Échauffement : seulement pour un exercice pas encore
+                    entamé (il s'insère avant les séries de travail). */}
+                {!isCurrentExercise && !(sessionEntry.doneSetCount > 0) && (
+                  <button
+                    type="button"
+                    className="add-set-button add-set-button--warmup"
+                    onClick={() => handleAddWarmupToEntry(sessionEntry.exerciseId)}
+                  >
+                    + Série d'échauffement
+                  </button>
+                )}
               </div>
             )
           }}
@@ -597,10 +640,20 @@ export function ExerciseView({ session, data, setData }) {
         <button type="button" className="rest-page__skip" onClick={handleSkipRest}>
           Passer le repos
         </button>
-        {doneSetCount > 0 && (
-          <button type="button" className="rest-page__skip" onClick={() => setRestView({ key: restKey, mode: 'compact' })}>
-            Voir mes séries
-          </button>
+        {correctableSetIndexes.length > 0 && (
+          <div className="rest-page__done-sets">
+            <p className="rest-page__done-sets-title">Une erreur ? Touche une série pour la corriger</p>
+            {correctableSetIndexes.map((i) => (
+              <button
+                key={i}
+                type="button"
+                className="rest-page__done-set"
+                onClick={() => setRestView({ key: restKey, mode: 'compact' })}
+              >
+                {getSetLabel(entry.sets, i)} · {formatSet(entry.sets[i], entry.exerciseName)}
+              </button>
+            ))}
+          </div>
         )}
         <button type="button" className="rest-page__skip" onClick={() => setEditingSession(true)}>
           Modifier ma séance
@@ -626,7 +679,7 @@ export function ExerciseView({ session, data, setData }) {
           onExpand={() => setRestView({ key: restKey, mode: 'big' })}
         />
       )}
-      <SessionTimeRemaining session={session} />
+      <SessionTimeRemaining session={session} sessions={data.sessions} />
       {navButtons}
       <TourStep
         id="exercise-flow"
@@ -667,48 +720,18 @@ export function ExerciseView({ session, data, setData }) {
       {!last && <p className="last-performance last-performance--empty">Première fois sur cet exercice</p>}
       {pulleySummary && <p className="last-performance last-performance--pulley">Réglage : {pulleySummary}</p>}
 
-      {restCompact ? (
-        // Toutes les séries de l'exercice : celles déjà validées
-        // modifiables une à une (updateSingleSet : ni progression ni repos
-        // touchés), celle en cours mise en évidence (saisie juste en
-        // dessous), celles à venir atténuées.
-        <div className="exercise-sets">
-          {entry.sets.map((s, i) => {
-            if (i === session.currentSetIndex || i >= doneSetCount) {
-              const isCurrent = i === session.currentSetIndex
-              return (
-                <div
-                  key={i}
-                  className={`exercise-sets__line${isCurrent ? ' exercise-sets__line--current' : ' exercise-sets__line--upcoming'}`}
-                >
-                  <span>{getSetLabel(entry.sets, i)}</span>
-                  <span>{isCurrent ? 'En cours' : formatSet(s, entry.exerciseName)}</span>
-                </div>
-              )
-            }
-            return (
-              <SetRow
-                key={i}
-                index={i}
-                label={getSetLabel(entry.sets, i)}
-                warmup={isWarmupSet(s)}
-                weight={s.weight}
-                reps={s.reps}
-                side={s.side}
-                exercise={exercise}
-                onChangeWeight={(weight) => handleEditSetWeightChange(entry.exerciseId, i, weight)}
-                onChangeReps={(reps) => handleEditSetRepsChange(entry.exerciseId, i, reps)}
-                onChangeWeightMode={(mode) => handleEditWeightModeChange(entry.exerciseId, mode)}
-                onChangeBarWeight={(barWeight) => handleEditBarWeightChange(entry.exerciseId, barWeight)}
-                onChangePulleyHeight={(height) => handleEditPulleyHeightChange(entry.exerciseId, height)}
-                onChangePulleyNotch={(notch) => handleEditPulleyNotchChange(entry.exerciseId, notch)}
-                onChangeGripWidth={(width) => handleEditGripWidthChange(entry.exerciseId, width)}
-                onRemove={() => {}}
-                removeDisabled
-              />
-            )
-          })}
-        </div>
+      {showSetsEditor ? (
+        // Toutes les séries de l'exercice, celles déjà faites modifiables
+        // (voir DoneSetsEditor) : pendant un repos compact, ou ouvert à la
+        // main ("Corriger une série faite").
+        <DoneSetsEditor
+          sessionId={session.id}
+          entry={entry}
+          exercise={exercise}
+          doneCount={doneSetCount}
+          currentSetIndex={session.currentSetIndex}
+          setData={setData}
+        />
       ) : (
         <SetComparisonTable entry={entry} last={last} currentSetIndex={session.currentSetIndex} />
       )}
@@ -754,11 +777,11 @@ export function ExerciseView({ session, data, setData }) {
               <button
                 type="button"
                 className="exercise-active__half-rep"
-                onClick={() => handleRepsChange(set.reps + 0.5)}
+                onClick={handleHalfRepDown}
                 disabled={validating}
-                aria-label="Ajouter une demi-répétition"
+                aria-label="Retirer une demi-répétition (dernière répétition faite à moitié)"
               >
-                ½
+                −½
               </button>
             </>
           )}
@@ -793,9 +816,29 @@ export function ExerciseView({ session, data, setData }) {
         text={'Poids et répétitions se règlent avec les boutons +/-. "Saisir par côté" pour un haltère par bras.'}
       />
 
-      <BigButton onClick={handleValidate} disabled={validating}>
-        {validating ? 'Série validée ✓' : isWarmup ? "Valider l'échauffement" : 'Valider la série'}
-      </BigButton>
+      {/* Collé en bas de l'écran (au-dessus de la barre de navigation) :
+          validable sans avoir à faire défiler. */}
+      <div className="exercise-active__validate-bar">
+        <BigButton onClick={handleValidate} disabled={validating}>
+          {validating
+            ? 'Série validée ✓'
+            : isCorrection
+              ? 'Valider la correction'
+              : isWarmup
+                ? "Valider l'échauffement"
+                : 'Valider la série'}
+        </BigButton>
+      </div>
+
+      {!restCompact && correctableSetIndexes.length > 0 && (
+        <button
+          type="button"
+          className="add-set-button"
+          onClick={() => setSetsEditorFor(showSetsEditor ? null : `${session.id}-${entry.exerciseId}`)}
+        >
+          {showSetsEditor ? 'Fermer la correction' : '✎ Corriger une série faite'}
+        </button>
+      )}
 
       {canAddWarmup && (
         <button type="button" className="add-set-button add-set-button--warmup" onClick={handleAddWarmup} disabled={validating}>

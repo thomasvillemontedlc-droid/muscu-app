@@ -17,6 +17,7 @@ import { ExercisePicker } from '../../components/ExercisePicker.jsx'
 import { FeelingPicker } from '../../components/FeelingPicker.jsx'
 import { StepperField } from '../../components/StepperField.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
+import { DoneSetsEditor } from '../../components/DoneSetsEditor.jsx'
 
 export function PickExerciseView({ session, data, setData }) {
   const timer = useRestTimer(session, setData)
@@ -29,6 +30,9 @@ export function PickExerciseView({ session, data, setData }) {
   const otherSessions = data.sessions.filter((s) => s.id !== session.id)
   const suggestedIds = getExercisesUsedInTemplate(otherSessions, session.templateName)
   const [replacingId, setReplacingId] = useState(null)
+  // Exercice terminé dont on corrige les séries sur place (toucher son nom),
+  // sans y retourner série par série.
+  const [editingDoneId, setEditingDoneId] = useState(null)
   const replacingEntry = session.entries.find((e) => e.exerciseId === replacingId)
   // Exercice quitté en cours de route ("Tous les exercices" conserve
   // currentExerciseId) : mis en avant, et c'est aussi le prochain pour le
@@ -117,9 +121,17 @@ export function PickExerciseView({ session, data, setData }) {
                     <span className="pick-exercise-list__badge">{getCurrentBadge(entry)}</span>
                   </button>
                 ) : (
-                  <BigButton variant={done ? 'secondary' : 'primary'} onClick={() => handlePick(entry.exerciseId)}>
+                  <BigButton
+                    variant={done ? 'secondary' : 'primary'}
+                    onClick={() =>
+                      done
+                        ? setEditingDoneId(editingDoneId === entry.exerciseId ? null : entry.exerciseId)
+                        : handlePick(entry.exerciseId)
+                    }
+                  >
                     {done ? '✓ ' : ''}
                     {entry.exerciseName}
+                    {done && <span className="pick-exercise-list__edit-hint">{editingDoneId === entry.exerciseId ? 'Fermer' : '✎ Modifier'}</span>}
                   </BigButton>
                 )}
                 {!done && (
@@ -133,6 +145,15 @@ export function PickExerciseView({ session, data, setData }) {
                   </button>
                 )}
               </div>
+              {done && editingDoneId === entry.exerciseId && (
+                <DoneSetsEditor
+                  sessionId={session.id}
+                  entry={entry}
+                  exercise={entryExercise}
+                  doneCount={entry.sets.length}
+                  setData={setData}
+                />
+              )}
               {done && (
                 <FeelingPicker feeling={entry.feeling} onChange={(feeling) => handleFeelingChange(entry.exerciseId, feeling)} />
               )}

@@ -14,7 +14,12 @@ const EXTENSIONS = ['webp', 'png', 'svg']
 // ne peut pas vérifier l'existence des fichiers à l'avance côté client — le
 // composant qui affiche l'image (voir components/ExerciseImage.jsx) essaie
 // chaque extension dans l'ordre et se masque si aucune ne charge.
+// Variante de hauteur de poulie ("... vis-à-vis (haute)") : retombe sur
+// l'image de l'exercice de base si elle n'a pas la sienne.
+const HEIGHT_SUFFIX = /-vis-a-vis-(haute|moyenne|basse)$/
+
 export function getExerciseImageCandidates(exerciseName) {
   const slug = slugify(exerciseName)
-  return EXTENSIONS.map((ext) => `${import.meta.env.BASE_URL}exercices/${slug}.${ext}`)
+  const slugs = HEIGHT_SUFFIX.test(slug) ? [slug, slug.replace(HEIGHT_SUFFIX, '-vis-a-vis')] : [slug]
+  return slugs.flatMap((s) => EXTENSIONS.map((ext) => `${import.meta.env.BASE_URL}exercices/${s}.${ext}`))
 }

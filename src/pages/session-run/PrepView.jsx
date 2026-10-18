@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
+  getEffectiveWeightStep,
   getOrCreateExercise,
   setExerciseBarWeight,
   setExerciseGripWidth,
@@ -12,6 +13,7 @@ import {
 import { getExercisesUsedInTemplate } from '../../domain/history.js'
 import {
   addSet,
+  addWarmupSet,
   getDisplayedSetCount,
   getSessionStatus,
   removeSet,
@@ -22,7 +24,7 @@ import {
 import { isWarmupSet } from '../../domain/setKinds.js'
 import { formatPlannedSetsSummary, getSetLabel } from '../../lib/formatSet.js'
 import { formatDecimal } from '../../lib/formatNumber.js'
-import { getEstimatedSessionStats } from '../../domain/sessionSummary.js'
+import { getEstimatedSessionStats, getSessionDurationEstimates } from '../../domain/sessionSummary.js'
 import {
   addExerciseEntryToSession,
   removeExerciseEntryFromSession,
@@ -47,7 +49,16 @@ export function PrepView({ session, data, setData }) {
   const otherSessions = data.sessions.filter((s) => s.id !== session.id)
   const suggestedIds = getExercisesUsedInTemplate(otherSessions, session.templateName)
   const estimate = getEstimatedSessionStats(session)
-  const estimatedDuration = formatDuration(estimate.durationMs)
+  // Durée : séance seule (calibrée sur tes dernières séances identiques si
+  // possible) et avec échauffement + étirements, voir
+  // domain/sessionSummary.js#getSessionDurationEstimates.
+  const durations = getSessionDurationEstimates(data.sessions, session)
+  const estimatedDuration = formatDuration(durations.withoutRoutinesMs)
+  const estimatedDurationWithRoutines = formatDuration(durations.withRoutinesMs)
+  const durationHint =
+    durations.calibratedOn > 0
+      ? `Ajustée sur ${durations.calibratedOn === 1 ? 'ta dernière séance' : `tes ${durations.calibratedOn} dernières séances`} identique${durations.calibratedOn > 1 ? 's' : ''}.`
+      : 'Estimation théorique, ajustée dès ta première séance terminée.'
   // Séance déjà faite au moins une fois (terminée ou partielle) : écran
   // compact - lancement en haut, exercices repliés en une ligne résumée,
   // options secondaires dans "Plus d'options". Jamais faite : affichage
@@ -70,6 +81,19 @@ export function PrepView({ session, data, setData }) {
     const { exercise, exercises } = getOrCreateExercise(data.exercises, name)
     const sessions = addExerciseEntryToSession(data.sessions, session.id, exercise)
     setData({ ...data, exercises, sessions })
+  }
+
+  // Série d'échauffement insérée avant les séries de travail (moitié de la
+  // charge, voir domain/sessions.js#addWarmupSet) ; autant qu'on veut.
+  function handleAddWarmup(exerciseId) {
+    const exercise = data.exercises.find((e) => e.id === exerciseId)
+    setData((current) => ({
+      ...current,
+      sessions: addWarmupSet(current.sessions, session.id, exerciseId, {
+        unilateral: exercise?.unilateral ?? false,
+        weightStep: getEffectiveWeightStep(exercise),
+      }),
+    }))
   }
 
   function handleAddSet(exerciseId) {
@@ -259,9 +283,11 @@ export function PrepView({ session, data, setData }) {
       {alreadyDone && session.entries.length > 0 && (
         <section className="featured-session prep-quickstart">
           <ul className="session-stats prep-quickstart__stats">
-            <li>~{estimatedDuration}</li>
+            <li>~{estimatedDuration} sans échauffement ni étirements</li>
+            <li>~{estimatedDurationWithRoutines} avec échauffement et étirements</li>
             <li>{estimate.totalSets} séries</li>
           </ul>
+          <p className="prep-field__hint">{durationHint}</p>
           {restField}
           <BigButton onClick={() => setShowWarmup(true)}>Commencer la séance</BigButton>
         </section>
@@ -394,6 +420,13 @@ export function PrepView({ session, data, setData }) {
             <button type="button" className="add-set-button" onClick={() => handleAddSet(entry.exerciseId)}>
               + Ajouter une série
             </button>
+            <button
+              type="button"
+              className="add-set-button add-set-button--warmup"
+              onClick={() => handleAddWarmup(entry.exerciseId)}
+            >
+              + Série d'échauffement
+            </button>
           </div>
           )
         }}
@@ -416,10 +449,12 @@ export function PrepView({ session, data, setData }) {
           {goalField}
 
           <ul className="session-stats">
-            <li>Durée estimée : ~{estimatedDuration}</li>
+            <li>~{estimatedDuration} sans échauffement ni étirements</li>
+            <li>~{estimatedDurationWithRoutines} avec échauffement et étirements</li>
             <li>{estimate.totalSets} séries</li>
             <li>~{formatDecimal(estimate.totalReps)} répétitions</li>
           </ul>
+          <p className="prep-field__hint">{durationHint}</p>
 
           <BigButton onClick={() => setShowWarmup(true)}>Commencer la séance</BigButton>
         </>

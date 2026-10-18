@@ -3998,3 +3998,55 @@ body {
   color: var(--color-muted);
   font-size: 0.9rem;
 }
+
+/* Semaine en cours dans la frise d'alternance (ProgramPage.jsx). */
+.alternation-timeline__week--current {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+  font-weight: 800;
+  transform: scale(1.15);
+}
+
+/* Bouton "Valider la série" collé en bas de l'écran d'exercice, juste
+   au-dessus de la barre de navigation (~68px + zone de sécurité). */
+.exercise-active__validate-bar {
+  position: sticky;
+  bottom: calc(env(safe-area-inset-bottom) + 76px);
+  z-index: 5;
+  padding: 6px 0;
+}
+
+/* Séries faites, touchables pour corriger, sous le chrono de repos. */
+.rest-page__done-sets {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 4px 0 10px;
+}
+
+.rest-page__done-sets-title {
+  width: 100%;
+  margin: 0;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.rest-page__done-set {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.pick-exercise-list__edit-hint {
+  margin-left: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  opacity: 0.7;
+}

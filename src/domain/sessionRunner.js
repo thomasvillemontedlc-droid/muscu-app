@@ -209,6 +209,15 @@ export function validateCurrentSet(sessions, sessionId) {
   const session = getSessionById(sessions, sessionId)
   if (!session) return sessions
 
+  // Série DÉJÀ validée (retour à la série précédente, ou exercice déjà fait
+  // repris depuis la liste) : c'est une correction, pas une nouvelle série.
+  // Le repos en cours continue tel quel (avant, il repartait de zéro) et on
+  // retourne là où on en était.
+  const current = session.entries.find((e) => e.exerciseId === session.currentExerciseId)
+  if (current && session.currentSetIndex < (current.doneSetCount ?? 0)) {
+    return updateSession(sessions, sessionId, getPositionAfterCorrection(session, current))
+  }
+
   // doneSetCount : progression mémorisée par exercice (séries validées),
   // pour reprendre au bon endroit après un détour par la liste (voir
   // getResumeSetIndex). Jamais diminué : revenir corriger une série
@@ -267,6 +276,20 @@ export function validateCurrentSet(sessions, sessionId) {
     completedExerciseIds,
     ...restStart,
   })
+}
+
+// Où reprendre après avoir corrigé une série déjà faite : la première série
+// pas encore faite de cet exercice, sinon (exercice terminé) la liste des
+// exercices, ou la fin de séance s'il ne reste rien.
+function getPositionAfterCorrection(session, entry) {
+  if (entry.doneSetCount < entry.sets.length && !session.completedExerciseIds.includes(entry.exerciseId)) {
+    return { currentSetIndex: entry.doneSetCount }
+  }
+  const remaining = session.entries.filter(
+    (e) => e.exerciseId !== entry.exerciseId && !session.completedExerciseIds.includes(e.exerciseId),
+  )
+  if (remaining.length === 0) return { currentSetIndex: Math.max(0, entry.sets.length - 1) }
+  return { phase: 'picking', currentExerciseId: null }
 }
 
 // Coupe court au repos en cours, pour ceux qui veulent enchaîner plus tôt.

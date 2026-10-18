@@ -224,13 +224,9 @@ export function WeightField({
 
   return (
     <div className="weight-field weight-field--per-side">
+      {/* Les disques (ce qu'on change d'une série à l'autre) en haut, la
+          barre (réglée une fois) en dessous. */}
       <div className="weight-field__row">
-        {hasBar && (
-          <label>
-            <span>Barre (kg)</span>
-            <NumberField decimal value={barWeight} onChange={handleBarWeightChange} aria-label="Poids de la barre en kg" />
-          </label>
-        )}
         <label>
           <span>{isDumbbell ? 'Poids par haltère (kg)' : 'Par côté (kg)'}</span>
           <ValueField
@@ -240,6 +236,12 @@ export function WeightField({
             {...valueFieldProps}
           />
         </label>
+        {hasBar && (
+          <label>
+            <span>Barre (kg)</span>
+            <NumberField decimal value={barWeight} onChange={handleBarWeightChange} aria-label="Poids de la barre en kg" />
+          </label>
+        )}
       </div>
       <p className="weight-field__total">Total : {computeTotal(barWeight, perSide)}kg</p>
       {stepControl}

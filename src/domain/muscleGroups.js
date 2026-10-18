@@ -81,6 +81,12 @@ export const EXERCISE_MUSCLES = {
   'ecarte-couche-halteres': { name: 'Écarté couché haltères', primary: ['pectoraux'], secondary: ['deltoides'] },
   'ecarte-incline-halteres': { name: 'Écarté incliné haltères', primary: ['pectoraux'], secondary: ['deltoides'] },
   'ecarte-a-la-poulie-vis-a-vis': { name: 'Écarté à la poulie vis-à-vis', primary: ['pectoraux'], secondary: ['deltoides'] },
+  // Mêmes écartés, une entrée par hauteur de poulie : on peut en enchaîner
+  // plusieurs dans une même séance, chacun avec son propre historique
+  // (hauteur fixée par le nom, voir domain/exercises.js#getFixedPulleyHeight).
+  'ecarte-a-la-poulie-vis-a-vis-haute': { name: 'Écarté à la poulie vis-à-vis (haute)', primary: ['pectoraux'], secondary: ['deltoides'] },
+  'ecarte-a-la-poulie-vis-a-vis-moyenne': { name: 'Écarté à la poulie vis-à-vis (moyenne)', primary: ['pectoraux'], secondary: ['deltoides'] },
+  'ecarte-a-la-poulie-vis-a-vis-basse': { name: 'Écarté à la poulie vis-à-vis (basse)', primary: ['pectoraux'], secondary: ['deltoides'] },
   'pec-deck-butterfly': { name: 'Pec deck (butterfly)', primary: ['pectoraux'], secondary: ['deltoides'] },
   pompes: { name: 'Pompes', primary: ['pectoraux'], secondary: ['triceps', 'deltoides', 'abdos-profonds'] },
   'pompes-declinees': { name: 'Pompes déclinées', primary: ['pectoraux'], secondary: ['triceps', 'deltoides'] },

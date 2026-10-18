@@ -1,6 +1,9 @@
 import { getLastPerformance } from './history.js'
 import { getExerciseUnit } from './muscleGroups.js'
+import { getSessionStatus } from './sessions.js'
 import { getWorkSets, isWarmupSet } from './setKinds.js'
+import { getStretchSuggestions } from './stretches.js'
+import { getPlannedMusclesWorked, getWarmupSuggestions } from './warmup.js'
 
 // Hypothèse grossière pour l'estimation de durée avant de lancer la séance
 // (voir getEstimatedSessionStats) : temps d'exécution d'une répétition
@@ -139,6 +142,80 @@ export function getEstimatedSessionStats(session) {
   return { totalSets, totalReps, durationMs: (activeSeconds + restSeconds) * 1000 }
 }
 
+// Calibrage de l'estimation sur l'historique : durée RÉELLE des dernières
+// séances terminées de la même séance type (de "Commencer" à la dernière
+// série, donc sans échauffement ni étirements, voir PrepView/FinishedView),
+// rapportée à ce que la formule ci-dessus aurait prévu pour ces mêmes
+// séances. Ce rapport corrige ensuite l'estimation de la séance à venir :
+// elle suit ton rythme réel (transitions, réglages, repos dépassés) tout en
+// tenant compte des séries ajoutées ou retirées aujourd'hui.
+// null sans historique exploitable.
+const CALIBRATION_SESSIONS = 5
+const MIN_PLAUSIBLE_MS = 5 * 60 * 1000
+const MAX_PLAUSIBLE_MS = 4 * 60 * 60 * 1000
+
+export function getDurationCalibration(sessions, session) {
+  const past = sessions
+    .filter((s) => s.id !== session.id)
+    .filter((s) => (session.templateId ? s.templateId === session.templateId : s.templateName === session.templateName))
+    .filter((s) => getSessionStatus(s) === 'done' && s.startedAt && s.finishedAt)
+    .filter((s) => {
+      const ms = s.finishedAt - s.startedAt
+      return ms >= MIN_PLAUSIBLE_MS && ms <= MAX_PLAUSIBLE_MS
+    })
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, CALIBRATION_SESSIONS)
+
+  let actualMs = 0
+  let estimatedMs = 0
+  let count = 0
+  for (const s of past) {
+    const estimate = getEstimatedSessionStats(s).durationMs
+    // Anciennes séances sans restSeconds : pas d'estimation comparable.
+    if (!Number.isFinite(estimate) || estimate <= 0) continue
+    actualMs += s.finishedAt - s.startedAt
+    estimatedMs += estimate
+    count += 1
+  }
+  if (count === 0) return null
+
+  // Bornes : une séance aberrante ne doit pas rendre l'estimation absurde.
+  const factor = Math.min(8, Math.max(0.4, actualMs / estimatedMs))
+  return { factor, count, averageMs: actualMs / count }
+}
+
+// Durée prévue de l'échauffement guidé et des étirements de fin, à partir
+// des mêmes suggestions que celles proposées à l'écran (muscles principaux
+// prévus), côtés droit/gauche comptés deux fois, + quelques secondes de
+// transition par mouvement.
+const ROUTINE_TRANSITION_SECONDS = 5
+
+export function getRoutinesDurationMs(session) {
+  const muscles = getPlannedMusclesWorked(session)
+  const warmupSeconds = getWarmupSuggestions(muscles).reduce(
+    (total, move) => total + (move.durationSeconds + ROUTINE_TRANSITION_SECONDS) * (move.sides ? 2 : 1),
+    0,
+  )
+  const stretchSeconds = getStretchSuggestions(muscles).reduce(
+    (total, stretch) => total + (stretch.holdSeconds + ROUTINE_TRANSITION_SECONDS) * (stretch.sides ? 2 : 1),
+    0,
+  )
+  return (warmupSeconds + stretchSeconds) * 1000
+}
+
+// Durée affichée avant de lancer la séance : séance seule (calibrée sur
+// l'historique si possible), et avec échauffement + étirements.
+export function getSessionDurationEstimates(sessions, session) {
+  const base = getEstimatedSessionStats(session).durationMs
+  const calibration = getDurationCalibration(sessions, session)
+  const withoutRoutinesMs = calibration ? base * calibration.factor : base
+  return {
+    withoutRoutinesMs,
+    withRoutinesMs: withoutRoutinesMs + getRoutinesDurationMs(session),
+    calibratedOn: calibration?.count ?? 0,
+  }
+}
+
 // Estimation du temps qu'il reste pour terminer le RESTE de la séance en
 // cours (écran d'exercice actif) : les séries restantes de l'exercice
 // courant (à partir de currentSetIndex inclus, la série en train d'être
@@ -149,7 +226,9 @@ export function getEstimatedSessionStats(session) {
 // chaque changement d'état de la séance (série validée, séries ajoutées/
 // retirées, repos modifié) plutôt que sur le temps réellement écoulé, qui ne
 // reflète pas ce qu'il reste à faire si on s'attarde sur une série.
-export function getRemainingSessionEstimate(session) {
+// `sessions` (optionnel) : applique le même calibrage sur l'historique que
+// l'estimation avant séance (getDurationCalibration).
+export function getRemainingSessionEstimate(session, sessions = null) {
   let totalSets = 0
   let activeSeconds = 0
 
@@ -166,8 +245,9 @@ export function getRemainingSessionEstimate(session) {
   }
 
   const restSeconds = totalSets > 0 ? (totalSets - 1) * session.restSeconds : 0
+  const factor = sessions ? (getDurationCalibration(sessions, session)?.factor ?? 1) : 1
 
-  return (activeSeconds + restSeconds) * 1000
+  return (activeSeconds + restSeconds) * 1000 * factor
 }
 
 // Un item par exercice effectivement complété dans la séance, avec la

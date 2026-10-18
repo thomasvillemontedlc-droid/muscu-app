@@ -262,13 +262,30 @@ function playPendingAlarm(ctx) {
   if (stillRelevant) scheduleAlarm(ctx)
 }
 
-// Décompte des 3 dernières secondes du repos ("bip, biip, biiip") : un bip
-// par seconde, de plus en plus long et fort à l'approche de zéro, puis
-// l'alarme de fin (playAlarmBeep). `secondsLeft` = 3, 2 ou 1.
+// Décompte des 3 dernières secondes du repos : un bip par seconde, puis
+// l'alarme de fin (playAlarmBeep). `secondsLeft` = 3, 2 ou 1. Les trois
+// au même volume que l'alarme : les deux premiers, plus faibles et plus
+// courts avant, passaient inaperçus en salle (seul le dernier s'entendait).
 const COUNTDOWN_BEEPS = {
-  3: { duration: 0.08, gain: 0.12 },
-  2: { duration: 0.15, gain: 0.2 },
-  1: { duration: 0.25, gain: 0.3 },
+  3: { duration: 0.15, gain: 0.3 },
+  2: { duration: 0.15, gain: 0.3 },
+  1: { duration: 0.2, gain: 0.3 },
+}
+
+// Réveille la sortie audio quelques secondes avant le décompte : sur iOS,
+// après un moment de silence, le haut-parleur met un instant à repartir et
+// avale le début du premier son. Un son inaudible joué en continu jusqu'au
+// décompte garde la sortie active, pour que le premier bip sorte entier.
+export async function primeAudio(seconds) {
+  const ctx = await ensureRunning()
+  if (!ctx) return
+  const oscillator = ctx.createOscillator()
+  const gainNode = ctx.createGain()
+  gainNode.gain.value = 0.0001
+  oscillator.connect(gainNode)
+  gainNode.connect(ctx.destination)
+  oscillator.start(ctx.currentTime)
+  oscillator.stop(ctx.currentTime + seconds)
 }
 
 export async function playCountdownBeep(secondsLeft) {

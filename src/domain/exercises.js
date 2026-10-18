@@ -79,10 +79,20 @@ export function isPulleyExercise(name) {
 // "poulie haute"/"poulie basse" (tirages, extensions triceps, curl...) ont
 // une position fixe déjà encodée dans leur nom.
 export function isPulleyHeightExercise(name) {
-  return isPulleyExercise(name) && slugify(name ?? '').includes('vis-a-vis')
+  return isPulleyExercise(name) && slugify(name ?? '').includes('vis-a-vis') && getFixedPulleyHeight(name) == null
 }
 
 export const PULLEY_HEIGHTS = ['Haute', 'Moyenne', 'Basse']
+
+// Variante à hauteur fixée par son nom ("Écarté à la poulie vis-à-vis
+// (haute)") : 'Haute' | 'Moyenne' | 'Basse', null sinon. Pas de sélecteur de
+// hauteur pour elle (isPulleyHeightExercise), la hauteur est affichée
+// d'office dans le rappel de réglage (getPulleySummary).
+export function getFixedPulleyHeight(name) {
+  const slug = slugify(name ?? '')
+  if (!slug.includes('vis-a-vis')) return null
+  return PULLEY_HEIGHTS.find((h) => slug.endsWith(`-${slugify(h)}`)) ?? null
+}
 
 // Hauteur de poulie ('Haute' | 'Moyenne' | 'Basse' | null) et cran (entier
 // | null), mémorisés par exercice comme barWeight/weightStep, voir
@@ -113,7 +123,10 @@ export function migratePulleyLevel(exercise) {
 export function getPulleySummary(exercise) {
   if (!exercise || !isPulleyExercise(exercise.name)) return null
   const parts = []
-  if (exercise.pulleyHeight && isPulleyHeightExercise(exercise.name)) {
+  const fixedHeight = getFixedPulleyHeight(exercise.name)
+  if (fixedHeight) {
+    parts.push(`Poulie ${fixedHeight.toLowerCase()}`)
+  } else if (exercise.pulleyHeight && isPulleyHeightExercise(exercise.name)) {
     parts.push(`Poulie ${exercise.pulleyHeight.toLowerCase()}`)
   }
   if (exercise.pulleyNotch != null) parts.push(`${parts.length ? 'cran' : 'Cran'} ${exercise.pulleyNotch}`)

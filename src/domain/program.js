@@ -45,6 +45,20 @@ export function getAlternationPreview(periodWeeks, weekCount = 12) {
   return Array.from({ length: weekCount }, (_, i) => (Math.floor(i / periodWeeks) % 2) + 1)
 }
 
+// Frise de l'alternance réelle : commence au début du cycle en cours (un
+// cycle = periodWeeks semaines de programme 1 puis autant de programme 2),
+// au moins 12 semaines et toujours un cycle complet, pour que la semaine
+// actuelle y figure toujours. currentIndex : la semaine en cours dans
+// `weeks`, null tant que l'alternance n'a pas de date de départ.
+export function getAlternationTimeline(alternation, now = new Date()) {
+  const period = alternation.periodWeeks
+  const weekCount = Math.max(12, period * 2)
+  const weeks = getAlternationPreview(period, weekCount)
+  if (!alternation.startDate) return { weeks, currentIndex: null }
+  const weeksElapsed = Math.max(0, Math.floor((now - new Date(alternation.startDate)) / WEEK_MS))
+  return { weeks, currentIndex: weeksElapsed % (period * 2) }
+}
+
 // Séance "récente" : faite il y a moins que le délai de récupération
 // musculaire (domain/recovery.js) - on évite de la reproposer tout de suite.
 const RECENT_HOURS = RECOVERY_HOURS

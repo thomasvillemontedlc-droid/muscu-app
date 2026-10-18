@@ -4,6 +4,7 @@ import {
   isAudioReady,
   playAlarmBeep,
   playCountdownBeep,
+  primeAudio,
   resumeAudioIfNeeded,
   subscribeAudioState,
 } from '../lib/alarm.js'
@@ -30,6 +31,10 @@ const LATE_ALARM_THRESHOLD_MS = 2000
 // restSeconds : un +15s qui refait passer au-dessus de zéro réarme tout.
 let lastCountdownKey = null
 let lastAlarmKey = null
+let lastPrimeKey = null
+// Fenêtre (avant la fin du repos) où la sortie audio est réveillée en
+// prévision du décompte, voir lib/alarm.js#primeAudio.
+const PRIME_BEFORE_MS = 6000
 
 function usePageVisible() {
   const [visible, setVisible] = useState(() => document.visibilityState === 'visible')
@@ -69,6 +74,15 @@ export function useRestTimer(session, setData) {
     isOvershoot &&
     session.restAlarmPlayedAt != null &&
     session.restAlarmPlayedAt - restUntil > LATE_ALARM_THRESHOLD_MS
+
+  const primeWindow = active && remainingMs > 3000 && remainingMs <= PRIME_BEFORE_MS
+  useEffect(() => {
+    if (!primeWindow || !visible) return
+    const key = `${session.restStartedAt}:${session.restSeconds}`
+    if (key === lastPrimeKey) return
+    lastPrimeKey = key
+    primeAudio(PRIME_BEFORE_MS / 1000 + 1)
+  }, [primeWindow, visible, session.restStartedAt, session.restSeconds])
 
   // Bip de décompte, une fois par seconde (3, 2, 1). Seulement app visible :
   // en arrière-plan le son ne part de toute façon pas de façon fiable.

@@ -99,5 +99,11 @@ function migrate(data) {
     migrated = { ...migrated, exercises: seedDefaultExercises(migrated.exercises) }
   }
 
+  // v7 -> v8 : écarté à la poulie vis-à-vis décliné en haute / moyenne /
+  // basse. Même principe : seules les entrées manquantes sont ajoutées.
+  if (previousVersion < 8) {
+    migrated = { ...migrated, exercises: seedDefaultExercises(migrated.exercises) }
+  }
+
   return migrated
 }

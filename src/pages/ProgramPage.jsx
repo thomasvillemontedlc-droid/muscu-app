@@ -5,7 +5,7 @@ import {
   addTemplateToProgram,
   getActiveProgramIndex,
   getAlternateProgramProposal,
-  getAlternationPreview,
+  getAlternationTimeline,
   getWeeksUntilSwitch,
   moveTemplateInProgram,
   removeTemplateFromProgram,
@@ -68,7 +68,7 @@ export function ProgramPage() {
 
   const activeProgramIndex = getActiveProgramIndex(data.alternation, programs)
   const weeksUntilSwitch = getWeeksUntilSwitch(data.alternation)
-  const alternationPreview = getAlternationPreview(data.alternation.periodWeeks)
+  const alternationTimeline = getAlternationTimeline(data.alternation)
   const isCustomPeriod = !PERIOD_OPTIONS.includes(data.alternation.periodWeeks)
 
   function persistProgramAt(index, nextProgram) {
@@ -308,15 +308,21 @@ export function ProgramPage() {
                 </div>
 
                 <div className="alternation-timeline">
-                  {alternationPreview.map((programNumber, index) => (
-                    <span
-                      key={index}
-                      className={`alternation-timeline__week alternation-timeline__week--program${programNumber}`}
-                      title={`Semaine ${index + 1} : Programme ${programNumber}`}
-                    >
-                      {programNumber}
-                    </span>
-                  ))}
+                  {alternationTimeline.weeks.map((programNumber, index) => {
+                    const isCurrent = index === alternationTimeline.currentIndex
+                    return (
+                      <span
+                        key={index}
+                        className={`alternation-timeline__week alternation-timeline__week--program${programNumber}${
+                          isCurrent ? ' alternation-timeline__week--current' : ''
+                        }`}
+                        title={`${isCurrent ? 'Cette semaine' : `Semaine ${index + 1}`} : Programme ${programNumber}`}
+                        aria-current={isCurrent ? 'date' : undefined}
+                      >
+                        {programNumber}
+                      </span>
+                    )
+                  })}
                 </div>
               </>
             )}

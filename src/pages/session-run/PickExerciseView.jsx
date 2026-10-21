@@ -146,13 +146,18 @@ export function PickExerciseView({ session, data, setData }) {
                 )}
               </div>
               {done && editingDoneId === entry.exerciseId && (
-                <DoneSetsEditor
-                  sessionId={session.id}
-                  entry={entry}
-                  exercise={entryExercise}
-                  doneCount={entry.sets.length}
-                  setData={setData}
-                />
+                <>
+                  {/* Enregistré à chaque saisie : ce bouton ne fait que
+                      refermer, il ne touche à aucun autre exercice. */}
+                  <DoneSetsEditor
+                    sessionId={session.id}
+                    entry={entry}
+                    exercise={entryExercise}
+                    doneCount={entry.sets.length}
+                    setData={setData}
+                  />
+                  <BigButton onClick={() => setEditingDoneId(null)}>Valider la correction</BigButton>
+                </>
               )}
               {done && (
                 <FeelingPicker feeling={entry.feeling} onChange={(feeling) => handleFeelingChange(entry.exerciseId, feeling)} />

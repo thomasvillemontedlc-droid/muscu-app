@@ -117,8 +117,8 @@ export function ExerciseView({ session, data, setData }) {
   // pour la position où il a été fait (`key`, voir restKey) : toute
   // navigation ou nouveau repos revient au choix automatique ci-dessous.
   const [restView, setRestView] = useState(null)
-  // "Corriger une série faite" ouvert à la main (hors repos compact), pour
-  // l'exercice où il a été ouvert seulement.
+  // Écran "Corriger une série faite" (voir plus bas), pour l'exercice où il
+  // a été ouvert seulement.
   const [setsEditorFor, setSetsEditorFor] = useState(null)
   const timer = useRestTimer(session, setData)
   const entry = session.entries.find((e) => e.exerciseId === session.currentExerciseId)
@@ -140,7 +140,8 @@ export function ExerciseView({ session, data, setData }) {
   const restCompact = timer != null && (restView?.key === restKey ? restView.mode === 'compact' : autoCompact)
   // Séries déjà faites autres que celle en cours : ce qu'on peut corriger.
   const correctableSetIndexes = entry.sets.map((_, i) => i).filter((i) => i < doneSetCount && i !== session.currentSetIndex)
-  const showSetsEditor = restCompact || setsEditorFor === `${session.id}-${entry.exerciseId}`
+  const editorKey = `${session.id}-${entry.exerciseId}`
+  const correcting = setsEditorFor === editorKey && correctableSetIndexes.length > 0
   // Série en cours déjà validée (retour en arrière) : la revalider corrige
   // sans relancer le repos (voir sessionRunner.js#validateCurrentSet).
   const isCorrection = session.currentSetIndex < (entry.doneSetCount ?? 0)
@@ -590,6 +591,40 @@ export function ExerciseView({ session, data, setData }) {
     )
   }
 
+  // Correction d'une série déjà faite : écran à part, sans la saisie ni le
+  // bouton de la série en cours. Avant, on corrigeait au-dessus de ces
+  // champs et "Valider" validait la série EN COURS : l'exercice avançait au
+  // lieu d'enregistrer la correction. Ici, chaque modification est
+  // enregistrée aussitôt (DoneSetsEditor) et "Valider la correction" ne
+  // fait que revenir à l'écran précédent : ni progression ni repos touchés.
+  if (correcting) {
+    return (
+      <div className="page">
+        {timer && (
+          <MiniRestTimer
+            timer={timer}
+            onAdjust={handleAdjustRest}
+            onSkip={handleSkipRest}
+            onExpand={() => setSetsEditorFor(null)}
+          />
+        )}
+        <h1>Corriger</h1>
+        <p className="last-performance">{entry.exerciseName}</p>
+        <DoneSetsEditor
+          sessionId={session.id}
+          entry={entry}
+          exercise={exercise}
+          doneCount={doneSetCount}
+          onlyDone
+          setData={setData}
+        />
+        <div className="exercise-active__validate-bar">
+          <BigButton onClick={() => setSetsEditorFor(null)}>Valider la correction</BigButton>
+        </div>
+      </div>
+    )
+  }
+
   // Pendant le repos (décompte encore en cours, pas le dépassement une fois
   // à zéro), le chrono doit rester l'élément dominant de l'écran EN TAILLE
   // (police, voir CSS) : on masque le reste de l'écran actif (tableau,
@@ -648,7 +683,7 @@ export function ExerciseView({ session, data, setData }) {
                 key={i}
                 type="button"
                 className="rest-page__done-set"
-                onClick={() => setRestView({ key: restKey, mode: 'compact' })}
+                onClick={() => setSetsEditorFor(editorKey)}
               >
                 {getSetLabel(entry.sets, i)} · {formatSet(entry.sets[i], entry.exerciseName)}
               </button>
@@ -720,7 +755,7 @@ export function ExerciseView({ session, data, setData }) {
       {!last && <p className="last-performance last-performance--empty">Première fois sur cet exercice</p>}
       {pulleySummary && <p className="last-performance last-performance--pulley">Réglage : {pulleySummary}</p>}
 
-      {showSetsEditor ? (
+      {restCompact ? (
         // Toutes les séries de l'exercice, celles déjà faites modifiables
         // (voir DoneSetsEditor) : pendant un repos compact, ou ouvert à la
         // main ("Corriger une série faite").
@@ -831,12 +866,8 @@ export function ExerciseView({ session, data, setData }) {
       </div>
 
       {!restCompact && correctableSetIndexes.length > 0 && (
-        <button
-          type="button"
-          className="add-set-button"
-          onClick={() => setSetsEditorFor(showSetsEditor ? null : `${session.id}-${entry.exerciseId}`)}
-        >
-          {showSetsEditor ? 'Fermer la correction' : '✎ Corriger une série faite'}
+        <button type="button" className="add-set-button" onClick={() => setSetsEditorFor(editorKey)}>
+          ✎ Corriger une série faite
         </button>
       )}
 

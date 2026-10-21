@@ -17,7 +17,8 @@ import { SetRow } from './SetRow.jsx'
 // progression (doneSetCount, curseur) ni le repos en cours ne bougent.
 // Sert sur l'écran d'exercice (correction pendant ou hors repos) et dans la
 // liste des exercices (exercice déjà terminé).
-export function DoneSetsEditor({ sessionId, entry, exercise, doneCount, currentSetIndex = null, setData }) {
+// `onlyDone` : seulement les séries déjà faites (écran de correction).
+export function DoneSetsEditor({ sessionId, entry, exercise, doneCount, currentSetIndex = null, onlyDone = false, setData }) {
   const exerciseId = entry.exerciseId
 
   function updateSet(setIndex, changes) {
@@ -35,6 +36,7 @@ export function DoneSetsEditor({ sessionId, entry, exercise, doneCount, currentS
     <div className="exercise-sets">
       {entry.sets.map((set, i) => {
         if (i === currentSetIndex || i >= doneCount) {
+          if (onlyDone) return null
           const isCurrent = i === currentSetIndex
           return (
             <div

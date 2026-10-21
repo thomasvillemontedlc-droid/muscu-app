@@ -4050,3 +4050,90 @@ body {
   font-weight: 500;
   opacity: 0.7;
 }
+
+/* ============================================================
+   Téléphone en paysage (hauteur réduite) : en portrait, la barre de
+   navigation du bas, la marge du haut et la largeur max de 480px laissaient
+   moins de 270px de hauteur utile sur un écran pourtant très large, et le
+   bouton "Valider" collé en bas recouvrait le contenu. Ici : navigation en
+   colonne à gauche, marges réduites, contenu élargi, bouton collé tout en
+   bas de l'écran.
+   ============================================================ */
+@media (orientation: landscape) and (max-height: 550px) {
+  .bottom-nav {
+    top: 0;
+    right: auto;
+    bottom: 0;
+    width: calc(76px + env(safe-area-inset-left));
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    border-top: none;
+    border-right: 1px solid var(--color-border);
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  .bottom-nav__link {
+    flex: 0 0 auto;
+    padding: 8px 0;
+    font-size: 0.7rem;
+  }
+
+  .app__content {
+    max-width: 820px;
+    padding: calc(env(safe-area-inset-top) + 12px) calc(env(safe-area-inset-right) + 64px)
+      calc(env(safe-area-inset-bottom) + 16px) calc(env(safe-area-inset-left) + 76px + 16px);
+  }
+
+  .exercise-active__validate-bar {
+    bottom: calc(env(safe-area-inset-bottom) + 8px);
+  }
+
+  .rest-page {
+    min-height: calc(100dvh - 28px);
+  }
+
+  .rest-page .rest-timer {
+    min-width: 0;
+  }
+
+  .page h1 {
+    margin: 4px 0 10px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 550px) {
+  .exercise-active__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  .exercise-active__title-row h1 {
+    font-size: 1.2rem;
+  }
+
+  .exercise-active__layout .exercise-active__fields {
+    margin-top: 0;
+  }
+}
+
+/* Illustrations des échauffements et étirements (RoutineRunner.jsx),
+   seulement si l'image existe dans public/mouvements/. */
+.routine-runner__image {
+  display: block;
+  width: 100%;
+  max-height: 38vh;
+  object-fit: contain;
+  margin: 0 auto 8px;
+  border-radius: var(--radius);
+}
+
+.routine-runner__thumb {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
+}

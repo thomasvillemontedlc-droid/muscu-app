@@ -23,3 +23,15 @@ export function getExerciseImageCandidates(exerciseName) {
   const slugs = HEIGHT_SUFFIX.test(slug) ? [slug, slug.replace(HEIGHT_SUFFIX, '-vis-a-vis')] : [slug]
   return slugs.flatMap((s) => EXTENSIONS.map((ext) => `${import.meta.env.BASE_URL}exercices/${s}.${ext}`))
 }
+
+// Illustration d'un mouvement d'échauffement ou d'étirement
+// (components/RoutineRunner.jsx) : public/mouvements/<nom-slugifié>.<ext>,
+// même principe que les exercices. Retombe sur public/exercices/ pour un
+// mouvement qui est aussi un exercice (ex. Rameur).
+export function getMoveImageCandidates(moveName) {
+  const slug = slugify(moveName)
+  return [
+    ...EXTENSIONS.map((ext) => `${import.meta.env.BASE_URL}mouvements/${slug}.${ext}`),
+    ...EXTENSIONS.map((ext) => `${import.meta.env.BASE_URL}exercices/${slug}.${ext}`),
+  ]
+}

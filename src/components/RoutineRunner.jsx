@@ -4,6 +4,8 @@ import { vibrateSuccess } from '../lib/haptics.js'
 import { BigButton } from './BigButton.jsx'
 import { DurationField } from './DurationField.jsx'
 import { TourStep } from './TourStep.jsx'
+import { ExerciseImage } from './ExerciseImage.jsx'
+import { getMoveImageCandidates } from '../lib/exerciseImage.js'
 
 // Un mouvement `sides: true` -> deux entrées adjacentes droit/gauche de
 // même durée (même forme que celles produites par "Par côté", voir
@@ -180,6 +182,14 @@ export function RoutineRunner({
         <p className="routine-runner__progress">
           {logicalNumbers[index]} / {logicalNumber}
         </p>
+        {/* Illustration du mouvement si public/mouvements/ en a une (rien
+            sinon). key : repart de la 1re extension à chaque mouvement. */}
+        <ExerciseImage
+          key={current.name}
+          name={current.name}
+          getCandidates={getMoveImageCandidates}
+          className="routine-runner__image"
+        />
         {current.muscleLabel && <p className="routine-runner__muscle">{current.muscleLabel}</p>}
         <p className="routine-runner__name">
           {current.name}
@@ -227,6 +237,12 @@ export function RoutineRunner({
           {items.map((item) => (
             <li key={item.id} className="routine-runner__item">
               <div className="routine-runner__item-header">
+                <ExerciseImage
+                  key={item.name}
+                  name={item.name}
+                  getCandidates={getMoveImageCandidates}
+                  className="routine-runner__thumb"
+                />
                 <div className="routine-runner__item-info">
                   {item.muscleLabel && <span className="routine-runner__item-muscle">{item.muscleLabel}</span>}
                   <span className="routine-runner__item-name">

@@ -1,5 +1,6 @@
 // Compresse automatiquement les illustrations d'exercice : toute image
-// raster (.png/.jpg/.jpeg) déposée dans public/exercices/ est convertie en
+// raster (.png/.jpg/.jpeg) déposée dans public/exercices/ ou
+// public/mouvements/ (échauffements et étirements) est convertie en
 // .webp puis supprimée, sauf si un .webp du même nom existe déjà. Lancé
 // automatiquement avant `npm run dev` et `npm run build` (voir les scripts
 // "predev"/"prebuild" dans package.json) : rien à faire manuellement en
@@ -10,11 +11,12 @@ import { extname, basename, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
 
-const DIR = fileURLToPath(new URL('../public/exercices/', import.meta.url))
+const DIRS = ['exercices', 'mouvements']
 const RASTER_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg'])
 const WEBP_QUALITY = 82
 
-async function main() {
+async function compressDir(name) {
+  const DIR = fileURLToPath(new URL(`../public/${name}/`, import.meta.url))
   let entries
   try {
     entries = await readdir(DIR)
@@ -38,10 +40,14 @@ async function main() {
     await sharp(sourcePath).webp({ quality: WEBP_QUALITY }).toFile(destPath)
     await unlink(sourcePath)
     converted++
-    console.log(`[exercices] ${entry} -> ${webpName}`)
+    console.log(`[${name}] ${entry} -> ${webpName}`)
   }
 
-  if (converted > 0) console.log(`[exercices] ${converted} image(s) compressée(s) en WebP.`)
+  if (converted > 0) console.log(`[${name}] ${converted} image(s) compressée(s) en WebP.`)
+}
+
+async function main() {
+  for (const name of DIRS) await compressDir(name)
 }
 
 await main()

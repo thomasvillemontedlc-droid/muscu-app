@@ -84,7 +84,8 @@ export function getSameMuscleExerciseIds(exercises, exerciseName) {
 // même nombre de séries, séries déjà validées (getResumeSetIndex pour un
 // exercice entamé) conservées telles quelles, séries restantes pré-remplies
 // avec la dernière performance du nouvel exercice (séries de travail, rang
-// par rang, la dernière répétée au-delà). Une série d'échauffement restante
+// par rang, la dernière répétée au-delà), ou, s'il n'a jamais été fait,
+// avec les poids et répétitions prévus pour l'ancien. Une série d'échauffement restante
 // le reste, à la moitié de la charge (arrondie au pas de l'exercice). Le
 // curseur, la complétion et le repos en cours suivent le nouvel id. Sans
 // effet si le nouvel exercice est déjà dans la séance.
@@ -106,7 +107,15 @@ export function replaceExerciseInSession(sessions, sessionId, oldExerciseId, new
     const workIndex = getWorkSets(oldEntry.sets.slice(0, i)).length
     const source = last ? (last.sets[workIndex] ?? last.sets[last.sets.length - 1]) : null
     const reps = source ? source.reps : sameUnit ? set.reps : 0
-    let weight = source ? source.weight : 0
+    // Nouvel exercice jamais fait : on garde le poids prévu pour l'ancien
+    // (même unité seulement) plutôt que de repartir de 0, à ajuster.
+    if (!source) {
+      const next = { weight: sameUnit ? set.weight : 0, reps }
+      if (set.side) next.side = set.side
+      if (isWarmupSet(set)) next.warmup = true
+      return withTarget(next)
+    }
+    let weight = source.weight
     if (isWarmupSet(set)) weight = Math.round(weight / 2 / step) * step
     const next = { weight: Math.round(weight * 100) / 100, reps }
     if (set.side) next.side = set.side

@@ -59,8 +59,7 @@ export function ReplaceExerciseSheet({ session, entry, data, setData, onClose })
         <h2 className="muscle-sheet__title">Remplacer</h2>
         <p className="muscle-sheet__detail">{entry.exerciseName}</p>
         <p className="muscle-sheet__detail replace-exercise__hint">
-          Les séries déjà validées sont conservées ; les suivantes reprennent ta dernière performance sur le nouvel
-          exercice.
+          Les séries déjà validées sont conservées ; les suivantes reprennent ta dernière performance sur le nouvel exercice, ou les poids prévus si tu ne l’as jamais fait.
         </p>
 
         <p className="muscle-sheet__subtitle">Nouvel exercice</p>

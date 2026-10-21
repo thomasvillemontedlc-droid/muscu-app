@@ -12,8 +12,11 @@ import { getExerciseImageCandidates } from '../lib/exerciseImage.js'
 // sort de l'image connu : true si une extension a fini par charger, false
 // si toutes ont échoué (voir ExerciseImageViewer.jsx, qui s'en sert pour
 // savoir s'il doit proposer "Voir le mouvement").
-export function ExerciseImage({ name, className, onAvailabilityChange }) {
-  const candidates = getExerciseImageCandidates(name)
+// `getCandidates` (optionnel) : autre source que les exercices, ex.
+// lib/exerciseImage.js#getMoveImageCandidates pour échauffements et
+// étirements.
+export function ExerciseImage({ name, className, onAvailabilityChange, getCandidates = getExerciseImageCandidates }) {
+  const candidates = getCandidates(name)
   const [index, setIndex] = useState(0)
   const exhausted = index >= candidates.length
 

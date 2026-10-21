@@ -743,145 +743,155 @@ export function ExerciseView({ session, data, setData }) {
       )}
       <p className={`session-date${isWarmup ? ' session-date--warmup' : ''}`}>{setDetail}</p>
 
-      {chargeSuggestion && (
-        <ChargeSuggestionCard
-          key={entry.exerciseId}
-          suggestion={chargeSuggestion}
-          onAccept={handleAcceptChargeSuggestion}
-          onDecline={handleDeclineChargeSuggestion}
-        />
-      )}
+      {/* Deux colonnes en paysage (voir .exercise-active__layout) : rappel
+          et tableau à gauche, saisie et validation à droite, visibles sans
+          défiler. En portrait, simple empilement comme avant. */}
+      <div className="exercise-active__layout">
+        <div className="exercise-active__info">
+          {!last && <p className="last-performance last-performance--empty">Première fois sur cet exercice</p>}
+          {pulleySummary && <p className="last-performance last-performance--pulley">Réglage : {pulleySummary}</p>}
 
-      {!last && <p className="last-performance last-performance--empty">Première fois sur cet exercice</p>}
-      {pulleySummary && <p className="last-performance last-performance--pulley">Réglage : {pulleySummary}</p>}
-
-      {restCompact ? (
-        // Toutes les séries de l'exercice, celles déjà faites modifiables
-        // (voir DoneSetsEditor) : pendant un repos compact, ou ouvert à la
-        // main ("Corriger une série faite").
-        <DoneSetsEditor
-          sessionId={session.id}
-          entry={entry}
-          exercise={exercise}
-          doneCount={doneSetCount}
-          currentSetIndex={session.currentSetIndex}
-          setData={setData}
-        />
-      ) : (
-        <SetComparisonTable entry={entry} last={last} currentSetIndex={session.currentSetIndex} />
-      )}
-
-      <ExerciseImageViewer key={entry.exerciseName} name={entry.exerciseName} />
-
-      <div className={`exercise-active__fields${validating ? ' exercise-active__fields--validated' : ''}`}>
-        {validating && <span className="exercise-active__check">✓</span>}
-        {validating && <Confetti />}
-
-        <label className="exercise-active__field">
-          <span>{isTimeBased ? 'Durée' : 'Répétitions'}</span>
-          {isTimeBased ? (
-            <DurationField
-              // ExerciseView ne démonte jamais entre deux séries, deux
-              // exercices, ni même deux séances (SessionRunPage ne key
-              // pas sur session.id, voir son commentaire sur la
-              // persistance du chrono de repos) : sans cette key, le
-              // chrono au temps (running/refs internes, voir
-              // DurationField.jsx) resterait un état React local
-              // partagé entre tout ça, au lieu de repartir à zéro à
-              // chaque nouvelle série.
-              key={`${session.id}-${entry.exerciseId}-${session.currentSetIndex}`}
-              className="exercise-active__input"
-              value={set.reps}
-              onChange={handleRepsChange}
-              disabled={validating}
-              aria-label="Durée"
+          {restCompact ? (
+            // Toutes les séries de l'exercice, celles déjà faites modifiables
+            // (voir DoneSetsEditor) : pendant un repos compact, ou ouvert à la
+            // main ("Corriger une série faite").
+            <DoneSetsEditor
+              sessionId={session.id}
+              entry={entry}
+              exercise={exercise}
+              doneCount={doneSetCount}
+              currentSetIndex={session.currentSetIndex}
+              setData={setData}
             />
           ) : (
-            <>
-              <StepperField
-                className="exercise-active__input"
-                value={set.reps}
-                onChange={handleRepsChange}
-                step={1}
-                decimal
-                normalize={roundToHalf}
-                format={formatDecimal}
-                disabled={validating}
-                aria-label="Répétitions"
-              />
-              <button
-                type="button"
-                className="exercise-active__half-rep"
-                onClick={handleHalfRepDown}
-                disabled={validating}
-                aria-label="Retirer une demi-répétition (dernière répétition faite à moitié)"
-              >
-                −½
-              </button>
-            </>
+            <SetComparisonTable entry={entry} last={last} currentSetIndex={session.currentSetIndex} />
           )}
-        </label>
-        <label className="exercise-active__field">
-          {/* En mode "par côté", WeightField affiche déjà ses propres
-              libellés (Barre / Par côté) : garder ce "Poids (kg)" en plus
-              ajouterait une ligne de texte que le champ Répétitions n'a
-              pas, décalant les deux champs verticalement l'un par rapport
-              à l'autre. */}
-          {(exercise?.weightInputMode ?? 'total') !== 'perSide' && <span>Poids (kg)</span>}
-          <WeightField
-            className="exercise-active__input"
-            exercise={exercise}
-            value={set.weight}
-            onChange={handleWeightChange}
-            onModeChange={handleWeightModeChange}
-            onBarWeightChange={handleBarWeightChange}
-            onStepChange={handleStepChange}
-            onPulleyHeightChange={handlePulleyHeightChange}
-            onPulleyNotchChange={handlePulleyNotchChange}
-            onGripWidthChange={handleGripWidthChange}
-            stepper
-            aria-label="Poids en kg"
+
+          <ExerciseImageViewer key={entry.exerciseName} name={entry.exerciseName} />
+        </div>
+        <div className="exercise-active__input">
+          {chargeSuggestion && (
+            <ChargeSuggestionCard
+              key={entry.exerciseId}
+              suggestion={chargeSuggestion}
+              onAccept={handleAcceptChargeSuggestion}
+              onDecline={handleDeclineChargeSuggestion}
+            />
+          )}
+
+
+          <div className={`exercise-active__fields${validating ? ' exercise-active__fields--validated' : ''}`}>
+            {validating && <span className="exercise-active__check">✓</span>}
+            {validating && <Confetti />}
+
+            <label className="exercise-active__field">
+              <span>{isTimeBased ? 'Durée' : 'Répétitions'}</span>
+              {isTimeBased ? (
+                <DurationField
+                  // ExerciseView ne démonte jamais entre deux séries, deux
+                  // exercices, ni même deux séances (SessionRunPage ne key
+                  // pas sur session.id, voir son commentaire sur la
+                  // persistance du chrono de repos) : sans cette key, le
+                  // chrono au temps (running/refs internes, voir
+                  // DurationField.jsx) resterait un état React local
+                  // partagé entre tout ça, au lieu de repartir à zéro à
+                  // chaque nouvelle série.
+                  key={`${session.id}-${entry.exerciseId}-${session.currentSetIndex}`}
+                  className="exercise-active__input"
+                  value={set.reps}
+                  onChange={handleRepsChange}
+                  disabled={validating}
+                  aria-label="Durée"
+                />
+              ) : (
+                <>
+                  <StepperField
+                    className="exercise-active__input"
+                    value={set.reps}
+                    onChange={handleRepsChange}
+                    step={1}
+                    decimal
+                    normalize={roundToHalf}
+                    format={formatDecimal}
+                    disabled={validating}
+                    aria-label="Répétitions"
+                  />
+                  <button
+                    type="button"
+                    className="exercise-active__half-rep"
+                    onClick={handleHalfRepDown}
+                    disabled={validating}
+                    aria-label="Retirer une demi-répétition (dernière répétition faite à moitié)"
+                  >
+                    −½
+                  </button>
+                </>
+              )}
+            </label>
+            <label className="exercise-active__field">
+              {/* En mode "par côté", WeightField affiche déjà ses propres
+                  libellés (Barre / Par côté) : garder ce "Poids (kg)" en plus
+                  ajouterait une ligne de texte que le champ Répétitions n'a
+                  pas, décalant les deux champs verticalement l'un par rapport
+                  à l'autre. */}
+              {(exercise?.weightInputMode ?? 'total') !== 'perSide' && <span>Poids (kg)</span>}
+              <WeightField
+                className="exercise-active__input"
+                exercise={exercise}
+                value={set.weight}
+                onChange={handleWeightChange}
+                onModeChange={handleWeightModeChange}
+                onBarWeightChange={handleBarWeightChange}
+                onStepChange={handleStepChange}
+                onPulleyHeightChange={handlePulleyHeightChange}
+                onPulleyNotchChange={handlePulleyNotchChange}
+                onGripWidthChange={handleGripWidthChange}
+                stepper
+                aria-label="Poids en kg"
+              />
+            </label>
+          </div>
+
+          <TourStep
+            id="exercise-input"
+            selector=".weight-field__mode-toggle"
+            text={'Poids et répétitions se règlent avec les boutons +/-. "Saisir par côté" pour un haltère par bras.'}
           />
-        </label>
+
+          {/* Collé en bas de l'écran (au-dessus de la barre de navigation) :
+              validable sans avoir à faire défiler. */}
+          <div className="exercise-active__validate-bar">
+            <BigButton onClick={handleValidate} disabled={validating}>
+              {validating
+                ? 'Série validée ✓'
+                : isCorrection
+                  ? 'Valider la correction'
+                  : isWarmup
+                    ? "Valider l'échauffement"
+                    : 'Valider la série'}
+            </BigButton>
+          </div>
+
+          {!restCompact && correctableSetIndexes.length > 0 && (
+            <button type="button" className="add-set-button" onClick={() => setSetsEditorFor(editorKey)}>
+              ✎ Corriger une série faite
+            </button>
+          )}
+
+          {canAddWarmup && (
+            <button type="button" className="add-set-button add-set-button--warmup" onClick={handleAddWarmup} disabled={validating}>
+              + Série d'échauffement
+            </button>
+          )}
+
+          {session.currentSetIndex > 0 && (
+            <BigButton variant="secondary" onClick={handleFinishExercise} disabled={validating}>
+              Terminer cet exercice
+            </BigButton>
+          )}
+
+        </div>
       </div>
-
-      <TourStep
-        id="exercise-input"
-        selector=".weight-field__mode-toggle"
-        text={'Poids et répétitions se règlent avec les boutons +/-. "Saisir par côté" pour un haltère par bras.'}
-      />
-
-      {/* Collé en bas de l'écran (au-dessus de la barre de navigation) :
-          validable sans avoir à faire défiler. */}
-      <div className="exercise-active__validate-bar">
-        <BigButton onClick={handleValidate} disabled={validating}>
-          {validating
-            ? 'Série validée ✓'
-            : isCorrection
-              ? 'Valider la correction'
-              : isWarmup
-                ? "Valider l'échauffement"
-                : 'Valider la série'}
-        </BigButton>
-      </div>
-
-      {!restCompact && correctableSetIndexes.length > 0 && (
-        <button type="button" className="add-set-button" onClick={() => setSetsEditorFor(editorKey)}>
-          ✎ Corriger une série faite
-        </button>
-      )}
-
-      {canAddWarmup && (
-        <button type="button" className="add-set-button add-set-button--warmup" onClick={handleAddWarmup} disabled={validating}>
-          + Série d'échauffement
-        </button>
-      )}
-
-      {session.currentSetIndex > 0 && (
-        <BigButton variant="secondary" onClick={handleFinishExercise} disabled={validating}>
-          Terminer cet exercice
-        </BigButton>
-      )}
 
       {completeSuggestion && (
         <CompleteSessionCard

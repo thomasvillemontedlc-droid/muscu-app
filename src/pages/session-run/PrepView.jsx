@@ -39,7 +39,8 @@ import { DraggableList } from '../../components/DraggableList.jsx'
 import { ExercisePicker } from '../../components/ExercisePicker.jsx'
 import { NumberField } from '../../components/NumberField.jsx'
 import { RoutineRunner } from '../../components/RoutineRunner.jsx'
-import { SetRow } from '../../components/SetRow.jsx'
+import { SetRow, SetRowHeader } from '../../components/SetRow.jsx'
+import { ExerciseSettings } from '../../components/WeightField.jsx'
 import { StepperField } from '../../components/StepperField.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
 
@@ -198,6 +199,7 @@ export function PrepView({ session, data, setData }) {
     return (
       <RoutineRunner
         title="Échauffement"
+        startLabel="Lancer l’échauffement"
         hint="Suggestions générales, pas un échauffement personnalisé."
         initialItems={getWarmupSuggestions(getPlannedMusclesWorked(session))}
         suggestions={getWarmupMoveSuggestions(getPlannedMusclesWorked(session))}
@@ -384,6 +386,14 @@ export function PrepView({ session, data, setData }) {
               </label>
             </div>
 
+            <ExerciseSettings
+              exercise={entryExercise}
+              onModeChange={(mode) => handleWeightModeChange(entry.exerciseId, mode)}
+              onPulleyHeightChange={(height) => handlePulleyHeightChange(entry.exerciseId, height)}
+              onPulleyNotchChange={(notch) => handlePulleyNotchChange(entry.exerciseId, notch)}
+              onGripWidthChange={(width) => handleGripWidthChange(entry.exerciseId, width)}
+            />
+            <SetRowHeader exercise={entryExercise} />
             {entry.sets.map((set, setIndex) => (
               <SetRow
                 // Voir ExerciseView.jsx : SessionRunPage ne remonte jamais
@@ -401,11 +411,7 @@ export function PrepView({ session, data, setData }) {
                 exercise={entryExercise}
                 onChangeWeight={(weight) => handleUpdateSet(entry.exerciseId, setIndex, { weight })}
                 onChangeReps={(reps) => handleUpdateSet(entry.exerciseId, setIndex, { reps })}
-                onChangeWeightMode={(mode) => handleWeightModeChange(entry.exerciseId, mode)}
                 onChangeBarWeight={(barWeight) => handleBarWeightChange(entry.exerciseId, barWeight)}
-                onChangePulleyHeight={(height) => handlePulleyHeightChange(entry.exerciseId, height)}
-                onChangePulleyNotch={(notch) => handlePulleyNotchChange(entry.exerciseId, notch)}
-                onChangeGripWidth={(width) => handleGripWidthChange(entry.exerciseId, width)}
                 onRemove={() => handleRemoveSet(entry.exerciseId, setIndex)}
                 removeDisabled={set.side != null}
               />

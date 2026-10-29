@@ -43,6 +43,7 @@ export function FinishedView({ session, data, setData }) {
     return (
       <RoutineRunner
         title="Étirements"
+        startLabel="Lancer les étirements"
         hint="Suggestions générales, pas un programme de récupération personnalisé."
         initialItems={stretches.map((s) => ({
           id: s.id,

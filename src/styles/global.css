@@ -296,30 +296,6 @@ input[type='number']:focus {
   border-color: var(--color-danger);
 }
 
-/* Même emplacement que .mini-rest-timer ci-dessus (jamais affichés en même
-   temps : celui-ci seulement pendant un exercice actif, l'autre seulement
-   pendant l'édition de la séance) - estimation du temps restant pour finir
-   la séance, voir components/SessionTimeRemaining.jsx. Volontairement
-   discret (texte plus petit, pas en gras) : une estimation, pas un vrai
-   chrono à surveiller. */
-.session-time-remaining {
-  position: fixed;
-  top: calc(env(safe-area-inset-top) + 12px);
-  right: 60px;
-  z-index: 10;
-  min-height: 40px;
-  padding: 0 14px;
-  display: flex;
-  align-items: center;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: var(--color-surface);
-  color: var(--color-muted);
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
 /* Bouton de retour en haut de l'écran "Modifier ma séance" (voir
    ExerciseView.jsx) : reste collé en haut pendant qu'on fait défiler la
    liste d'exercices/séries, pour qu'il soit toujours atteignable sans tout
@@ -4141,4 +4117,191 @@ body {
 .rest-timer__custom-label {
   color: var(--color-muted);
   font-size: 0.85rem;
+}
+
+/* Ligne de série compacte (SetRow.jsx) : Série | Reps | Kg | ✕, en-têtes de
+   colonnes une seule fois (SetRowHeader). Remplace l'ancienne carte par
+   série avec libellés et réglages répétés. */
+.set-row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1fr) 40px;
+  align-items: start;
+  gap: 8px;
+  padding: 6px 0;
+  margin: 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.set-row:last-child {
+  border-bottom: none;
+  padding-bottom: 6px;
+  margin-bottom: 0;
+}
+
+.set-row .set-row__label {
+  align-self: center;
+  font-size: 0.85rem;
+}
+
+.set-row .set-row__remove {
+  min-width: 40px;
+  min-height: 40px;
+  align-self: center;
+}
+
+.set-row--header {
+  padding: 0 0 4px;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.set-row .weight-field__total {
+  font-size: 0.8rem;
+}
+
+.exercise-settings {
+  margin: 4px 0 8px;
+}
+
+.exercise-settings summary {
+  cursor: pointer;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  padding: 6px 0;
+}
+
+.exercise-settings__body {
+  display: grid;
+  gap: 10px;
+  padding: 6px 0 10px;
+}
+
+/* Séance en cours (App.jsx, .app--live) : pas de barre de navigation ni de
+   bouton de thème, donc pas de marges réservées pour eux. */
+.app--live .app__content {
+  padding-top: calc(env(safe-area-inset-top) + 8px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+}
+
+.app--live .exercise-active__validate-bar {
+  bottom: calc(env(safe-area-inset-bottom) + 8px);
+}
+
+.app--live .rest-page {
+  min-height: calc(100dvh - 80px);
+}
+
+.app--live .mini-rest-timer {
+  right: 16px;
+}
+
+/* Barre du haut d'une séance en cours (SessionTopBar.jsx). */
+.session-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 6px 6px 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.session-top-bar__info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  min-width: 0;
+}
+
+.session-top-bar__clock {
+  font-weight: 700;
+}
+
+.session-top-bar__muted {
+  color: var(--color-muted);
+}
+
+.session-top-bar__finish {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 600;
+}
+
+.session-top-bar__menu {
+  display: grid;
+  gap: 8px;
+}
+
+@media (orientation: landscape) and (max-height: 550px) {
+  .app--live .app__content {
+    padding-left: calc(env(safe-area-inset-left) + 16px);
+    padding-right: calc(env(safe-area-inset-right) + 16px);
+  }
+}
+
+.rest-page__skip-bar {
+  position: sticky;
+  bottom: calc(env(safe-area-inset-bottom) + 8px);
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+/* Menu ⋯ des séances enregistrées : vrai menu déroulant sous le bouton. */
+.template-list__menu {
+  position: relative;
+}
+
+.template-list__menu-items {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  display: grid;
+  min-width: 220px;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.template-list__menu-items .subtle-button {
+  text-align: left;
+  padding: 10px 12px;
+  margin: 0;
+}
+
+.template-list__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.template-list__actions .big-button {
+  flex: 1;
+}
+
+.template-list__actions .template-list__menu {
+  margin-top: 0;
+}
+
+.exercise-active__nav {
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.exercise-active__nav .back-link {
+  margin: 0;
 }

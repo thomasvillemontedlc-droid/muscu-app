@@ -205,9 +205,11 @@ export function WeightField({
         {stepControl}
         {pulleyControl}
         {gripControl}
-        <button type="button" className="weight-field__mode-toggle" onClick={() => onModeChange('perSide')}>
-          Saisir par côté
-        </button>
+        {onModeChange && (
+          <button type="button" className="weight-field__mode-toggle" onClick={() => onModeChange('perSide')}>
+            Saisir par côté
+          </button>
+        )}
       </div>
     )
   }
@@ -247,9 +249,67 @@ export function WeightField({
       {stepControl}
       {pulleyControl}
       {gripControl}
-      <button type="button" className="weight-field__mode-toggle" onClick={() => onModeChange('total')}>
-        Saisir le poids total
-      </button>
+      {onModeChange && (
+        <button type="button" className="weight-field__mode-toggle" onClick={() => onModeChange('total')}>
+          Saisir le poids total
+        </button>
+      )}
     </div>
+  )
+}
+
+// Réglages d'un exercice, valables pour toutes ses séries : saisie du poids
+// (total / par côté), hauteur et cran de poulie, largeur de prise. Affichés
+// une fois par exercice (préparation, "Modifier ma séance") dans un bloc
+// repliable, au lieu d'être répétés sous chaque série. Résumé visible
+// replié ("Par côté · Cran 7 · Prise large").
+export function ExerciseSettings({ exercise, onModeChange, onPulleyHeightChange, onPulleyNotchChange, onGripWidthChange }) {
+  const name = exercise?.name
+  const mode = exercise?.weightInputMode ?? 'total'
+  const isPulley = isPulleyExercise(name)
+  const isGrip = isGripWidthExercise(name)
+  const summary = [
+    mode === 'perSide' ? 'Par côté' : null,
+    isPulley && exercise?.pulleyHeight && isPulleyHeightExercise(name) ? `Poulie ${exercise.pulleyHeight.toLowerCase()}` : null,
+    isPulley && exercise?.pulleyNotch != null ? `Cran ${exercise.pulleyNotch}` : null,
+    isGrip && exercise?.gripWidth ? `Prise ${exercise.gripWidth.toLowerCase()}` : null,
+  ].filter(Boolean)
+
+  return (
+    <details className="exercise-settings">
+      <summary>Réglages{summary.length > 0 ? ` · ${summary.join(' · ')}` : ''}</summary>
+      <div className="exercise-settings__body">
+        <div className="weight-field__preset-buttons">
+          <button
+            type="button"
+            className={`weight-field__preset-button${mode === 'total' ? ' weight-field__preset-button--selected' : ''}`}
+            onClick={() => onModeChange('total')}
+          >
+            Poids total
+          </button>
+          <button
+            type="button"
+            className={`weight-field__preset-button${mode === 'perSide' ? ' weight-field__preset-button--selected' : ''}`}
+            onClick={() => onModeChange('perSide')}
+          >
+            Par côté
+          </button>
+        </div>
+        {isPulley && (
+          <PulleyFields exercise={exercise} onHeightChange={onPulleyHeightChange} onNotchChange={onPulleyNotchChange} />
+        )}
+        {isGrip && (
+          <PresetField
+            className="weight-field__grip"
+            label="Prise"
+            presets={GRIP_WIDTH_PRESETS}
+            value={exercise?.gripWidth ?? null}
+            placeholder="Précision (optionnel)"
+            ariaLabel="Largeur de prise précise"
+            onChange={onGripWidthChange}
+          />
+        )}
+      </div>
+    </details>
   )
 }

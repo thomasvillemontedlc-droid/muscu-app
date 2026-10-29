@@ -44,10 +44,9 @@ import { useRestTimer } from '../../hooks/useRestTimer.js'
 import { RestBanner } from '../../components/RestBanner.jsx'
 import { MiniRestTimer } from '../../components/MiniRestTimer.jsx'
 import { CompleteSessionCard } from '../../components/CompleteSessionCard.jsx'
-import { SessionTimeRemaining } from '../../components/SessionTimeRemaining.jsx'
 import { DraggableList } from '../../components/DraggableList.jsx'
 import { ExercisePicker } from '../../components/ExercisePicker.jsx'
-import { SetRow } from '../../components/SetRow.jsx'
+import { SetRow, SetRowHeader } from '../../components/SetRow.jsx'
 import { DoneSetsEditor } from '../../components/DoneSetsEditor.jsx'
 import { DurationField } from '../../components/DurationField.jsx'
 import { ExerciseImage } from '../../components/ExerciseImage.jsx'
@@ -56,7 +55,7 @@ import { ExerciseImageViewer } from '../../components/ExerciseImageViewer.jsx'
 import { ExerciseProgressBar } from '../../components/ExerciseProgressBar.jsx'
 import { SetComparisonTable } from '../../components/SetComparisonTable.jsx'
 import { StepperField } from '../../components/StepperField.jsx'
-import { WeightField } from '../../components/WeightField.jsx'
+import { ExerciseSettings, WeightField } from '../../components/WeightField.jsx'
 import { formatPerformanceSummary, formatSet, getSetLabel, getSetPosition } from '../../lib/formatSet.js'
 import { ReplaceExerciseSheet } from '../../components/ReplaceExerciseSheet.jsx'
 import { formatDecimal, roundToHalf } from '../../lib/formatNumber.js'
@@ -438,16 +437,17 @@ export function ExerciseView({ session, data, setData }) {
     }))
   }
 
+  // Deux actions différentes, deux signes différents (avant : deux "←").
   const navButtons = (
     <div className="exercise-active__nav">
+      <button id="tip-exercise-flow" type="button" className="back-link" onClick={handleGoToList}>
+        ☰ Tous les exercices
+      </button>
       {session.currentSetIndex > 0 && (
         <button type="button" className="back-link" onClick={handlePreviousSet}>
-          ← Série précédente
+          ↺ Série précédente
         </button>
       )}
-      <button id="tip-exercise-flow" type="button" className="back-link" onClick={handleGoToList}>
-        ← Tous les exercices
-      </button>
     </div>
   )
 
@@ -541,6 +541,14 @@ export function ExerciseView({ session, data, setData }) {
                   </label>
                 </div>
 
+                <ExerciseSettings
+                  exercise={entryExercise}
+                  onModeChange={(mode) => handleEditWeightModeChange(sessionEntry.exerciseId, mode)}
+                  onPulleyHeightChange={(height) => handleEditPulleyHeightChange(sessionEntry.exerciseId, height)}
+                  onPulleyNotchChange={(notch) => handleEditPulleyNotchChange(sessionEntry.exerciseId, notch)}
+                  onGripWidthChange={(width) => handleEditGripWidthChange(sessionEntry.exerciseId, width)}
+                />
+                <SetRowHeader exercise={entryExercise} />
                 {sessionEntry.sets.map((set, setIndex) => (
                   <SetRow
                     key={setIndex}
@@ -553,11 +561,7 @@ export function ExerciseView({ session, data, setData }) {
                     exercise={entryExercise}
                     onChangeWeight={(weight) => handleEditSetWeightChange(sessionEntry.exerciseId, setIndex, weight)}
                     onChangeReps={(reps) => handleEditSetRepsChange(sessionEntry.exerciseId, setIndex, reps)}
-                    onChangeWeightMode={(mode) => handleEditWeightModeChange(sessionEntry.exerciseId, mode)}
                     onChangeBarWeight={(barWeight) => handleEditBarWeightChange(sessionEntry.exerciseId, barWeight)}
-                    onChangePulleyHeight={(height) => handleEditPulleyHeightChange(sessionEntry.exerciseId, height)}
-                    onChangePulleyNotch={(notch) => handleEditPulleyNotchChange(sessionEntry.exerciseId, notch)}
-                    onChangeGripWidth={(width) => handleEditGripWidthChange(sessionEntry.exerciseId, width)}
                     onRemove={() => handleRemoveSetFromEntry(sessionEntry.exerciseId, setIndex)}
                     removeDisabled={isCurrentExercise || set.side != null}
                   />
@@ -674,9 +678,7 @@ export function ExerciseView({ session, data, setData }) {
           text="Pour être sûr d'entendre l'alarme, évite de verrouiller l'écran manuellement pendant le repos : le son n'est pas garanti écran verrouillé."
         />
         <p className="rest-page__set-detail">{setDetail}</p>
-        <button type="button" className="rest-page__skip" onClick={handleSkipRest}>
-          Passer le repos
-        </button>
+
         {correctableSetIndexes.length > 0 && (
           <div className="rest-page__done-sets">
             <p className="rest-page__done-sets-title">Une erreur ? Touche une série pour la corriger</p>
@@ -695,6 +697,13 @@ export function ExerciseView({ session, data, setData }) {
         <button type="button" className="rest-page__skip" onClick={() => setEditingSession(true)}>
           Modifier ma séance
         </button>
+        {/* Action la plus fréquente pendant le repos : un vrai bouton large
+            en bas, à portée de pouce (avant : petit lien souligné). */}
+        <div className="rest-page__skip-bar">
+          <BigButton variant="secondary" onClick={handleSkipRest}>
+            Passer le repos
+          </BigButton>
+        </div>
       </div>
     )
   }
@@ -716,7 +725,6 @@ export function ExerciseView({ session, data, setData }) {
           onExpand={() => setRestView({ key: restKey, mode: 'big' })}
         />
       )}
-      <SessionTimeRemaining session={session} sessions={data.sessions} />
       {navButtons}
       <TourStep
         id="exercise-flow"

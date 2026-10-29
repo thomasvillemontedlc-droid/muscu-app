@@ -5,6 +5,7 @@ import { PrepView } from './session-run/PrepView.jsx'
 import { ExerciseView } from './session-run/ExerciseView.jsx'
 import { PickExerciseView } from './session-run/PickExerciseView.jsx'
 import { FinishedView } from './session-run/FinishedView.jsx'
+import { SessionTopBar } from '../components/SessionTopBar.jsx'
 
 // Aiguille vers l'écran correspondant à la phase de la séance (prep ->
 // exercise -> [exercise | picking] -> finished). Le repos n'est plus une
@@ -30,9 +31,19 @@ export function SessionRunPage() {
 
   switch (session.phase) {
     case 'exercise':
-      return <ExerciseView session={session} data={data} setData={setData} />
+      return (
+        <>
+          <SessionTopBar session={session} />
+          <ExerciseView session={session} data={data} setData={setData} />
+        </>
+      )
     case 'picking':
-      return <PickExerciseView session={session} data={data} setData={setData} />
+      return (
+        <>
+          <SessionTopBar session={session} />
+          <PickExerciseView session={session} data={data} setData={setData} />
+        </>
+      )
     case 'finished':
       return <FinishedView session={session} data={data} setData={setData} />
     case 'prep':

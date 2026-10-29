@@ -1,14 +1,8 @@
 import { updateSingleSet } from '../domain/sessions.js'
-import {
-  setExerciseBarWeight,
-  setExerciseGripWidth,
-  setExercisePulleyHeight,
-  setExercisePulleyNotch,
-  setExerciseWeightMode,
-} from '../domain/exercises.js'
+import { setExerciseBarWeight } from '../domain/exercises.js'
 import { isWarmupSet } from '../domain/setKinds.js'
 import { formatSet, getSetLabel } from '../lib/formatSet.js'
-import { SetRow } from './SetRow.jsx'
+import { SetRow, SetRowHeader } from './SetRow.jsx'
 
 // Toutes les séries d'un exercice pendant la séance : celles déjà validées
 // (index < doneCount) modifiables une à une, celle en cours
@@ -34,6 +28,7 @@ export function DoneSetsEditor({ sessionId, entry, exercise, doneCount, currentS
 
   return (
     <div className="exercise-sets">
+      <SetRowHeader exercise={exercise} />
       {entry.sets.map((set, i) => {
         if (i === currentSetIndex || i >= doneCount) {
           if (onlyDone) return null
@@ -60,11 +55,7 @@ export function DoneSetsEditor({ sessionId, entry, exercise, doneCount, currentS
             exercise={exercise}
             onChangeWeight={(weight) => updateSet(i, { weight })}
             onChangeReps={(reps) => updateSet(i, { reps })}
-            onChangeWeightMode={(mode) => updateExercise((list) => setExerciseWeightMode(list, exerciseId, mode))}
             onChangeBarWeight={(barWeight) => updateExercise((list) => setExerciseBarWeight(list, exerciseId, barWeight))}
-            onChangePulleyHeight={(height) => updateExercise((list) => setExercisePulleyHeight(list, exerciseId, height))}
-            onChangePulleyNotch={(notch) => updateExercise((list) => setExercisePulleyNotch(list, exerciseId, notch))}
-            onChangeGripWidth={(width) => updateExercise((list) => setExerciseGripWidth(list, exerciseId, width))}
             onRemove={() => {}}
             removeDisabled
           />

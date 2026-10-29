@@ -6,6 +6,12 @@ import { DurationField } from './DurationField.jsx'
 import { TourStep } from './TourStep.jsx'
 import { ExerciseImage } from './ExerciseImage.jsx'
 import { getMoveImageCandidates } from '../lib/exerciseImage.js'
+import { formatClock } from '../lib/formatClock.js'
+
+// 45s sous la minute, 5:00 au-delà (avant : "300s").
+function formatSeconds(seconds) {
+  return seconds < 60 ? `${seconds}s` : formatClock(seconds * 1000)
+}
 
 // Un mouvement `sides: true` -> deux entrées adjacentes droit/gauche de
 // même durée (même forme que celles produites par "Par côté", voir
@@ -44,6 +50,7 @@ export function RoutineRunner({
   finishLabel,
   onFinish,
   tip,
+  startLabel = 'Lancer',
 }) {
   const [items, setItems] = useState(() => initialItems.flatMap(expandSides))
   const [running, setRunning] = useState(false)
@@ -177,7 +184,7 @@ export function RoutineRunner({
     const overtime = current.durationSeconds > 0 && remaining < 0
 
     return (
-      <div className="routine-runner">
+      <div className="page routine-runner">
         <h1>{title}</h1>
         <p className="routine-runner__progress">
           {logicalNumbers[index]} / {logicalNumber}
@@ -197,7 +204,7 @@ export function RoutineRunner({
         </p>
         <p className={`routine-runner__timer${overtime ? ' routine-runner__timer--overtime' : ''}`}>
           {/* Dépassement affiché en positif : +1s, +2s... */}
-          {current.durationSeconds > 0 ? (overtime ? `+${-remaining}s` : `${remaining}s`) : '—'}
+          {current.durationSeconds > 0 ? (overtime ? `+${formatSeconds(-remaining)}` : formatSeconds(remaining)) : '—'}
         </p>
         {isLast && finishLabel && onFinish ? (
           <BigButton
@@ -226,7 +233,7 @@ export function RoutineRunner({
   }
 
   return (
-    <div className="routine-runner">
+    <div className="page routine-runner">
       <h1>{title}</h1>
       {hint && <p className="routine-runner__hint">{hint}</p>}
 
@@ -281,7 +288,7 @@ export function RoutineRunner({
         </ul>
       )}
 
-      <div id={tip ? `tip-${tip.id}` : undefined} className="routine-runner__add">
+      <div className="routine-runner__add">
         <input
           className="routine-runner__add-input"
           value={newName}
@@ -294,7 +301,9 @@ export function RoutineRunner({
         </button>
       </div>
 
-      {tip && <TourStep id={tip.id} selector={`#tip-${tip.id}`} text={tip.text} />}
+      {/* Ancré sur le titre : posé sur le champ d'ajout, il masquait les
+          suggestions juste en dessous. */}
+      {tip && <TourStep id={tip.id} selector=".routine-runner h1" text={tip.text} />}
 
       {visibleSuggestions.length > 0 && (
         <div className="routine-runner__suggestions">
@@ -312,7 +321,7 @@ export function RoutineRunner({
       )}
 
       <BigButton onClick={handleStart} disabled={items.length === 0}>
-        Lancer
+        {startLabel}
       </BigButton>
       <button type="button" className="subtle-button" onClick={onDone}>
         {skipLabel}

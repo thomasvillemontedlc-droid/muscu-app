@@ -15,6 +15,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { TourStep } from '../components/TourStep.jsx'
 import { TemplateBulkEditSheet } from '../components/TemplateBulkEditSheet.jsx'
 import { BackupReminder } from '../components/BackupReminder.jsx'
+import { getSetProgress } from '../domain/sessionSummary.js'
 
 export function TemplatesListPage() {
   const { data, setData } = useAppDataContext()
@@ -157,7 +158,7 @@ export function TemplatesListPage() {
       {!inProgressSession && data.templates.length === 0 && (
         <section className="featured-session">
           <p className="featured-session__label">Bienvenue</p>
-          <p className="featured-session__name">Par où commencer ?</p>
+          <p className="featured-session__name">Par où commencer ?</p>
           <p className="featured-session__detail">
             Un programme te propose tes séances de la semaine. Une séance seule te laisse composer librement.
           </p>
@@ -173,7 +174,7 @@ export function TemplatesListPage() {
           <p className="featured-session__label">Séance en cours</p>
           <p className="featured-session__name">{inProgressSession.templateName}</p>
           <p className="featured-session__detail">
-            {inProgressSession.completedExerciseIds.length} / {inProgressSession.entries.length} exercice(s) terminé(s)
+            {getSetProgress(inProgressSession).done} / {getSetProgress(inProgressSession).total} séries faites
           </p>
           <BigButton onClick={() => navigate(`/sessions/${inProgressSession.id}`)}>Reprendre ma séance</BigButton>
         </section>
@@ -212,9 +213,11 @@ export function TemplatesListPage() {
         )
       )}
 
-      <Link to="/program" className="back-link home-link">
-        Programme hebdomadaire →
-      </Link>
+      {data.templates.length > 0 && (
+        <Link to="/program" className="back-link home-link">
+          Programme hebdomadaire →
+        </Link>
+      )}
 
       <details id="tip-home-create" className="template-create-toggle" ref={createPanelRef}>
         <summary>Créer une nouvelle séance</summary>
@@ -269,7 +272,7 @@ export function TemplatesListPage() {
               {selecting ? 'Annuler' : 'Sélectionner'}
             </button>
           </div>
-          <p className="template-list-header__hint">Déjà prêtes : lancez-les directement.</p>
+          <p className="template-list-header__hint">Déjà prêtes : lance-les directement.</p>
           {selecting && (
             <label className="template-list__select-all">
               <input type="checkbox" checked={allSelected} onChange={toggleAll} />
@@ -302,27 +305,42 @@ export function TemplatesListPage() {
             <li key={template.id} className="template-list__item">
               <span className="template-list__name">{template.name}</span>
               <span className="template-list__count">{template.exerciseIds.length} exercice(s)</span>
+              {/* Le lime reste réservé au "Commencer" mis en avant en haut :
+                  ici un bouton secondaire, le reste dans le menu ⋯. */}
               <div className="template-list__actions">
                 <BigButton
+                  variant="secondary"
                   onClick={() => handleStart(template)}
                   disabled={template.exerciseIds.length === 0}
+                  aria-label={`Commencer ${template.name}`}
                 >
-                  Lancer
-                </BigButton>
-                <BigButton variant="secondary" onClick={() => navigate(`/templates/${template.id}`)}>
-                  Modifier
+                  ▶ Commencer
                 </BigButton>
                 <details className="template-list__menu">
                   <summary className="template-list__menu-trigger" aria-label="Plus d'options">
                     ⋯
                   </summary>
-                  <button
-                    type="button"
-                    className="subtle-button subtle-button--danger"
-                    onClick={() => setPendingDeleteId(template.id)}
-                  >
-                    Supprimer cette séance type
-                  </button>
+                  <div className="template-list__menu-items">
+                    <button type="button" className="subtle-button" onClick={() => navigate(`/templates/${template.id}`)}>
+                      Modifier la séance type
+                    </button>
+                    {template.exerciseIds.length > 0 && (
+                      <button
+                        type="button"
+                        className="subtle-button"
+                        onClick={() => handleStart(template, { startNow: false })}
+                      >
+                        Ajuster avant de commencer
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="subtle-button subtle-button--danger"
+                      onClick={() => setPendingDeleteId(template.id)}
+                    >
+                      Supprimer
+                    </button>
+                  </div>
                 </details>
               </div>
             </li>

@@ -295,3 +295,17 @@ export function buildSessionSummary(sessions, session) {
   const bestPercent = Math.max(0, ...items.map((item) => item.progressPercent ?? -Infinity))
   return items.map((item) => ({ ...item, bestProgress: bestPercent > 0 && item.progressPercent === bestPercent }))
 }
+
+// Progression en séries (échauffements compris) : plus parlant que le
+// nombre d'exercices terminés, qui reste à 0 pendant tout le premier.
+export function getSetProgress(session) {
+  let done = 0
+  let total = 0
+  for (const entry of session.entries) {
+    total += entry.sets.length
+    done += session.completedExerciseIds?.includes(entry.exerciseId)
+      ? entry.sets.length
+      : Math.min(entry.doneSetCount ?? 0, entry.sets.length)
+  }
+  return { done, total }
+}

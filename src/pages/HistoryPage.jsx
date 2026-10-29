@@ -11,7 +11,8 @@ import { TrendDot } from '../components/TrendDot.jsx'
 import { BodyHeatmap, BodyHeatmapLegend } from '../components/BodyHeatmap.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { FeelingPicker, getFeelingLabel } from '../components/FeelingPicker.jsx'
-import { SetRow } from '../components/SetRow.jsx'
+import { SetRow, SetRowHeader } from '../components/SetRow.jsx'
+import { ExerciseSettings } from '../components/WeightField.jsx'
 import { TourStep } from '../components/TourStep.jsx'
 
 const STATUS_LABELS = {
@@ -157,6 +158,14 @@ export function HistoryPage() {
 
                         {isEditing ? (
                           <>
+                            <ExerciseSettings
+                              exercise={entryExercise}
+                              onModeChange={(mode) => handleEditWeightModeChange(entry.exerciseId, mode)}
+                              onPulleyHeightChange={(height) => handleEditPulleyHeightChange(entry.exerciseId, height)}
+                              onPulleyNotchChange={(notch) => handleEditPulleyNotchChange(entry.exerciseId, notch)}
+                              onGripWidthChange={(width) => handleEditGripWidthChange(entry.exerciseId, width)}
+                            />
+                            <SetRowHeader exercise={entryExercise} />
                             {entry.sets.map((set, setIndex) => (
                               <SetRow
                                 key={setIndex}
@@ -169,11 +178,7 @@ export function HistoryPage() {
                                 exercise={entryExercise}
                                 onChangeWeight={(weight) => handleEditWeightChange(session.id, entry.exerciseId, setIndex, weight)}
                                 onChangeReps={(reps) => handleEditRepsChange(session.id, entry.exerciseId, setIndex, reps)}
-                                onChangeWeightMode={(mode) => handleEditWeightModeChange(entry.exerciseId, mode)}
                                 onChangeBarWeight={(barWeight) => handleEditBarWeightChange(entry.exerciseId, barWeight)}
-                                onChangePulleyHeight={(height) => handleEditPulleyHeightChange(entry.exerciseId, height)}
-                                onChangePulleyNotch={(notch) => handleEditPulleyNotchChange(entry.exerciseId, notch)}
-                                onChangeGripWidth={(width) => handleEditGripWidthChange(entry.exerciseId, width)}
                                 removeDisabled
                               />
                             ))}

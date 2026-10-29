@@ -209,7 +209,7 @@ export function SettingsPage() {
           (filtre par muscle incomplet, par exemple) après une mise à jour de l'app.
         </p>
         <BigButton variant="secondary" onClick={handleResetCatalog}>
-          Réinitialiser le catalogue d'exercices
+          Mettre à jour le catalogue d'exercices
         </BigButton>
       </section>
 

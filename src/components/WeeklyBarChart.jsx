@@ -12,8 +12,13 @@ export function WeeklyBarChart({ bars }) {
     <div className="weekly-bar-chart">
       {bars.map((bar) => (
         <div key={bar.key} className="weekly-bar-chart__col">
-          <span className="weekly-bar-chart__count">{bar.count}</span>
-          <div className="weekly-bar-chart__bar" style={{ height: `${Math.max(4, (bar.count / max) * 100)}%` }} />
+          {/* Barre vide en gris et sans chiffre : un 0 en lime se lisait
+              comme une donnée. */}
+          <span className="weekly-bar-chart__count">{bar.count > 0 ? bar.count : ''}</span>
+          <div
+            className={`weekly-bar-chart__bar${bar.count === 0 ? ' weekly-bar-chart__bar--empty' : ''}`}
+            style={{ height: `${Math.max(4, (bar.count / max) * 100)}%` }}
+          />
           <span className="weekly-bar-chart__label">{bar.label}</span>
         </div>
       ))}

@@ -1,4 +1,4 @@
-import { getExerciseUnit } from '../domain/muscleGroups.js'
+import { getExerciseUnit, isBodyweightExercise } from '../domain/muscleGroups.js'
 import { formatDecimal, roundToHalf } from '../lib/formatNumber.js'
 import { DurationField } from './DurationField.jsx'
 import { NumberField } from './NumberField.jsx'
@@ -87,7 +87,7 @@ export function SetRowHeader({ exercise }) {
     <div className="set-row set-row--header" aria-hidden="true">
       <span>Série</span>
       <span>{isTimeBased ? 'Durée' : 'Reps'}</span>
-      <span>{perSide ? 'Kg par côté' : 'Kg'}</span>
+      <span>{isBodyweightExercise(exercise?.name) ? 'Lest kg' : perSide ? 'Kg par côté' : 'Kg'}</span>
       <span />
     </div>
   )

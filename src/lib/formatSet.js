@@ -1,4 +1,4 @@
-import { getExerciseUnit } from '../domain/muscleGroups.js'
+import { getExerciseUnit, isBodyweightExercise } from '../domain/muscleGroups.js'
 import { getWorkSets, isWarmupSet } from '../domain/setKinds.js'
 import { formatDecimal } from './formatNumber.js'
 
@@ -16,11 +16,18 @@ function warmupSuffix(set) {
 // historique) continue de fonctionner sans changement de schéma. Les
 // répétitions peuvent être des demi-répétitions (7,5), affichées avec une
 // virgule.
+// Charge affichée : "60kg", ou pour un exercice au poids du corps "PDC"
+// (charge 0) / "PDC+10kg" (lest) plutôt qu'un "0kg" trompeur.
+export function formatWeight(weight, exerciseName) {
+  if (isBodyweightExercise(exerciseName)) return weight > 0 ? `PDC+${formatDecimal(weight)}kg` : 'PDC'
+  return `${formatDecimal(weight)}kg`
+}
+
 export function formatSet(set, exerciseName) {
   if (getExerciseUnit(exerciseName) === 'time') {
     return (set.weight > 0 ? `${set.weight}kg, ${set.reps}s` : `${set.reps}s`) + sideSuffix(set) + warmupSuffix(set)
   }
-  return `${set.weight}kg×${formatDecimal(set.reps)}${sideSuffix(set)}${warmupSuffix(set)}`
+  return `${formatWeight(set.weight, exerciseName)}×${formatDecimal(set.reps)}${sideSuffix(set)}${warmupSuffix(set)}`
 }
 
 // Position affichée d'une série dans sa liste, comptée parmi les séries de
@@ -55,7 +62,13 @@ export function formatPerformanceSummary(sets, exerciseName) {
   const formatReps = (reps) => (isTime ? `${reps} s` : formatDecimal(reps))
   const sameWeight = series.every((set) => set.weight === series[0].weight)
   const sameReps = series.every((set) => set.reps === series[0].reps)
-  const weightSuffix = series[0].weight > 0 ? ` à ${formatDecimal(series[0].weight)} kg` : ''
+  const weightSuffix = isBodyweightExercise(exerciseName)
+    ? series[0].weight > 0
+      ? ` à PDC + ${formatDecimal(series[0].weight)} kg`
+      : ' au poids du corps'
+    : series[0].weight > 0
+      ? ` à ${formatDecimal(series[0].weight)} kg`
+      : ''
 
   if (sameWeight && sameReps) return `${series.length} × ${formatReps(series[0].reps)}${weightSuffix}`
   if (sameWeight) return `${series.map((set) => formatReps(set.reps)).join(', ')}${weightSuffix}`

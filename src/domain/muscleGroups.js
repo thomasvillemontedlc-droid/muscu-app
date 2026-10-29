@@ -409,6 +409,38 @@ const TIME_BASED_EXERCISE_KEYS = new Set([
   'etirements-complets',
 ])
 
+// Exercices au poids du corps : une charge de 0 veut dire "au poids du
+// corps" (affiché PDC), une charge positive est un lest ("PDC + 10 kg"),
+// voir lib/formatSet.js#formatWeight.
+const BODYWEIGHT_EXERCISE_KEYS = new Set([
+  'tractions',
+  'tractions-pronation',
+  'tractions-supination',
+  'tractions-prise-neutre',
+  'tractions-prise-serree',
+  'dips',
+  'dips-sur-barres-paralleles-buste-penche',
+  'dips-sur-barres-paralleles-buste-droit',
+  'dips-sur-banc',
+  'pompes',
+  'pompes-declinees',
+  'pompes-diamant',
+  'releve-de-jambes-suspendu',
+  'releve-de-genoux-suspendu',
+  'releve-de-jambes-au-sol',
+  'crunch-au-sol',
+  'superman-au-sol',
+  'nordic-curl',
+  'sissy-squat',
+  'pont-fessier-au-sol',
+  'burpees',
+])
+
+export function isBodyweightExercise(exerciseName) {
+  const key = resolveExerciseKey(exerciseName)
+  return key != null && BODYWEIGHT_EXERCISE_KEYS.has(key)
+}
+
 export function getExerciseUnit(exerciseName) {
   const key = resolveExerciseKey(exerciseName)
   return key != null && TIME_BASED_EXERCISE_KEYS.has(key) ? 'time' : 'reps'

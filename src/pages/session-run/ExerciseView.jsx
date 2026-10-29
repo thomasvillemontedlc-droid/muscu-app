@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { getChargeSuggestion } from '../../domain/chargeSuggestion.js'
 import { getExercisesUsedInTemplate, getLastPerformance } from '../../domain/history.js'
-import { getExerciseUnit } from '../../domain/muscleGroups.js'
+import { getExerciseUnit, isBodyweightExercise } from '../../domain/muscleGroups.js'
 import {
   addSet,
   addWarmupSet,
@@ -832,8 +832,9 @@ export function ExerciseView({ session, data, setData }) {
                     onClick={handleHalfRepDown}
                     disabled={validating}
                     aria-label="Retirer une demi-répétition (dernière répétition faite à moitié)"
+                title="Dernière répétition faite à moitié"
                   >
-                    −½
+                    −½ rép
                   </button>
                 </>
               )}
@@ -844,7 +845,9 @@ export function ExerciseView({ session, data, setData }) {
                   ajouterait une ligne de texte que le champ Répétitions n'a
                   pas, décalant les deux champs verticalement l'un par rapport
                   à l'autre. */}
-              {(exercise?.weightInputMode ?? 'total') !== 'perSide' && <span>Poids (kg)</span>}
+              {(exercise?.weightInputMode ?? 'total') !== 'perSide' && (
+                <span>{isBodyweightExercise(entry.exerciseName) ? 'Lest (kg, 0 = PDC)' : 'Poids (kg)'}</span>
+              )}
               <WeightField
                 className="exercise-active__input"
                 exercise={exercise}

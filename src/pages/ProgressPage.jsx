@@ -15,6 +15,8 @@ import { MuscleInfoSheet } from '../components/MuscleInfoSheet.jsx'
 import { MuscleRecoveryRow } from '../components/MuscleRecoveryRow.jsx'
 import { WeeklyBarChart } from '../components/WeeklyBarChart.jsx'
 import { TourStep } from '../components/TourStep.jsx'
+import { useNavigate } from 'react-router-dom'
+import { BigButton } from '../components/BigButton.jsx'
 
 const PERIOD_OPTIONS = [
   { value: 'week', label: 'Cette semaine' },
@@ -23,9 +25,9 @@ const PERIOD_OPTIONS = [
   { value: 'all', label: 'Tout' },
 ]
 
+// Initiale du jour (L M M J V S D), lisible à l'horizontale.
 function formatDayLabel(dayStart) {
-  const label = dayStart.toLocaleDateString('fr-FR', { weekday: 'short' })
-  return label.charAt(0).toUpperCase() + label.slice(1).replace('.', '')
+  return 'DLMMJVS'[dayStart.getDay()]
 }
 
 function formatWeekLabel(weekStart) {
@@ -42,6 +44,7 @@ function formatTotalDuration(ms) {
 
 export function ProgressPage() {
   const { data } = useAppDataContext()
+  const navigate = useNavigate()
   const [period, setPeriod] = useState('week')
   const [selectedMuscleIds, setSelectedMuscleIds] = useState(null)
   const closeMuscleSheet = useCallback(() => setSelectedMuscleIds(null), [])
@@ -71,6 +74,24 @@ export function ProgressPage() {
   const intensities = getMuscleIntensities(getCumulativeMuscleVolumes(sessionsInPeriod))
   const neglected = getMostNeglectedMuscles(data.sessions)
   const longTermImbalance = getLongTermMuscleImbalance(data.sessions, data.templates, data.exercises)
+
+  // Aucune séance terminée : un mur de "jamais sollicité" en rouge ne dit
+  // rien d'utile, on invite plutôt à faire la première.
+  const hasAnyFinishedSession = data.sessions.some((s) => s.phase === 'finished')
+  if (!hasAnyFinishedSession) {
+    return (
+      <div className="page">
+        <h1>Progression</h1>
+        <section className="featured-session">
+          <p className="featured-session__name">Ta progression arrive</p>
+          <p className="featured-session__detail">
+            Fais ta première séance : tes muscles travaillés, ta récupération et tes progrès s'afficheront ici.
+          </p>
+          <BigButton onClick={() => navigate('/')}>Choisir une séance</BigButton>
+        </section>
+      </div>
+    )
+  }
 
   return (
     <div className="page">
@@ -130,7 +151,12 @@ export function ProgressPage() {
               ))}
             </ul>
 
-            <MuscleGapSuggestions suggestions={suggestions} uncovered={uncovered} />
+            {/* "Aucune séance ne couvre : ..." répéterait mot pour mot la liste
+                juste au-dessus quand aucune séance n'aide. */}
+            <MuscleGapSuggestions
+              suggestions={suggestions}
+              uncovered={uncovered.length === coverage.missing.length ? [] : uncovered}
+            />
           </>
         )}
       </section>

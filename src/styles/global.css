@@ -24,24 +24,27 @@
   --radius: 16px;
 }
 
-/* Thème clair explicite (Réglages > Apparence) : blanc cassé chaud, même
-   accent lime sur les boutons, vert olive pour l'accent en texte. */
+/* Thème clair explicite (Réglages > Apparence) : fond clair neutre (un
+   gris chaud plus soutenu rendait l'ensemble terne), bordures assez
+   marquées pour que les cartes blanches ne flottent pas, lime un peu plus
+   dense pour tenir sur fond clair, vert franc pour l'accent en texte (le
+   vert olive tirait vers le kaki). */
 :root[data-theme='light'] {
-  --color-bg: #f6f4ef;
+  --color-bg: #f4f4f2;
   --color-surface: #ffffff;
-  --color-surface-2: #eeebe3;
+  --color-surface-2: #ebebe7;
   --color-text: #141414;
-  --color-muted: #6f6c66;
-  --color-border: #e6e2d8;
-  --color-primary: #c6ff3d;
+  --color-muted: #64645e;
+  --color-border: #dcdcd6;
+  --color-primary: #b9f227;
   --color-primary-text: #0a0a0b;
   --color-danger: #d92d20;
-  --color-accent-text: #4f7a00;
+  --color-accent-text: #367a00;
   --color-glow: rgba(120, 170, 0, 0.3);
-  --color-feature-bg: #f3fbe0;
+  --color-feature-bg: #f1fadc;
   --color-feature-border: rgba(110, 160, 0, 0.35);
   --color-warning: #c77700;
-  --color-nav-bg: rgba(246, 244, 239, 0.88);
+  --color-nav-bg: rgba(244, 244, 242, 0.9);
 }
 
 /* Thème "suivre le système" (aucun data-theme posé, voir hooks/useTheme.js)
@@ -49,21 +52,21 @@
    que si l'OS préfère un thème clair. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
-    --color-bg: #f6f4ef;
+    --color-bg: #f4f4f2;
     --color-surface: #ffffff;
-    --color-surface-2: #eeebe3;
+    --color-surface-2: #ebebe7;
     --color-text: #141414;
-    --color-muted: #6f6c66;
-    --color-border: #e6e2d8;
-    --color-primary: #c6ff3d;
+    --color-muted: #64645e;
+    --color-border: #dcdcd6;
+    --color-primary: #b9f227;
     --color-primary-text: #0a0a0b;
     --color-danger: #d92d20;
-    --color-accent-text: #4f7a00;
+    --color-accent-text: #367a00;
     --color-glow: rgba(120, 170, 0, 0.3);
-    --color-feature-bg: #f3fbe0;
+    --color-feature-bg: #f1fadc;
     --color-feature-border: rgba(110, 160, 0, 0.35);
     --color-warning: #c77700;
-    --color-nav-bg: rgba(246, 244, 239, 0.88);
+    --color-nav-bg: rgba(244, 244, 242, 0.9);
   }
 }
 
@@ -4304,4 +4307,38 @@ body {
 
 .exercise-active__nav .back-link {
   margin: 0;
+}
+
+/* Bouton d'agrandissement de l'image du prochain exercice : vide quand
+   l'exercice n'a pas d'illustration (ExerciseImage ne rend rien). */
+.rest-page__next-image-trigger:empty {
+  display: none;
+}
+
+/* Grand écran : la barre de navigation reste de la même largeur que le
+   contenu au lieu de s'étaler sur toute la fenêtre. */
+@media (min-width: 600px) and (min-height: 551px) {
+  .bottom-nav {
+    left: 50%;
+    right: auto;
+    width: 480px;
+    transform: translateX(-50%);
+    border: 1px solid var(--color-border);
+    border-bottom: none;
+    border-radius: 16px 16px 0 0;
+  }
+}
+
+.weekly-bar-chart__bar--empty {
+  background: var(--color-surface-2);
+}
+
+/* Libellés à l'horizontale (initiale du jour, ou date courte par semaine). */
+.weekly-bar-chart__label {
+  writing-mode: horizontal-tb;
+  transform: none;
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }

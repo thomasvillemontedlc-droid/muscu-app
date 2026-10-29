@@ -198,7 +198,7 @@ export const TEMPLATE_STRUCTURES = [
         // ("à faire si le temps le permet"), pas le nom de l'exercice —
         // ajouté normalement, à retirer à la main les jours où on le saute
         // (comme n'importe quel exercice d'une séance type).
-        name: 'Pull (réel)',
+        name: 'Pull',
         exercises: [
           { name: 'Tractions', sets: 3, reps: 12 },
           { name: 'Tirage horizontal poulie basse', sets: 3, reps: 12 },
@@ -208,7 +208,7 @@ export const TEMPLATE_STRUCTURES = [
         ],
       },
       {
-        name: 'Push (réel)',
+        name: 'Push',
         exercises: [
           { name: 'Développé couché barre', sets: 3, reps: 8 },
           { name: 'Développé incliné barre', sets: 3, reps: 8 },
@@ -220,7 +220,7 @@ export const TEMPLATE_STRUCTURES = [
         ],
       },
       {
-        name: 'Jambes (réel)',
+        name: 'Jambes',
         exercises: [
           { name: 'Presse à cuisses', sets: 3, reps: 12 },
           { name: 'Fentes marchées', sets: 3, reps: 15 },

@@ -105,5 +105,33 @@ function migrate(data) {
     migrated = { ...migrated, exercises: seedDefaultExercises(migrated.exercises) }
   }
 
+  // v8 -> v9 : les séances types créées depuis les modèles "Pull (réel)",
+  // "Push (réel)", "Jambes (réel)" perdent ce suffixe (une note interne,
+  // pas un nom). Renommées avec leurs séances passées (rapprochées par
+  // templateName pour l'historique), sauf si le nom court est déjà pris.
+  if (previousVersion < 9) {
+    migrated = stripRealSuffix(migrated)
+  }
+
   return migrated
+}
+
+const REAL_SUFFIX = ' (réel)'
+
+function stripRealSuffix(data) {
+  const taken = new Set(data.templates.map((t) => t.name))
+  const renamed = new Map()
+  const templates = data.templates.map((t) => {
+    if (!t.name.endsWith(REAL_SUFFIX)) return t
+    const name = t.name.slice(0, -REAL_SUFFIX.length)
+    if (taken.has(name)) return t
+    taken.add(name)
+    renamed.set(t.name, name)
+    return { ...t, name }
+  })
+  if (renamed.size === 0) return data
+  const sessions = data.sessions.map((s) =>
+    renamed.has(s.templateName) ? { ...s, templateName: renamed.get(s.templateName) } : s,
+  )
+  return { ...data, templates, sessions }
 }

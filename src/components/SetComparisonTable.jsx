@@ -1,11 +1,11 @@
 import { getExerciseUnit } from '../domain/muscleGroups.js'
 import { getWorkSets } from '../domain/setKinds.js'
 import { formatDecimal } from '../lib/formatNumber.js'
-import { getSetPosition } from '../lib/formatSet.js'
+import { formatWeight, getSetPosition } from '../lib/formatSet.js'
 
-function formatSetValue(set, unit) {
+function formatSetValue(set, unit, exerciseName) {
   if (!set) return '—'
-  return unit === 'time' ? `${set.reps}s` : `${set.weight}kg × ${formatDecimal(set.reps)}`
+  return unit === 'time' ? `${set.reps}s` : `${formatWeight(set.weight, exerciseName)} × ${formatDecimal(set.reps)}`
 }
 
 // Une ligne par série prévue pour l'exercice en cours, comparant la
@@ -42,8 +42,8 @@ export function SetComparisonTable({ entry, last, currentSetIndex }) {
                 {pos.warmup ? 'Échauff.' : pos.position}
                 {pos.sideLabel ? ` (${pos.sideLabel === 'Côté droit' ? 'D' : 'G'})` : ''}
               </td>
-              <td>{pos.warmup ? '—' : formatSetValue(last?.sets[workIndex], unit)}</td>
-              <td>{formatSetValue(set, unit)}</td>
+              <td>{pos.warmup ? '—' : formatSetValue(last?.sets[workIndex], unit, entry.exerciseName)}</td>
+              <td>{formatSetValue(set, unit, entry.exerciseName)}</td>
             </tr>
           )
         })}

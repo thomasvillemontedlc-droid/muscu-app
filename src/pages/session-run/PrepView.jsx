@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import {
   getEffectiveWeightStep,
   getOrCreateExercise,
@@ -15,7 +15,6 @@ import {
   addSet,
   addWarmupSet,
   getDisplayedSetCount,
-  getSessionStatus,
   removeSet,
   setEntryUnilateral,
   setSetCount,
@@ -45,7 +44,11 @@ import { StepperField } from '../../components/StepperField.jsx'
 import { BigButton } from '../../components/BigButton.jsx'
 
 export function PrepView({ session, data, setData }) {
-  const [showWarmup, setShowWarmup] = useState(false)
+  const location = useLocation()
+  // "Commencer" depuis l'accueil lance directement l'échauffement (puis la
+  // séance) : cet écran de préparation ne sert qu'à "Ajuster avant de
+  // commencer".
+  const [showWarmup, setShowWarmup] = useState(() => location.state?.startNow === true)
   const otherSessions = data.sessions.filter((s) => s.id !== session.id)
   const suggestedIds = getExercisesUsedInTemplate(otherSessions, session.templateName)
   const estimate = getEstimatedSessionStats(session)
@@ -59,14 +62,11 @@ export function PrepView({ session, data, setData }) {
     durations.calibratedOn > 0
       ? `Ajustée sur ${durations.calibratedOn === 1 ? 'ta dernière séance' : `tes ${durations.calibratedOn} dernières séances`} identique${durations.calibratedOn > 1 ? 's' : ''}.`
       : 'Estimation théorique, ajustée dès ta première séance terminée.'
-  // Séance déjà faite au moins une fois (terminée ou partielle) : écran
-  // compact - lancement en haut, exercices repliés en une ligne résumée,
-  // options secondaires dans "Plus d'options". Jamais faite : affichage
-  // détaillé (tout déplié, lancement en bas), pour tout régler la 1re fois.
-  const alreadyDone = otherSessions.some(
-    (s) => s.templateId === session.templateId && getSessionStatus(s) !== 'not-done',
-  )
-  // Mode compact : un seul exercice déplié à la fois (null = tous repliés).
+  // Écran compact pour toute séance : lancement en haut, exercices repliés
+  // en une ligne résumée, options secondaires dans "Plus d'options". Avant,
+  // une séance jamais faite s'affichait toute dépliée avec "Commencer" tout
+  // en bas d'une très longue page.
+  // Un seul exercice déplié à la fois (null = tous repliés).
   const [expandedId, setExpandedId] = useState(null)
 
   function handleReorder(fromIndex, toIndex) {
@@ -280,7 +280,7 @@ export function PrepView({ session, data, setData }) {
 
       <h1>{session.templateName}</h1>
 
-      {alreadyDone && session.entries.length > 0 && (
+      {session.entries.length > 0 && (
         <section className="featured-session prep-quickstart">
           <ul className="session-stats prep-quickstart__stats">
             <li>~{estimatedDuration} sans échauffement ni étirements</li>
@@ -325,7 +325,7 @@ export function PrepView({ session, data, setData }) {
 
           // Mode compact, exercice replié : une ligne nom + résumé ; un
           // toucher la déplie (et replie l'éventuel autre exercice ouvert).
-          const expanded = !alreadyDone || expandedId === entry.exerciseId
+          const expanded = expandedId === entry.exerciseId
           if (!expanded) {
             return (
               <div className="prep-exercise prep-exercise--folded">
@@ -351,21 +351,15 @@ export function PrepView({ session, data, setData }) {
           return (
           <div className="prep-exercise">
             <div className="prep-exercise__header">
-              {alreadyDone ? (
-                <button
-                  type="button"
-                  className="prep-exercise__toggle"
-                  {...titleProps}
-                  onClick={() => setExpandedId(null)}
-                  aria-expanded="true"
-                >
-                  <span className="prep-exercise__name">{entry.exerciseName}</span>
-                </button>
-              ) : (
-                <span className="prep-exercise__name" {...titleProps}>
-                  {entry.exerciseName}
-                </span>
-              )}
+              <button
+                type="button"
+                className="prep-exercise__toggle"
+                {...titleProps}
+                onClick={() => setExpandedId(null)}
+                aria-expanded="true"
+              >
+                <span className="prep-exercise__name">{entry.exerciseName}</span>
+              </button>
               {removeButton}
             </div>
 
@@ -436,28 +430,15 @@ export function PrepView({ session, data, setData }) {
 
       {session.entries.length === 0 ? (
         <p className="empty-state">Ajoute au moins un exercice pour commencer.</p>
-      ) : alreadyDone ? (
+      ) : (
         <details className="prep-more-options">
           <summary>Plus d'options</summary>
           {startingField}
           {goalField}
+          <p className="prep-field__hint">
+            {estimate.totalSets} séries · ~{formatDecimal(estimate.totalReps)} répétitions
+          </p>
         </details>
-      ) : (
-        <>
-          {startingField}
-          {restField}
-          {goalField}
-
-          <ul className="session-stats">
-            <li>~{estimatedDuration} sans échauffement ni étirements</li>
-            <li>~{estimatedDurationWithRoutines} avec échauffement et étirements</li>
-            <li>{estimate.totalSets} séries</li>
-            <li>~{formatDecimal(estimate.totalReps)} répétitions</li>
-          </ul>
-          <p className="prep-field__hint">{durationHint}</p>
-
-          <BigButton onClick={() => setShowWarmup(true)}>Commencer la séance</BigButton>
-        </>
       )}
     </div>
   )

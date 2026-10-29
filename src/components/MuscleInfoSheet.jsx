@@ -57,7 +57,7 @@ export function MuscleInfoSheet({ muscleIds, recovery, onClose }) {
   function handleStart(template) {
     const { session, sessions } = startSessionFromTemplate(data.sessions, template, data.exercises)
     setData({ ...data, sessions })
-    navigate(`/sessions/${session.id}`)
+    navigate(`/sessions/${session.id}`, { state: { startNow: true } })
   }
 
   function handleSetNext(template) {

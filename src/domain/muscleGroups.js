@@ -313,6 +313,18 @@ const EXERCISE_ALIASES = {
   'abducteurs-machine': 'machine-abducteurs-ecarter',
   'curl-poignets': 'curl-poignets-barre-flexion',
   'dead-hang': 'suspension-a-la-barre-dead-hang',
+  // Noms des modèles de séance (domain/templateModels.js) sans entrée exacte :
+  // sans ces alias, la couverture musculaire les ignorait (ex. aucun biceps
+  // dans un Pull contenant deux curls).
+  'developpe-militaire-halteres-assis': 'developpe-militaire',
+  'developpe-militaire-halteres': 'developpe-militaire',
+  'tirage-vertical-poulie-haute-prise-neutre': 'tirage-vertical-prise-neutre',
+  'tirage-vertical-poulie-haute': 'tirage-vertical-poulie-haute-pronation',
+  'oiseau-halteres': 'oiseau-halteres-buste-penche',
+  'curl-marteau-haltere-ou-machine': 'curl-marteau',
+  'curl-biceps-a-la-poulie-basse': 'curl-a-la-poulie-basse',
+  'curl-biceps-poulie-basse': 'curl-a-la-poulie-basse',
+  'extension-triceps-a-la-poulie-haute': 'extension-triceps-a-la-poulie-haute-barre',
   // Barre guidée (Smith machine) : noms courts courants.
   'squat-smith': 'squat-a-la-barre-guidee-smith-machine',
   'smith-squat': 'squat-a-la-barre-guidee-smith-machine',
@@ -351,10 +363,25 @@ const EMPTY_MUSCLES = { primary: [], secondary: [] }
 // catalogue, si un exercice existant "couvre" déjà une entrée canonique
 // même sous un nom différent (ex. le "Gainage" de l'utilisateur couvre la
 // même clé que notre "Gainage planche" via l'alias gainage -> gainage-planche).
-function resolveExerciseKey(exerciseName) {
-  const slug = slugify(exerciseName)
+// En dernier recours, pour un nom saisi à la main : le même nom sans sa
+// précision entre parenthèses ("Curl marteau (haltère ou machine)" ->
+// "Curl marteau"), puis la première entrée qui commence par ce nom
+// ("Oiseau haltères" -> "Oiseau haltères (buste penché)"), à partir de
+// deux mots.
+const CANONICAL_KEYS = Object.keys(EXERCISE_MUSCLES)
+
+function resolveSlug(slug) {
+  if (!slug) return null
   if (EXERCISE_MUSCLES[slug]) return slug
-  return EXERCISE_ALIASES[slug] ?? null
+  if (EXERCISE_ALIASES[slug]) return EXERCISE_ALIASES[slug]
+  // Au moins deux mots : un mot seul ("Pull") est trop vague pour deviner.
+  if (!slug.includes('-')) return null
+  return CANONICAL_KEYS.find((key) => key.startsWith(`${slug}-`)) ?? null
+}
+
+function resolveExerciseKey(exerciseName) {
+  const name = exerciseName ?? ''
+  return resolveSlug(slugify(name)) ?? resolveSlug(slugify(name.replace(/\([^)]*\)/g, '')))
 }
 
 export function getExerciseMuscles(exerciseName) {

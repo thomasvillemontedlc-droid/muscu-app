@@ -73,7 +73,10 @@ export function RestBanner({ timer, onAdjust, nextExerciseName, nextLastPerforma
         </p>
       )}
 
+      {/* Ajustement libre du repos, en plus des ±15s : sans libellé,
+          impossible de deviner à quoi servait ce champ. */}
       <div className="rest-timer__custom">
+        <span className="rest-timer__custom-label">Ajuster de</span>
         <button
           type="button"
           className="rest-timer__custom-button"

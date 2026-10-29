@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import { createTemplate, deleteTemplate, deleteTemplates, sortTemplatesForToday } from '../domain/templates.js'
@@ -131,16 +131,42 @@ export function TemplatesListPage() {
     setNotice(message)
   }
 
-  function handleStart(template) {
+  const createPanelRef = useRef(null)
+
+  function openCreatePanel() {
+    if (!createPanelRef.current) return
+    createPanelRef.current.open = true
+    createPanelRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  // startNow : échauffement puis séance tout de suite (voir PrepView) ;
+  // sinon, écran de préparation pour ajuster avant de commencer.
+  function handleStart(template, { startNow = true } = {}) {
     const { session, sessions } = startSessionFromTemplate(data.sessions, template, data.exercises)
     setData({ ...data, sessions })
-    navigate(`/sessions/${session.id}`)
+    navigate(`/sessions/${session.id}`, { state: { startNow } })
   }
 
   return (
     <div className="page">
       <h1>Mes séances</h1>
       <BackupReminder />
+
+      {/* Premier lancement : rien à lancer encore. Deux portes d'entrée
+          plutôt qu'une redirection forcée vers le programme. */}
+      {!inProgressSession && data.templates.length === 0 && (
+        <section className="featured-session">
+          <p className="featured-session__label">Bienvenue</p>
+          <p className="featured-session__name">Par où commencer ?</p>
+          <p className="featured-session__detail">
+            Un programme te propose tes séances de la semaine. Une séance seule te laisse composer librement.
+          </p>
+          <BigButton onClick={() => navigate('/program')}>Créer mon programme</BigButton>
+          <BigButton variant="secondary" onClick={openCreatePanel}>
+            Créer une séance
+          </BigButton>
+        </section>
+      )}
 
       {inProgressSession ? (
         <section className="featured-session">
@@ -173,6 +199,15 @@ export function TemplatesListPage() {
             >
               Commencer {featuredTemplate.name}
             </BigButton>
+            {featuredTemplate.exerciseIds.length > 0 && (
+              <button
+                type="button"
+                className="subtle-button"
+                onClick={() => handleStart(featuredTemplate, { startNow: false })}
+              >
+                Ajuster avant de commencer
+              </button>
+            )}
           </section>
         )
       )}
@@ -181,7 +216,7 @@ export function TemplatesListPage() {
         Programme hebdomadaire →
       </Link>
 
-      <details id="tip-home-create" className="template-create-toggle">
+      <details id="tip-home-create" className="template-create-toggle" ref={createPanelRef}>
         <summary>Créer une nouvelle séance</summary>
 
         <div className="template-create-panel">

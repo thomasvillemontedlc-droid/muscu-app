@@ -50,12 +50,19 @@ export function getTemplatesForMuscle(muscleId, templates, exercises) {
 // jamais — vérification structurelle du programme lui-même (domain/program.js),
 // indépendante de tout historique de séances réelles (voir getMuscleCoverage
 // ci-dessus pour la version basée sur ce qui a été effectivement fait).
+// Un muscle travaillé seulement en secondaire (trapèzes dans les tractions)
+// compte comme couvert : "jamais travaillé" doit vouloir dire pas du tout.
 export function getProgramMuscleCoverage(program, templates, exercises) {
   const covered = new Set()
   for (const templateId of program.templateIds) {
     const template = templates.find((t) => t.id === templateId)
     if (!template) continue
-    for (const muscleId of getTemplateMuscles(template, exercises)) covered.add(muscleId)
+    for (const exerciseId of template.exerciseIds) {
+      const exercise = exercises.find((e) => e.id === exerciseId)
+      if (!exercise) continue
+      const { primary, secondary } = getExerciseMuscles(exercise.name)
+      for (const muscleId of [...primary, ...secondary]) covered.add(muscleId)
+    }
   }
   return {
     covered: MUSCLE_GROUPS.filter((id) => covered.has(id)),

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAppDataContext } from '../hooks/AppDataContext.jsx'
 import {
@@ -14,7 +14,6 @@ import { startSessionFromTemplate } from '../domain/sessions.js'
 import { getProgramMuscleCoverage } from '../domain/muscleCoverage.js'
 import { getMuscleLabel } from '../domain/muscleGroups.js'
 import { FREQUENCY_STRUCTURE_KEYS, TEMPLATE_STRUCTURES } from '../domain/templateModels.js'
-import { markWeeklyProgramOnboardingComplete } from '../storage/onboarding.js'
 import { BigButton } from '../components/BigButton.jsx'
 import { NumberField } from '../components/NumberField.jsx'
 import { ProgramComposer } from '../components/ProgramComposer.jsx'
@@ -36,15 +35,6 @@ export function ProgramPage() {
   const [composingProgram2, setComposingProgram2] = useState(false)
   const [selectedProgramIndex, setSelectedProgramIndex] = useState(0)
   const [periodCustomOpen, setPeriodCustomOpen] = useState(false)
-
-  // Verrouille définitivement le fait qu'un programme a déjà existé une
-  // fois (voir App.jsx et storage/onboarding.js) : contrairement à
-  // templateIds.length, ce drapeau ne redescend jamais, même si le
-  // programme est vidé par la suite - l'écran forcé du tout premier
-  // lancement ne doit plus jamais revenir après ça.
-  useEffect(() => {
-    if (program1.templateIds.length > 0) markWeeklyProgramOnboardingComplete()
-  }, [program1.templateIds.length])
 
   const structureOptions = frequency ? FREQUENCY_STRUCTURE_KEYS[frequency] : []
   const activeStructure = structureKey ? TEMPLATE_STRUCTURES.find((s) => s.key === structureKey) : null
@@ -97,7 +87,7 @@ export function ProgramPage() {
   function handleStart(template) {
     const { session, sessions } = startSessionFromTemplate(data.sessions, template, data.exercises)
     setData({ ...data, sessions })
-    navigate(`/sessions/${session.id}`)
+    navigate(`/sessions/${session.id}`, { state: { startNow: true } })
   }
 
   function handleSelectFrequency(freq) {

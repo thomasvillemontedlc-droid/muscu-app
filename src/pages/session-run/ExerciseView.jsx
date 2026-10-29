@@ -655,7 +655,9 @@ export function ExerciseView({ session, data, setData }) {
             >
               <ExerciseImage key={entry.exerciseName} name={entry.exerciseName} className="rest-page__next-image" />
             </button>
-            <p className="rest-page__next-label">Prochain exercice</p>
+            {/* "Prochain exercice" seulement si on change vraiment
+                d'exercice : sinon c'est la série suivante du même. */}
+            <p className="rest-page__next-label">{doneSetCount > 0 ? 'Série suivante' : 'Prochain exercice'}</p>
             <h2 className="rest-page__next-name">{entry.exerciseName}</h2>
           </div>
           <RestBanner timer={timer} onAdjust={handleAdjustRest} nextLastPerformance={lastSummary} />
